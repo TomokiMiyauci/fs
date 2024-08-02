@@ -18,6 +18,7 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
+import { BlobDataItem } from "./blob.ts";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   override get kind(): "file" {
@@ -61,11 +62,9 @@ export class FileSystemFileHandle extends FileSystemHandle {
       // 6. Set f’s underlying byte sequence to a copy of entry’s binary data.
       const blob = new BlobDataItem({
         locator: fsLocator,
-        lastModified: entry.modificationTimestamp,
         entry,
         fs: this.fs,
         io: this.io,
-        binaryData: entry.binaryData,
       });
 
       // 9. Set f’s type to an implementation-defined value, based on for example entry’s name or its file extension.
@@ -83,7 +82,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
     });
 
     // 5. Return result.
-
     return promise;
   }
 
@@ -221,61 +219,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
 }
 
 function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
-
-interface BlobDataItemOptions {
-  lastModified: number;
-  locator: FileSystemLocator;
-  entry: FileEntry;
-  fs: UnderlyingFileSystem;
-  io: IO;
-  binaryData: Uint8Array;
-}
-
-class BlobDataItem extends Blob {
-  lastModified: number;
-  locator: FileSystemLocator;
-  entry: FileEntry;
-  fs: UnderlyingFileSystem;
-  io: IO;
-  binaryData: Uint8Array;
-
-  constructor(options: BlobDataItemOptions) {
-    super([options.binaryData]);
-
-    this.lastModified = options.lastModified;
-    this.locator = options.locator;
-    this.entry = options.entry;
-    this.fs = options.fs;
-    this.io = options.io;
-    this.binaryData = options.binaryData;
-  }
-
-  slice(start: number = 0, end?: number): Blob {
-    const binaryData = this.binaryData.slice(start, end);
-
-    return new BlobDataItem({
-      lastModified: this.lastModified,
-      locator: this.locator,
-      entry: { ...this.entry, binaryData },
-      fs: this.fs,
-      io: this.io,
-      binaryData,
-    });
-  }
-
-  stream(): ReadableStream<Uint8Array> {
-    const timestamp = this.io.modificationTimestamp(this.locator);
-
-    if (timestamp > this.lastModified) {
-      throw new DOMException(
-        "The requested file could not be read, typically due to permission problems that have occurred after a reference to a file was acquired.",
-        "NotReadableError",
-      );
-    }
-
-    return this.fs.stream(this.entry, this.locator);
-  }
-}
 
 export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
