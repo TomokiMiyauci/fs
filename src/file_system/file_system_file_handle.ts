@@ -18,7 +18,7 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
-import { BlobDataItem } from "./blob.ts";
+// import { BlobDataItem } from "./blob.ts";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   override get kind(): "file" {
@@ -60,25 +60,21 @@ export class FileSystemFileHandle extends FileSystemHandle {
       // 4. Let f be a new File.
       // 5. Set f’s snapshot state to the current state of entry.
       // 6. Set f’s underlying byte sequence to a copy of entry’s binary data.
-      const blob = new BlobDataItem({
-        locator: fsLocator,
-        entry,
-        fs: this.fs,
-        io: this.io,
-      });
-
       // 9. Set f’s type to an implementation-defined value, based on for example entry’s name or its file extension.
       const type = typeByExtension(extname(entry.name));
 
+      // `getFile` reads binaries at the time of the `getFile` call, according to the current specification.
+      // @see https://github.com/whatwg/fs/issues/157
+
       // 7. Set f’s name to entry’s name.
-      const file = new File([blob], entry.name, {
+      const f = new File([entry.binaryData.slice(0)], entry.name, {
         // 8. Set f’s lastModified to entry’s modification timestamp.
         lastModified: entry.modificationTimestamp,
         type,
       });
 
       // 10. Resolve result with f.
-      resolve(file);
+      resolve(f);
     });
 
     // 5. Return result.
