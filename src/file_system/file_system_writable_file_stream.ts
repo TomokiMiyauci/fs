@@ -1,3 +1,4 @@
+import { concat } from "@std/bytes/concat";
 import { releaseLock } from "./algorithm.ts";
 import type {
   FileEntry,
@@ -5,7 +6,6 @@ import type {
   WriteParams,
 } from "./type.ts";
 import { $file, buffer, seekOffset } from "./symbol.ts";
-import { concat } from "@std/bytes";
 import { Msg } from "./constant.ts";
 
 export class FileSystemWritableFileStream
