@@ -121,6 +121,13 @@ function next(
   next,
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
+  constructor(
+    loc: FileSystemLocator,
+    private fs: UnderlyingFileSystem,
+    private io: IO,
+  ) {
+    super(loc);
+  }
   override get kind(): "directory" {
     return "directory";
   }

@@ -21,6 +21,13 @@ import { Msg } from "./constant.ts";
 // import { BlobDataItem } from "./blob.ts";
 
 export class FileSystemFileHandle extends FileSystemHandle {
+  constructor(
+    loc: FileSystemLocator,
+    private fs: UnderlyingFileSystem,
+    private io: IO,
+  ) {
+    super(loc);
+  }
   override get kind(): "file" {
     return "file";
   }
