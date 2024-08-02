@@ -165,8 +165,8 @@ export interface UnderlyingFileSystem {
 }
 
 export interface IO {
-  binaryData(locator: FileSystemLocator): Uint8Array;
-  modificationTimestamp(locator: FileSystemLocator): number;
+  getBinaryData(locator: FileSystemLocator): Uint8Array;
+  getModificationTimestamp(locator: FileSystemLocator): number;
   queryAccess(
     locator: FileSystemLocator,
     mode: AccessMode,
@@ -175,5 +175,5 @@ export interface IO {
     locator: FileSystemLocator,
     mode: AccessMode,
   ): FileSystemAccessResult | Promise<FileSystemAccessResult>;
-  children(locator: FileSystemLocator): FileSystemLocator[];
+  getChildren(locator: FileSystemLocator): FileSystemLocator[];
 }

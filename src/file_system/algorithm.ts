@@ -55,7 +55,7 @@ class FileEntryImpl implements FileEntry {
 
   get modificationTimestamp(): number {
     return this.#timestamp ??
-      (this.#timestamp = this.io.modificationTimestamp(this.locator));
+      (this.#timestamp = this.io.getModificationTimestamp(this.locator));
   }
 
   set modificationTimestamp(value: number) {
@@ -64,7 +64,7 @@ class FileEntryImpl implements FileEntry {
 
   get binaryData(): Uint8Array {
     return this.#binaryData ??
-      (this.#binaryData = this.io.binaryData(this.locator));
+      (this.#binaryData = this.io.getBinaryData(this.locator));
   }
 
   set binaryData(value: Uint8Array) {
@@ -93,7 +93,7 @@ class DirectoryEntryImpl implements DirectoryEntry {
   get children(): FileSystemEntry[] {
     if (this.#children) return this.#children;
 
-    const childLocators = this.io.children(this.locator);
+    const childLocators = this.io.getChildren(this.locator);
     const createEntry = this.createEntry.bind(this);
 
     this.#children = childLocators.map(createEntry);

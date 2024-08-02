@@ -39,7 +39,7 @@ export class BlobDataItem extends Blob {
   }
 
   stream(): ReadableStream<Uint8Array> {
-    const timestamp = this.io.modificationTimestamp(this.locator);
+    const timestamp = this.io.getModificationTimestamp(this.locator);
 
     if (timestamp > this.entry.modificationTimestamp) {
       throw new DOMException(
