@@ -27,55 +27,62 @@ export class FileSystemSyncAccessHandle {
     // 2. Let bufferSize be buffer’s byte length.
     const bufferSize = buffer.byteLength;
 
-    // 3. Let fileContents be this's [[file]]'s binary data.
-    const fileContents = this[$file].binaryData;
+    try {
+      // 3. Let fileContents be this's [[file]]'s binary data.
+      const fileContents = this[$file].binaryData;
 
-    // 4. Let fileSize be fileContents’s length.
-    const fileSize = fileContents.length;
+      // 4. Let fileSize be fileContents’s length.
+      const fileSize = fileContents.length;
 
-    // 5. Let readStart be options["at"] if options["at"] exists; otherwise this's file position cursor.
-    const readStart = typeof options?.at === "number"
-      ? options.at
-      : this.filePositionCursor;
+      // 5. Let readStart be options["at"] if options["at"] exists; otherwise this's file position cursor.
+      const readStart = typeof options?.at === "number"
+        ? options.at
+        : this.filePositionCursor;
 
-    // 6. If the underlying file system does not support reading from a file offset of readStart, throw a TypeError.
+      // 6. If the underlying file system does not support reading from a file offset of readStart, throw a TypeError.
 
-    // 7. If readStart is larger than fileSize:
-    if (readStart > fileSize) {
-      // 1. Set this's file position cursor to fileSize.
-      this.filePositionCursor = fileSize;
+      // 7. If readStart is larger than fileSize:
+      if (readStart > fileSize) {
+        // 1. Set this's file position cursor to fileSize.
+        this.filePositionCursor = fileSize;
 
-      // 2. Return 0.
+        // 2. Return 0.
+        return 0;
+      }
+
+      // 8. Let readEnd be readStart + (bufferSize − 1).
+      // No need -1?
+      let readEnd = readStart + bufferSize;
+
+      // 9. If readEnd is larger than fileSize, set readEnd to fileSize.
+      if (readEnd > fileSize) readEnd = fileSize;
+
+      // 10. Let bytes be a byte sequence containing the bytes from readStart to readEnd of fileContents.
+      const bytes = fileContents.slice(readStart, readEnd);
+
+      // 11. Let result be bytes’s length.
+      const result = bytes.length;
+
+      // 13. Let arrayBuffer be buffer’s underlying buffer.
+      const arrayBuffer = undelyingBuffer(buffer);
+
+      // 14. Write bytes into arrayBuffer.
+      write(arrayBuffer, bytes);
+
+      // 15. Set this's file position cursor to readStart + result.
+      this.filePositionCursor = readStart + result;
+
+      // 16. Return result.
+      return result;
+
+      // 12. If the operations reading from fileContents in the previous steps failed:
+    } catch {
+      // 1. If there were partial reads and the number of bytes that were read into bytes is known, set result to the number of read bytes.
+
+      // 2. Otherwise set result to 0.
       return 0;
+      // The following are not executable
     }
-
-    // 8. Let readEnd be readStart + (bufferSize − 1).
-    let readEnd = readStart + (bufferSize - 1);
-
-    // 9. If readEnd is larger than fileSize, set readEnd to fileSize.
-    if (readEnd > fileSize) readEnd = fileSize;
-
-    // 10. Let bytes be a byte sequence containing the bytes from readStart to readEnd of fileContents.
-    const bytes = fileContents.slice(readStart, readEnd);
-
-    // 11. Let result be bytes’s length.
-    const result = bytes.length;
-
-    // 12. If the operations reading from fileContents in the previous steps failed:
-
-    // 1. If there were partial reads and the number of bytes that were read into bytes is known, set result to the number of read bytes.
-
-    // 2. Otherwise set result to 0.
-
-    // 13. Let arrayBuffer be buffer’s underlying buffer.
-
-    // 14. Write bytes into arrayBuffer.
-
-    // 15. Set this's file position cursor to readStart + result.
-    this.filePositionCursor = readStart + result;
-
-    // 16. Return result.
-    return result;
   }
 
   write(
@@ -93,7 +100,7 @@ export class FileSystemSyncAccessHandle {
     // 3. If the underlying file system does not support writing to a file offset of writePosition, throw a TypeError.
 
     // 4. Let fileContents be a copy of this's [[file]]'s binary data.
-    const fileContents = this[$file].binaryData.slice(0);
+    let fileContents = this[$file].binaryData.slice();
 
     // 5. Let oldSize be fileContents’s length.
     const oldSize = fileContents.length;
@@ -102,38 +109,48 @@ export class FileSystemSyncAccessHandle {
     const bufferSize = buffer.byteLength;
 
     // 7. If writePosition is larger than oldSize, append writePosition − oldSize 0x00 (NUL) bytes to the end of fileContents.
+    if (writePosition > oldSize) {
+      fileContents = concat([
+        fileContents,
+        new Uint8Array(writePosition - oldSize),
+      ]);
+    }
 
     // 8. Let head be a byte sequence containing the first writePosition bytes of fileContents.
-    // const head = fileContents.slice(0, writePosition);
+    const head = fileContents.slice(0, writePosition);
 
     // 9. Let tail be an empty byte sequence.
-    // let tail = new Uint8Array();
+    let tail = new Uint8Array();
 
     // 10. If writePosition + bufferSize is smaller than oldSize:
-    if (writePosition + bufferSize < oldSize) {
-      // const lastIndex = oldSize - (writePosition + bufferSize);
+    if ((writePosition + bufferSize) < oldSize) {
+      const lastIndex = oldSize - (writePosition + bufferSize);
       // 1. Set tail to a byte sequence containing the last oldSize − (writePosition + bufferSize) bytes of fileContents.
-      // tail = fileContents.slice(-lastIndex);
+      tail = fileContents.slice(-lastIndex);
     }
 
     // 11. Let newSize be head’s length + bufferSize + tail’s length.
-    // const newSize = head.length + bufferSize + tail.length;
+    const newSize = head.length + bufferSize + tail.length;
 
     // 12. If newSize − oldSize exceeds the available storage quota, throw a "QuotaExceededError" DOMException.
 
-    // 13. Set this's [[file]]'s binary data to the concatenation of head, the contents of buffer and tail.
+    try {
+      // 13. Set this's [[file]]'s binary data to the concatenation of head, the contents of buffer and tail.
+      this[$file].binaryData = concat([head, contentsOf(buffer), tail]);
 
-    // 14. If the operations modifying the this's[[file]]'s binary data in the previous steps failed:
+      // 14. If the operations modifying the this's[[file]]'s binary data in the previous steps failed:
+    } catch {
+      // 1. If there were partial writes and the number of bytes that were written from buffer is known:
 
-    // 1. If there were partial writes and the number of bytes that were written from buffer is known:
+      // 1. Let bytesWritten be the number of bytes that were written from buffer.
 
-    // 1. Let bytesWritten be the number of bytes that were written from buffer.
+      // 2. Set this's file position cursor to writePosition + bytesWritten.
 
-    // 2. Set this's file position cursor to writePosition + bytesWritten.
+      // 3. Return bytesWritten.
 
-    // 3. Return bytesWritten.
-
-    // 2. Otherwise throw an "InvalidStateError" DOMException.
+      // 2. Otherwise throw an "InvalidStateError" DOMException.
+      throw new DOMException("InvalidStateError");
+    }
 
     // 15. Set this's file position cursor to writePosition + bufferSize.
     this.filePositionCursor = writePosition + bufferSize;
@@ -221,10 +238,14 @@ export class FileSystemSyncAccessHandle {
       lockReleased = true;
     });
 
+    const pauseForRelease = () => {
+      if (lockReleased) return;
+
+      setTimeout(pauseForRelease, 0);
+    };
+
     // 6. Pause until lockReleased is true.
-    while (!lockReleased) {
-      // noop
-    }
+    pauseForRelease();
   }
 }
 
@@ -242,4 +263,25 @@ export function createFileSystemSyncAccessHandle(
 
   // 4. Return handle.
   return handle;
+}
+
+function contentsOf(buffer: AllowSharedBufferSource): Uint8Array {
+  if (buffer instanceof ArrayBuffer) return new Uint8Array(buffer);
+  else {
+    return new Uint8Array(
+      buffer.buffer,
+      buffer.byteOffset,
+      buffer.byteLength,
+    );
+  }
+}
+
+function write(buffer: Uint8Array, bytes: Uint8Array): void {
+  buffer.set(bytes);
+}
+
+function undelyingBuffer(buffer: AllowSharedBufferSource): Uint8Array {
+  return buffer instanceof ArrayBuffer
+    ? new Uint8Array(buffer)
+    : new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
 }
