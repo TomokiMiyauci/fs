@@ -280,11 +280,16 @@ export function writeChunk(
       // 5. If newSize is larger than oldSize:
       if (newSize > oldSize) {
         // 1. Set stream’s [[buffer]] to a byte sequence formed by concating stream’s [[buffer]] with a byte sequence containing newSize-oldSize 0x00 bytes.
+        stream[buffer] = concat([
+          stream[buffer],
+          new Uint8Array(newSize - oldSize),
+        ]);
 
         // 2. If the operation in the previous step failed due to exceeding the storage quota, reject p with a "QuotaExceededError" DOMException and abort these steps, leaving stream’s [[buffer]] unmodified.
       } // 6. Otherwise, if newSize is smaller than oldSize:
       else if (newSize < oldSize) {
         // 1. Set stream’s [[buffer]] to a byte sequence containing the first newSize bytes in stream’s [[buffer]].
+        stream[buffer] = stream[buffer].slice(0, newSize);
       }
 
       // 7. If stream’s [[seekOffset]] is bigger than newSize, set stream’s [[seekOffset]] to newSize.

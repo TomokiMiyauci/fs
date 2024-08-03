@@ -22,3 +22,26 @@ export function createEmptyFile(
 ): Promise<FileSystemFileHandle> {
   return createFileWithContents(handle, name, "");
 }
+
+export async function getFileContents(
+  handle: FileSystemFileHandle,
+): Promise<string> {
+  const file = await handle.getFile();
+
+  return file.text();
+}
+
+export async function getFileSize(
+  handle: FileSystemFileHandle,
+): Promise<number> {
+  const file = await handle.getFile();
+
+  return file.size;
+}
+
+export function createDirectory(
+  handle: FileSystemDirectoryHandle,
+  name: string,
+) {
+  return handle.getDirectoryHandle(name, { create: true });
+}
