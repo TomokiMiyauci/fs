@@ -619,6 +619,62 @@ describe("FileSystemDirectoryHandle", () => {
       },
     );
   });
+
+  describe("resolve", () => {
+    it<Context>(
+      "Resolve returns empty array for same directory",
+      async function () {
+        await expect(this.root.resolve(this.root)).resolves.toEqual([]);
+      },
+    );
+
+    it<Context>(
+      "Resolve returns empty array for same directory",
+      async function () {
+        const subdir = await this.root.getDirectoryHandle("subdir-name", {
+          create: true,
+        });
+        const file = await subdir.getFileHandle("file-name", { create: true });
+
+        await expect(this.root.resolve(file)).resolves.toEqual([
+          "subdir-name",
+          "file-name",
+        ]);
+      },
+    );
+
+    it<Context>(
+      "Resolve returns correct path with non-ascii characters",
+      async function () {
+        const subdir = await this.root.getDirectoryHandle("subdir😊", {
+          create: true,
+        });
+        const file = await subdir.getFileHandle("file-name", { create: true });
+
+        await expect(this.root.resolve(file)).resolves.toEqual([
+          "subdir😊",
+          "file-name",
+        ]);
+        await expect(this.root.resolve(subdir)).resolves.toEqual([
+          "subdir😊",
+        ]);
+      },
+    );
+
+    it<Context>(
+      "Resolve returns null when entry is not a child",
+      async function () {
+        const subdir = await this.root.getDirectoryHandle("subdir-name", {
+          create: true,
+        });
+        const file = await this.root.getFileHandle("file-name", {
+          create: true,
+        });
+
+        await expect(subdir.resolve(file)).resolves.toEqual(null);
+      },
+    );
+  });
 });
 
 function getAscii(): string {
