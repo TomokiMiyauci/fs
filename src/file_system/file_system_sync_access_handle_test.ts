@@ -1,3 +1,7 @@
+/**
+ * @see https://github.com/web-platform-tests/wpt/blob/1eaddc37a55977200ae3f983eafc1cfcb121235e/fs/FileSystemSyncAccessHandle-read-write.https.worker.js
+ */
+
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { FileSystemSyncAccessHandle } from "./file_system_sync_access_handle.ts";
@@ -150,6 +154,315 @@ describe("FileSystemSyncAccessHandle", () => {
         this.handle.read(readBuffer, { at: 0 });
 
         expect(text).toBe(new TextDecoder().decode(readBuffer));
+      },
+    );
+  });
+
+  describe("read write", () => {
+    it<Context>(
+      `Test reading an empty file through a sync access handle.`,
+      function () {
+        const readBuffer = new Uint8Array(24);
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(0).toBe(readBytes);
+      },
+    );
+
+    it<Context>(
+      `Test using an empty ArrayBuffer.`,
+      function () {
+        const readBuffer = new ArrayBuffer(0);
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(0).toBe(readBytes);
+      },
+    );
+
+    it<Context>(
+      `Test using an ArrayBuffer.`,
+      function () {
+        const readBuffer = new ArrayBuffer(24);
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(0).toBe(readBytes);
+      },
+    );
+
+    it<Context>(
+      `Test writing and reading through a sync access handle.`,
+      function () {
+        const decoder = new TextDecoder();
+
+        const text = "Hello Storage Foundation";
+        const writeBuffer = new TextEncoder().encode(text);
+        const writtenBytes = this.handle.write(writeBuffer, { at: 0 });
+
+        expect(writeBuffer.byteLength).toBe(writtenBytes);
+        let readBuffer = new Uint8Array(writtenBytes);
+        let readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(writtenBytes).toBe(readBytes);
+        expect(text).toBe(decoder.decode(readBuffer));
+
+        // Test a read of less bytes than available.
+        const expected = "Storage";
+        readBuffer = new Uint8Array(expected.length);
+        readBytes = this.handle.read(readBuffer, {
+          at: text.indexOf(expected),
+        });
+        expect(readBuffer.length).toBe(readBytes);
+        const actual = decoder.decode(readBuffer);
+
+        expect(expected).toBe(actual);
+      },
+    );
+
+    it<Context>(
+      `Test second write that is bigger than the first write`,
+      function () {
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        for (const text of ["Hello", "Longer Text"]) {
+          const writeBuffer = encoder.encode(text);
+          const writtenBytes = this.handle.write(writeBuffer, { at: 0 });
+
+          expect(writeBuffer.byteLength).toBe(writtenBytes);
+          const readBuffer = new Uint8Array(writtenBytes);
+          const readBytes = this.handle.read(readBuffer, { at: 0 });
+          expect(writtenBytes).toBe(readBytes);
+          expect(text).toBe(decoder.decode(readBuffer));
+        }
+      },
+    );
+
+    it<Context>(
+      `Test second write that is smaller than the first write`,
+      function () {
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        for (
+          const tuple of [
+            { input: "Hello World", expected: "Hello World" },
+            { input: "foobar", expected: "foobarWorld" },
+          ]
+        ) {
+          const text = tuple.input;
+          const expected = tuple.expected;
+          const writeBuffer = encoder.encode(text);
+          const writtenBytes = this.handle.write(writeBuffer, { at: 0 });
+          expect(writeBuffer.byteLength).toBe(writtenBytes);
+
+          const readBuffer = new Uint8Array(expected.length);
+          const readBytes = this.handle.read(readBuffer, { at: 0 });
+          expect(expected.length).toBe(readBytes);
+          expect(expected).toBe(decoder.decode(readBuffer));
+        }
+      },
+    );
+
+    it<Context>(
+      `Test initial write with an offset`,
+      function () {
+        const expected = 17;
+        const writeBuffer = new Uint8Array(1);
+        writeBuffer[0] = expected;
+        const offset = 5;
+        const writtenBytes = this.handle.write(writeBuffer, { at: offset });
+        expect(writeBuffer.byteLength).toBe(writtenBytes);
+
+        const fileLength = writeBuffer.byteLength + offset;
+        const readBuffer = new Uint8Array(fileLength);
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(fileLength).toBe(readBytes);
+
+        for (let i = 0; i < offset; ++i) {
+          expect(readBuffer[i]).toBe(0);
+        }
+
+        expect(readBuffer[offset]).toBe(expected);
+      },
+    );
+
+    it<Context>(
+      `Test overwriting the file at an offset`,
+      function () {
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        for (
+          const tuple of [
+            { input: "Hello World", expected: "Hello World", offset: 0 },
+            { input: "foobar", expected: "Hello foobar", offset: 6 },
+          ]
+        ) {
+          const text = tuple.input;
+          const expected = tuple.expected;
+          const offset = tuple.offset;
+          const writeBuffer = encoder.encode(text);
+          const writtenBytes = this.handle.write(writeBuffer, { at: offset });
+          expect(writeBuffer.byteLength).toBe(writtenBytes);
+
+          const readBuffer = new Uint8Array(expected.length);
+          const readBytes = this.handle.read(readBuffer, { at: 0 });
+          expect(expected.length).toBe(readBytes);
+
+          const actual = decoder.decode(readBuffer);
+          expect(expected).toBe(actual);
+        }
+      },
+    );
+
+    it<Context>(
+      `Test read at an offset`,
+      function () {
+        const decoder = new TextDecoder();
+
+        const text = "Hello Storage Foundation";
+        const writeBuffer = new TextEncoder().encode(text);
+        const writtenBytes = this.handle.write(writeBuffer, { at: 0 });
+        expect(writeBuffer.byteLength).toBe(writtenBytes);
+
+        const bufferLength = text.length;
+        for (
+          const tuple of [
+            { offset: 0, expected: text },
+            { offset: 6, expected: text.substring(6) },
+          ]
+        ) {
+          const offset = tuple.offset;
+          const expected = tuple.expected;
+
+          const readBuffer = new Uint8Array(bufferLength);
+          const readBytes = this.handle.read(readBuffer, { at: offset });
+          expect(expected.length).toBe(readBytes);
+
+          const actual = decoder.decode(readBuffer);
+          expect(actual.startsWith(expected)).toBeTruthy();
+        }
+
+        const readBuffer = new Uint8Array(bufferLength);
+        // Offset is greater than the file length.
+        const readBytes = this.handle.read(readBuffer, {
+          at: bufferLength + 1,
+        });
+        expect(readBytes).toBe(0);
+
+        for (const value of readBuffer) expect(value).toBe(0);
+      },
+    );
+
+    it<Context>(
+      `Test read with default options`,
+      function () {
+        const expected = "Hello Storage Foundation";
+        const writeBuffer = new TextEncoder().encode(expected);
+        const writtenBytes = this.handle.write(writeBuffer, { at: 0 });
+        expect(writeBuffer.byteLength).toBe(writtenBytes);
+
+        const readBuffer = new Uint8Array(expected.length);
+        // No options parameter provided, should read at offset 0.
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(expected.length).toBe(readBytes);
+        const actual = new TextDecoder().decode(readBuffer);
+        expect(expected).toBe(actual);
+      },
+    );
+
+    it<Context>(
+      `Test write with default options`,
+      function () {
+        const expected = "Hello Storage Foundation";
+        const writeBuffer = new TextEncoder().encode(expected);
+        // No options parameter provided, should write at offset 0.
+        const writtenBytes = this.handle.write(writeBuffer);
+        expect(writeBuffer.byteLength).toBe(writtenBytes);
+
+        const readBuffer = new Uint8Array(expected.length);
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+        expect(expected.length).toBe(readBytes);
+
+        const actual = new TextDecoder().decode(readBuffer);
+        expect(expected).toBe(actual);
+      },
+    );
+
+    it<Context>(
+      `Test reading at a negative offset fails.`,
+      function () {
+        const readBuffer = new Uint8Array(24);
+        expect(() => this.handle.read(readBuffer, { at: -1 })).toThrow(
+          TypeError,
+        );
+      },
+    );
+
+    it<Context>(
+      `Test writing at a negative offset fails.`,
+      function () {
+        const readBuffer = new Uint8Array(24);
+        expect(() => this.handle.write(readBuffer, { at: -1 })).toThrow(
+          TypeError,
+        );
+
+        const readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(readBytes).toBe(0);
+      },
+    );
+
+    it<Context>(
+      `Test reading and writing a file using the cursor`,
+      function () {
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        let writeBuffer = encoder.encode("Hello ");
+        let writtenBytes = this.handle.write(writeBuffer);
+        writeBuffer = encoder.encode("World");
+        writtenBytes += this.handle.write(writeBuffer);
+        let readBuffer = new Uint8Array(256);
+        let readBytes = this.handle.read(readBuffer, { at: 0 });
+
+        expect(readBytes).toBe("Hello World".length);
+        let actual = decoder.decode(readBuffer).substring(0, readBytes);
+        expect(actual).toBe("Hello World");
+
+        readBuffer = new Uint8Array(5);
+        readBytes = this.handle.read(readBuffer, { at: 0 });
+        expect(readBytes).toBe(5);
+
+        actual = decoder.decode(readBuffer).substring(0, readBytes);
+        expect(actual).toBe("Hello");
+
+        readBuffer = new Uint8Array(256);
+        readBytes = this.handle.read(readBuffer);
+        expect(readBytes).toBe("Hello World".length - 5);
+
+        actual = decoder.decode(readBuffer).substring(0, readBytes);
+        expect(actual).toBe(" World");
+
+        readBuffer = new Uint8Array(5);
+        readBytes = this.handle.read(readBuffer, { at: 0 });
+        expect(readBytes).toBe(5);
+
+        actual = decoder.decode(readBuffer);
+        expect(actual).toBe("Hello");
+
+        writeBuffer = encoder.encode(" X");
+        writtenBytes = this.handle.write(writeBuffer);
+        expect(writtenBytes).toBe(2);
+
+        readBuffer = new Uint8Array(256);
+        readBytes = this.handle.read(readBuffer, { at: 0 });
+        expect(readBytes).toBe("Hello Xorld".length);
+
+        actual = decoder.decode(readBuffer).substring(0, readBytes);
+        expect(actual).toBe("Hello Xorld");
       },
     );
   });

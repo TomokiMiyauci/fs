@@ -21,6 +21,8 @@ export class FileSystemSyncAccessHandle {
     buffer: AllowSharedBufferSource,
     options?: FileSystemReadWriteOptions,
   ): number {
+    this.assertUnsignedLongLong(options?.at);
+
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this[state] === "close") throw new DOMException("InvalidStateError");
 
@@ -89,6 +91,8 @@ export class FileSystemSyncAccessHandle {
     buffer: AllowSharedBufferSource,
     options?: FileSystemReadWriteOptions,
   ): number {
+    this.assertUnsignedLongLong(options?.at);
+
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this[state] === "close") throw new DOMException("InvalidStateError");
 
@@ -247,6 +251,16 @@ export class FileSystemSyncAccessHandle {
     // 6. Pause until lockReleased is true.
     pauseForRelease();
   }
+
+  private assertUnsignedLongLong(value: number | undefined): asserts value {
+    if (typeof value === "number" && !isUnsignedLongLong(value)) {
+      throw new TypeError("Invalid range of value");
+    }
+  }
+}
+
+function isUnsignedLongLong(value: number): boolean {
+  return Number.isInteger(value) && 0 <= value;
 }
 
 export function createFileSystemSyncAccessHandle(
