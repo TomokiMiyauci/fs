@@ -532,6 +532,92 @@ describe("FileSystemDirectoryHandle", () => {
         expect(names).toEqual([file_name1, file_name2]);
       },
     );
+
+    it<Context>(
+      "values: full iteration works",
+      async function () {
+        const file_name1 = "foo1.txt";
+        const file_name2 = "foo2.txt";
+
+        const handle1 = await this.root.getFileHandle(file_name1, {
+          create: true,
+        });
+        const handle2 = await this.root.getFileHandle(file_name2, {
+          create: true,
+        });
+
+        await write(handle1, "contents");
+        await write(handle2, "contents");
+
+        const names: string[] = [];
+
+        for await (const entry of this.root.values()) {
+          expect(entry instanceof FileSystemFileHandle).toBeTruthy();
+
+          names.push(entry.name);
+        }
+
+        names.sort();
+
+        expect(names).toEqual([file_name1, file_name2]);
+      },
+    );
+
+    it<Context>(
+      "keys: full iteration works",
+      async function () {
+        const file_name1 = "foo1.txt";
+        const file_name2 = "foo2.txt";
+
+        const handle1 = await this.root.getFileHandle(file_name1, {
+          create: true,
+        });
+        const handle2 = await this.root.getFileHandle(file_name2, {
+          create: true,
+        });
+
+        await write(handle1, "contents");
+        await write(handle2, "contents");
+
+        const names: string[] = [];
+
+        for await (const entry of this.root.keys()) {
+          expect(typeof entry).toBe("string");
+          names.push(entry);
+        }
+
+        names.sort();
+
+        expect(names).toEqual([file_name1, file_name2]);
+      },
+    );
+
+    it<Context>(
+      "iteration while iterator gets garbage collected",
+      async function () {
+        const file_name1 = "foo1.txt";
+
+        const handle1 = await this.root.getFileHandle(file_name1, {
+          create: true,
+        });
+
+        await write(handle1, "contents");
+
+        const next = (() => {
+          const iterator = this.root.entries();
+          return iterator.next();
+        })();
+
+        // garbageCollect(); // TODO
+        const entry = await next;
+
+        expect(entry.done).toBeFalsy();
+        expect(Array.isArray(entry.value)).toBeTruthy();
+        expect(entry.value.length).toBe(2);
+        expect(entry.value[0]).toBe(file_name1);
+        expect(entry.value[1].name).toBe(file_name1);
+      },
+    );
   });
 });
 
