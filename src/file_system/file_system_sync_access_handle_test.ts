@@ -1,5 +1,6 @@
 /**
  * @see https://github.com/web-platform-tests/wpt/blob/1eaddc37a55977200ae3f983eafc1cfcb121235e/fs/FileSystemSyncAccessHandle-read-write.https.worker.js
+ * @see https://github.com/web-platform-tests/wpt/blob/1eaddc37a55977200ae3f983eafc1cfcb121235e/fs/FileSystemSyncAccessHandle-truncate.https.worker.js
  */
 
 import { expect } from "@std/expect";
@@ -463,6 +464,82 @@ describe("FileSystemSyncAccessHandle", () => {
 
         actual = decoder.decode(readBuffer).substring(0, readBytes);
         expect(actual).toBe("Hello Xorld");
+      },
+    );
+  });
+
+  describe("truncate", () => {
+    it<Context>(
+      `test SyncAccessHandle.truncate with different sizes`,
+      function () {
+        this.handle.truncate(4);
+        expect(this.handle.getSize()).toBe(4);
+
+        this.handle.truncate(2);
+        expect(this.handle.getSize()).toBe(2);
+
+        this.handle.truncate(7);
+        expect(this.handle.getSize()).toBe(7);
+
+        this.handle.truncate(0);
+        expect(this.handle.getSize()).toBe(0);
+
+        expect(() => this.handle.truncate(-4)).toThrow(TypeError);
+      },
+    );
+
+    it<Context>(
+      `test SyncAccessHandle.truncate after SyncAccessHandle.write`,
+      function () {
+        const writeBuffer = new Uint8Array(4);
+        writeBuffer.set([96, 97, 98, 99]);
+        this.handle.write(writeBuffer, { at: 0 });
+
+        this.handle.truncate(2);
+        const readBuffer = new Uint8Array(6);
+        expect(this.handle.read(readBuffer, { at: 0 })).toBe(2);
+        const expected = new Uint8Array(6);
+        expected.set([96, 97, 0, 0, 0, 0]);
+        expect(expected).toEqual(readBuffer);
+
+        // Resize the file to 6, expect that everything beyond the old size is '0'.
+        this.handle.truncate(6);
+        expect(this.handle.read(readBuffer, { at: 0 })).toBe(6);
+        expect(expected).toEqual(readBuffer);
+      },
+    );
+
+    it<Context>(
+      `Test truncate effect on cursor`,
+      function () {
+        const writeBuffer = new Uint8Array(4);
+        writeBuffer.set([96, 97, 98, 99]);
+        this.handle.write(writeBuffer, { at: 0 });
+
+        // Moves cursor to 2
+        this.handle.truncate(2);
+        const readBuffer = new Uint8Array(256);
+        expect(this.handle.read(readBuffer)).toBe(0);
+
+        writeBuffer.set([100, 101, 102, 103]);
+        this.handle.write(writeBuffer);
+
+        expect(this.handle.read(readBuffer, { at: 0 })).toBe(6);
+
+        let expected = new Uint8Array(256);
+        expected.set([96, 97, 100, 101, 102, 103]);
+        expect(readBuffer).toEqual(expected);
+
+        // Resize the file to 10, expect that everything beyond the old size is '0'.
+        this.handle.truncate(10); // file cursor should still be at 6
+        // overwrite two bytes
+        const writeBuffer2 = new Uint8Array(2);
+        writeBuffer2.set([110, 111]);
+        this.handle.write(writeBuffer2);
+        expected = new Uint8Array(256);
+        expected.set([96, 97, 100, 101, 102, 103, 110, 111, 0, 0]);
+        expect(this.handle.read(readBuffer, { at: 0 })).toBe(10);
+        expect(readBuffer).toEqual(expected);
       },
     );
   });

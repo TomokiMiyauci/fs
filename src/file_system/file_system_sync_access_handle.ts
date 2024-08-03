@@ -164,6 +164,8 @@ export class FileSystemSyncAccessHandle {
   }
 
   truncate(newSize: number): void {
+    this.assertUnsignedLongLong(newSize);
+
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this[state] === "close") throw new DOMException("InvalidStateError");
 
