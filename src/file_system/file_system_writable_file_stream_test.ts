@@ -743,4 +743,170 @@ describe("FileSystemWritableFileStream", () => {
     //   },
     // );
   });
+
+  describe("piped", () => {
+    it<Context>("can be piped to with a string", async function () {
+      const handle = await createEmptyFile(this.root, "foo_string.txt");
+      const wfs = await handle.createWritable();
+
+      const rs = new ReadableStream({
+        start(controller) {
+          controller.enqueue("foo_string");
+          controller.close();
+        },
+      });
+
+      await rs.pipeTo(wfs, { preventCancel: true });
+
+      await expect(getFileContents(handle)).resolves.toBe("foo_string");
+      await expect(getFileSize(handle)).resolves.toBe(10);
+    });
+
+    it<Context>("can be piped to with an ArrayBuffer", async function () {
+      const handle = await createEmptyFile(this.root, "foo_arraybuf.txt");
+      const wfs = await handle.createWritable();
+      const buf = new ArrayBuffer(3);
+      const intView = new Uint8Array(buf);
+      intView[0] = 0x66;
+      intView[1] = 0x6f;
+      intView[2] = 0x6f;
+
+      const rs = new ReadableStream({
+        start(controller) {
+          controller.enqueue(buf);
+          controller.close();
+        },
+      });
+
+      await rs.pipeTo(wfs, { preventCancel: true });
+
+      await expect(getFileContents(handle)).resolves.toBe("foo");
+      await expect(getFileSize(handle)).resolves.toBe(3);
+    });
+
+    it<Context>("can be piped to with a Blob", async function () {
+      const handle = await createEmptyFile(this.root, "foo_blob.txt");
+      const wfs = await handle.createWritable();
+
+      const rs = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Blob(["foo"]));
+          controller.close();
+        },
+      });
+
+      await rs.pipeTo(wfs, { preventCancel: true });
+
+      await expect(getFileContents(handle)).resolves.toBe("foo");
+      await expect(getFileSize(handle)).resolves.toBe(3);
+    });
+
+    it<Context>(
+      "can be piped to with a param object with write command",
+      async function () {
+        const handle = await createEmptyFile(this.root, "foo_write_param.txt");
+        const wfs = await handle.createWritable();
+
+        const rs = new ReadableStream({
+          start(controller) {
+            controller.enqueue({ type: "write", data: "foobar" });
+            controller.close();
+          },
+        });
+
+        await rs.pipeTo(wfs, { preventCancel: true });
+
+        await expect(getFileContents(handle)).resolves.toBe("foobar");
+        await expect(getFileSize(handle)).resolves.toBe(6);
+      },
+    );
+
+    it<Context>(
+      "can be piped to with a param object with multiple commands",
+      async function () {
+        const handle = await createEmptyFile(this.root, "foo_write_param.txt");
+        const wfs = await handle.createWritable();
+
+        const rs = new ReadableStream({
+          start(controller) {
+            controller.enqueue({ type: "write", data: "foobar" });
+            controller.enqueue({ type: "truncate", size: 10 });
+            controller.enqueue({ type: "write", position: 0, data: "baz" });
+            controller.close();
+          },
+        });
+
+        await rs.pipeTo(wfs, { preventCancel: true });
+
+        await expect(getFileContents(handle)).resolves.toBe("bazbar\0\0\0\0");
+        await expect(getFileSize(handle)).resolves.toBe(10);
+      },
+    );
+
+    it<Context>(
+      "multiple operations can be queued",
+      async function () {
+        const handle = await createEmptyFile(this.root, "foo_write_queued.txt");
+        const wfs = await handle.createWritable();
+
+        const rs = new ReadableStream({
+          start(controller) {
+            controller.enqueue("foo");
+            controller.enqueue("bar");
+            controller.enqueue("baz");
+            controller.close();
+          },
+        });
+
+        await rs.pipeTo(wfs, { preventCancel: true });
+
+        await expect(getFileContents(handle)).resolves.toBe("foobarbaz");
+        await expect(getFileSize(handle)).resolves.toBe(9);
+      },
+    );
+
+    // TODO:(miyauci) Possible bug in WritableStream
+    it<Context>(
+      "plays well with fetch",
+      { ignore: true },
+      async function () {
+        const handle = await createEmptyFile(this.root, "fetched.txt");
+        const wfs = await handle.createWritable();
+
+        const response = await fetch("data:text/plain,fetched from far");
+        const body = response.body!;
+
+        await body.pipeTo(wfs, { preventCancel: true });
+
+        await expect(getFileContents(handle)).resolves.toBe("fetched from far");
+        await expect(getFileSize(handle)).resolves.toBe(16);
+      },
+    );
+
+    it<Context>(
+      "abort() aborts write",
+      async function () {
+        const handle = await createEmptyFile(
+          this.root,
+          "aborted should_be_empty.txt",
+        );
+        const wfs = await handle.createWritable();
+
+        const response = await fetch("data:text/plain,fetched from far");
+        const body = response.body!;
+
+        const abortController = new AbortController();
+        const signal = abortController.signal;
+
+        const promise = body.pipeTo(wfs, { signal });
+        abortController.abort();
+
+        await expect(promise).rejects.toThrow(DOMException);
+        await expect(wfs.close()).rejects.toThrow(TypeError);
+
+        await expect(getFileContents(handle)).resolves.toBe("");
+        await expect(getFileSize(handle)).resolves.toBe(0);
+      },
+    );
+  });
 });
