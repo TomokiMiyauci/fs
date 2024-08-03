@@ -129,4 +129,28 @@ describe("FileSystemSyncAccessHandle", () => {
       },
     );
   });
+
+  describe("flush", () => {
+    it<Context>(
+      "Test flush on an empty file.",
+      function () {
+        this.handle.flush();
+      },
+    );
+
+    it<Context>(
+      `SyncAccessHandle.read returns bytes written by SyncAccessHandle.write + after SyncAccessHandle.flush`,
+      function () {
+        const text = "Hello Storage Foundation";
+        const writeBuffer = new TextEncoder().encode(text);
+        this.handle.write(writeBuffer, { at: 0 });
+        this.handle.flush();
+
+        const readBuffer = new Uint8Array(text.length);
+        this.handle.read(readBuffer, { at: 0 });
+
+        expect(text).toBe(new TextDecoder().decode(readBuffer));
+      },
+    );
+  });
 });
