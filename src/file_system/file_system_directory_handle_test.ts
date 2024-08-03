@@ -4,6 +4,7 @@ import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
 import { define } from "./helper.ts";
+import type { FileSystemWriteChunkType } from "./type.ts";
 import { FileSystemFileHandle } from "./file_system_file_handle.ts";
 
 interface Context {
@@ -440,6 +441,98 @@ describe("FileSystemDirectoryHandle", () => {
       },
     );
   });
+
+  describe("iteration", () => {
+    it<Context>(
+      "returning early from an iteration doesn't crash",
+      async function () {
+        const file_name1 = "foo1.txt";
+        const file_name2 = "foo2.txt";
+
+        const handle1 = await this.root.getFileHandle(file_name1, {
+          create: true,
+        });
+        const handle2 = await this.root.getFileHandle(file_name2, {
+          create: true,
+        });
+
+        await write(handle1, "contents");
+        await write(handle2, "contents");
+
+        for await (const _ of this.root) {
+          break;
+        }
+      },
+    );
+
+    it<Context>(
+      "@@asyncIterator: full iteration works",
+      async function () {
+        const file_name1 = "foo1.txt";
+        const file_name2 = "foo2.txt";
+
+        const handle1 = await this.root.getFileHandle(file_name1, {
+          create: true,
+        });
+        const handle2 = await this.root.getFileHandle(file_name2, {
+          create: true,
+        });
+
+        await write(handle1, "contents");
+        await write(handle2, "contents");
+
+        const names: string[] = [];
+
+        for await (const entry of this.root) {
+          expect(Array.isArray(entry)).toBeTruthy();
+          expect(entry.length).toBe(2);
+          expect(typeof entry[0]).toBe("string");
+          expect(entry[1] instanceof FileSystemFileHandle).toBeTruthy();
+          expect(entry[0]).toBe(entry[1].name);
+
+          names.push(entry[0]);
+        }
+
+        names.sort();
+
+        expect(names).toEqual([file_name1, file_name2]);
+      },
+    );
+
+    it<Context>(
+      "entries: full iteration works",
+      async function () {
+        const file_name1 = "foo1.txt";
+        const file_name2 = "foo2.txt";
+
+        const handle1 = await this.root.getFileHandle(file_name1, {
+          create: true,
+        });
+        const handle2 = await this.root.getFileHandle(file_name2, {
+          create: true,
+        });
+
+        await write(handle1, "contents");
+        await write(handle2, "contents");
+
+        const names: string[] = [];
+
+        for await (const entry of this.root.entries()) {
+          expect(Array.isArray(entry)).toBeTruthy();
+          expect(entry.length).toBe(2);
+          expect(typeof entry[0]).toBe("string");
+          expect(entry[1] instanceof FileSystemFileHandle).toBeTruthy();
+          expect(entry[0]).toBe(entry[1].name);
+
+          names.push(entry[0]);
+        }
+
+        names.sort();
+
+        expect(names).toEqual([file_name1, file_name2]);
+      },
+    );
+  });
 });
 
 function getAscii(): string {
@@ -500,4 +593,15 @@ async function getFileContents(handle: FileSystemFileHandle): Promise<string> {
   const file = await handle.getFile();
 
   return file.text();
+}
+
+async function write(
+  handle: FileSystemFileHandle,
+  data: FileSystemWriteChunkType,
+): Promise<void> {
+  const writable = await handle.createWritable();
+
+  await writable.write(data);
+
+  await writable.close();
 }

@@ -71,7 +71,7 @@ export function asynciterator<
       }
 
       entries() {
-        return this[Symbol.asyncIterator];
+        return this[Symbol.asyncIterator]();
       }
     };
   };
