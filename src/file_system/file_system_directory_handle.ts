@@ -3,10 +3,10 @@ import {
   isDirectoryEntry,
   isFileEntry,
   isValidFileName,
-  locateEntry,
   resolve,
 } from "./algorithm.ts";
 import type {
+  Definition,
   DirectoryEntry,
   FileEntry,
   FileSystemEntry,
@@ -14,7 +14,6 @@ import type {
   FileSystemGetFileOptions,
   FileSystemLocator,
   FileSystemRemoveOptions,
-  IO,
   UnderlyingFileSystem,
 } from "./type.ts";
 import {
@@ -39,8 +38,8 @@ function next(
     & IterationContext,
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
   const fsLocator = handle[locator];
-  const io = handle["io"];
   const fs = handle["fs"];
+  const definition = handle["definition"];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<
@@ -52,7 +51,7 @@ function next(
   // // 2. Enqueue the following steps to the file system queue:
   queueMicrotask(async () => {
     // // 1. Let directory be the result of locating an entry given handle’s locator.
-    const directory = locateEntry(fsLocator, io, fs);
+    const directory = definition.locateEntry(fsLocator);
 
     // // 2. Let accessResult be the result of running directory’s query access given "read".
     const accessResult = await directory?.queryAccess("read");
@@ -92,8 +91,7 @@ function next(
       // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
       result = createChildFileSystemFileHandle(fsLocator, child.name, {
         FileSystemFileHandle,
-        fs,
-        io,
+        definition,
       });
     } // 7. Otherwise:
     else {
@@ -101,7 +99,7 @@ function next(
       result = createChildFileSystemDirectoryHandle(
         fsLocator,
         child.name,
-        { FileSystemDirectoryHandle, fs, io },
+        { FileSystemDirectoryHandle, definition, fs },
       );
     }
 
@@ -123,8 +121,8 @@ function next(
 export class FileSystemDirectoryHandle extends FileSystemHandle {
   constructor(
     loc: FileSystemLocator,
-    private fs: UnderlyingFileSystem,
-    private io: IO,
+    private definition: Definition,
+    private fs?: UnderlyingFileSystem,
   ) {
     super(loc);
   }
@@ -154,7 +152,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator, this.io, this.fs);
+      const entry = this.definition.locateEntry(fsLocator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -193,8 +191,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           return resolve(
             createChildFileSystemDirectoryHandle(fsLocator, name, {
               FileSystemDirectoryHandle,
+              definition: this.definition,
               fs: this.fs,
-              io: this.io,
             }),
           );
         }
@@ -221,7 +219,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
       // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
       try {
-        this.fs.create(child, fsLocator);
+        this.fs?.create(child, fsLocator);
       } catch (e) {
         return reject(e);
       }
@@ -230,8 +228,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       resolve(
         createChildFileSystemDirectoryHandle(fsLocator, child.name, {
           FileSystemDirectoryHandle,
+          definition: this.definition,
           fs: this.fs,
-          io: this.io,
         }),
       );
     });
@@ -250,7 +248,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     >();
 
     // 2. Let realm be this's relevant Realm.
-    const realm = { FileSystemFileHandle, fs: this.fs, io: this.io };
+    const realm = { FileSystemFileHandle, definition: this.definition };
 
     // 3. Let locator be this's locator.
     const fsLocator = this[locator];
@@ -262,7 +260,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator, this.io, this.fs);
+      const entry = this.definition.locateEntry(fsLocator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -329,7 +327,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
       // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
       try {
-        this.fs.create(child, fsLocator);
+        this.fs?.create(child, fsLocator);
       } catch (e) {
         reject(e);
       }
@@ -357,7 +355,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       if (!isValidFileName(name)) return reject();
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator, this.io, this.fs);
+      const entry = this.definition.locateEntry(fsLocator);
 
       // 3. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = await entry?.requestAccess("readwrite");
@@ -396,11 +394,13 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           }
 
           // 2. Remove child from entry’s children.
-          // TODO
+          entry.children = entry.children.filter((entry) =>
+            child.name !== entry.name
+          );
 
           // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
           try {
-            this.fs.remove(child, fsLocator);
+            this.fs?.remove(child, fsLocator);
           } catch (e) {
             return reject(e);
           }
@@ -438,8 +438,8 @@ export function createChildFileSystemDirectoryHandle(
   name: string,
   realm: {
     FileSystemDirectoryHandle: typeof FileSystemDirectoryHandle;
-    fs: UnderlyingFileSystem;
-    io: IO;
+    definition: Definition;
+    fs?: UnderlyingFileSystem;
   },
 ): FileSystemDirectoryHandle {
   // 2. Let childType be "directory".
@@ -460,8 +460,8 @@ export function createChildFileSystemDirectoryHandle(
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
   const handle = new realm.FileSystemDirectoryHandle(
     locator,
+    realm.definition,
     realm.fs,
-    realm.io,
   );
 
   // 6. Return handle.
@@ -473,15 +473,15 @@ export function createFileSystemDirectoryHandle(
   path: string[],
   realm: {
     FileSystemDirectoryHandle: typeof FileSystemDirectoryHandle;
-    fs: UnderlyingFileSystem;
-    io: IO;
+    definition: Definition;
+    fs?: UnderlyingFileSystem;
   },
 ): FileSystemDirectoryHandle {
   const locator = { kind: "directory", root, path } satisfies FileSystemLocator;
   const handle = new realm.FileSystemDirectoryHandle(
     locator,
+    realm.definition,
     realm.fs,
-    realm.io,
   );
 
   return handle;

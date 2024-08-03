@@ -160,16 +160,6 @@ export interface UnderlyingFileSystem {
   write(locator: FileLocator, data: Uint8Array): void;
 }
 
-export interface IO {
-  getBinaryData(locator: FileSystemLocator): Uint8Array;
-  getModificationTimestamp(locator: FileSystemLocator): number;
-  queryAccess(
-    locator: FileSystemLocator,
-    mode: AccessMode,
-  ): FileSystemAccessResult | Promise<FileSystemAccessResult>;
-  requestAccess(
-    locator: FileSystemLocator,
-    mode: AccessMode,
-  ): FileSystemAccessResult | Promise<FileSystemAccessResult>;
-  getChildren(locator: FileSystemLocator): FileSystemLocator[];
+export interface Definition {
+  locateEntry(locator: FileSystemLocator): FileSystemEntry | null;
 }

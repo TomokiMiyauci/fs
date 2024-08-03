@@ -1,13 +1,12 @@
 import { FileSystemHandle } from "./file_system_handle.ts";
 import type {
+  Definition,
   FileEntry,
   FileSystemCreateWritableOptions,
   FileSystemEntry,
   FileSystemLocator,
-  IO,
-  UnderlyingFileSystem,
 } from "./type.ts";
-import { locateEntry, takeLock } from "./algorithm.ts";
+import { takeLock } from "./algorithm.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { buffer, locator } from "./symbol.ts";
 import { extname } from "@std/path";
@@ -23,8 +22,7 @@ import { Msg } from "./constant.ts";
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
     loc: FileSystemLocator,
-    private fs: UnderlyingFileSystem,
-    private io: IO,
+    private definition: Definition,
   ) {
     super(loc);
   }
@@ -44,7 +42,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 4. Enqueue the following steps to the file system queue:
     queueMicrotask(async () => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator, this.io, this.fs);
+      const entry = this.definition.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s query access given "read".
       const accessResult = await entry?.queryAccess("read");
@@ -106,7 +104,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 5. Enqueue the following steps to the file system queue:
     queueMicrotask(async () => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator, this.io, this.fs);
+      const entry = this.definition.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = await entry?.requestAccess("readwrite");
@@ -174,7 +172,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 6. Enqueue the following steps to the file system queue:
     queueMicrotask(async () => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator, this.io, this.fs);
+      const entry = this.definition.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = await entry?.requestAccess("readwrite");
@@ -228,8 +226,7 @@ export function createChildFileSystemFileHandle(
   name: string,
   realm: {
     FileSystemFileHandle: typeof FileSystemFileHandle;
-    fs: UnderlyingFileSystem;
-    io: IO;
+    definition: Definition;
   },
 ): FileSystemFileHandle {
   // 2. Let childType be "file".
@@ -247,7 +244,10 @@ export function createChildFileSystemFileHandle(
   } satisfies FileSystemLocator;
   // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new realm.FileSystemFileHandle(locator, realm.fs, realm.io);
+  const handle = new realm.FileSystemFileHandle(
+    locator,
+    realm.definition,
+  );
 
   // 6. Return handle.
   return handle;
@@ -256,8 +256,7 @@ export function createChildFileSystemFileHandle(
 export function createFileSystemFileHandle(
   root: string,
   path: string[],
-  fs: UnderlyingFileSystem,
-  io: IO,
+  definition: Definition,
 ): FileSystemFileHandle {
   const locator = {
     kind: "file",
@@ -267,7 +266,7 @@ export function createFileSystemFileHandle(
 
   // 1. Let handle be a new FileSystemFileHandle in realm.
   // 2. Set handle’s locator to a file system locator whose kind is "file", root is root, and path is path.
-  const handle = new FileSystemFileHandle(locator, fs, io);
+  const handle = new FileSystemFileHandle(locator, definition);
 
   // 3. Return handle.
   return handle;

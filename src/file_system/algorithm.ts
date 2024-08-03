@@ -1,128 +1,9 @@
 import type {
-  AccessMode,
   DirectoryEntry,
-  DirectoryLocator,
   FileEntry,
-  FileLocator,
   FileSystemEntry,
   FileSystemLocator,
-  IO,
-  UnderlyingFileSystem,
 } from "./type.ts";
-
-export function locateEntry(
-  locator: FileSystemLocator,
-  io: IO,
-  fs: UnderlyingFileSystem,
-): FileSystemEntry | null {
-  switch (locator.kind) {
-    case "directory":
-      return createDirectoryEntry(locator, io, fs);
-
-    case "file":
-      return createFileEntry(locator, io, fs);
-  }
-}
-
-function createFileEntry(
-  locator: FileLocator,
-  io: IO,
-  fs: UnderlyingFileSystem,
-): FileEntry {
-  const name = locator.path[locator.path.length - 1];
-
-  return new FileEntryImpl(name, io, fs, locator);
-}
-
-class FileEntryImpl implements FileEntry {
-  constructor(
-    public name: string,
-    private io: IO,
-    private fs: UnderlyingFileSystem,
-    private locator: FileLocator,
-  ) {}
-  sharedLockCount: number = 0;
-  queryAccess(mode: AccessMode) {
-    return this.io.queryAccess(this.locator, mode);
-  }
-  requestAccess(mode: AccessMode) {
-    return this.io.requestAccess(this.locator, mode);
-  }
-  lock: "open" | "taken-exclusive" | "taken-shared" = "open";
-
-  #timestamp: number | undefined;
-  #binaryData: Uint8Array | undefined;
-
-  get modificationTimestamp(): number {
-    return this.#timestamp ??
-      (this.#timestamp = this.io.getModificationTimestamp(this.locator));
-  }
-
-  set modificationTimestamp(value: number) {
-    this.#timestamp = value;
-  }
-
-  get binaryData(): Uint8Array {
-    return this.#binaryData ??
-      (this.#binaryData = this.io.getBinaryData(this.locator));
-  }
-
-  set binaryData(value: Uint8Array) {
-    this.#binaryData = value;
-
-    this.fs.write(this.locator, value);
-  }
-}
-
-class DirectoryEntryImpl implements DirectoryEntry {
-  constructor(
-    public name: string,
-    private io: IO,
-    private fs: UnderlyingFileSystem,
-    private locator: DirectoryLocator,
-  ) {}
-  queryAccess(mode: AccessMode) {
-    return this.io.queryAccess(this.locator, mode);
-  }
-  requestAccess(mode: AccessMode) {
-    return this.io.requestAccess(this.locator, mode);
-  }
-
-  #children: FileSystemEntry[] | undefined;
-
-  get children(): FileSystemEntry[] {
-    if (this.#children) return this.#children;
-
-    const childLocators = this.io.getChildren(this.locator);
-    const createEntry = this.createEntry.bind(this);
-
-    this.#children = childLocators.map(createEntry);
-
-    return this.#children;
-  }
-
-  set children(value: (FileEntry | DirectoryEntry)[]) {
-    this.#children = value;
-  }
-
-  private createEntry(locator: FileSystemLocator): FileSystemEntry {
-    if (locator.kind === "file") {
-      return createFileEntry(locator, this.io, this.fs);
-    }
-
-    return createDirectoryEntry(locator, this.io, this.fs);
-  }
-}
-
-function createDirectoryEntry(
-  locator: DirectoryLocator,
-  io: IO,
-  fs: UnderlyingFileSystem,
-): DirectoryEntry {
-  const name = locator.path[locator.path.length - 1];
-
-  return new DirectoryEntryImpl(name, io, fs, locator);
-}
 
 export function isValidFileName(fileName: string): boolean {
   // a string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.
@@ -130,7 +11,7 @@ export function isValidFileName(fileName: string): boolean {
 
   if (fileName === "." || fileName === "..") return false;
 
-  if (fileName.includes("/")) return false;
+  if (fileName.includes("/") || fileName.includes("\\")) return false;
 
   return true;
 }
