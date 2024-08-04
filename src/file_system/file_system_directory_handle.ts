@@ -90,7 +90,6 @@ function next(
     if (isFileEntry(child)) {
       // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
       result = createChildFileSystemFileHandle(fsLocator, child.name, {
-        FileSystemFileHandle,
         definition,
       });
     } // 7. Otherwise:
@@ -99,7 +98,7 @@ function next(
       result = createChildFileSystemDirectoryHandle(
         fsLocator,
         child.name,
-        { FileSystemDirectoryHandle, definition, fs },
+        { definition, fs },
       );
     }
 
@@ -190,7 +189,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           // 2. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm and abort these steps.
           return resolve(
             createChildFileSystemDirectoryHandle(fsLocator, name, {
-              FileSystemDirectoryHandle,
               definition: this.definition,
               fs: this.fs,
             }),
@@ -227,7 +225,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
       resolve(
         createChildFileSystemDirectoryHandle(fsLocator, child.name, {
-          FileSystemDirectoryHandle,
           definition: this.definition,
           fs: this.fs,
         }),
@@ -436,11 +433,7 @@ function assertDirectoryEntry(
 export function createChildFileSystemDirectoryHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: {
-    FileSystemDirectoryHandle: typeof FileSystemDirectoryHandle;
-    definition: Definition;
-    fs?: UnderlyingFileSystem;
-  },
+  realm: { definition: Definition; fs?: UnderlyingFileSystem },
 ): FileSystemDirectoryHandle {
   // 2. Let childType be "directory".
   const childType = "directory";
@@ -458,7 +451,7 @@ export function createChildFileSystemDirectoryHandle(
 
   // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
-  const handle = new realm.FileSystemDirectoryHandle(
+  const handle = new FileSystemDirectoryHandle(
     locator,
     realm.definition,
     realm.fs,

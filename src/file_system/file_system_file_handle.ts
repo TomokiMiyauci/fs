@@ -224,10 +224,7 @@ function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
 export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: {
-    FileSystemFileHandle: typeof FileSystemFileHandle;
-    definition: Definition;
-  },
+  realm: { definition: Definition },
 ): FileSystemFileHandle {
   // 2. Let childType be "file".
   const childType = "file";
@@ -244,7 +241,7 @@ export function createChildFileSystemFileHandle(
   } satisfies FileSystemLocator;
   // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new realm.FileSystemFileHandle(
+  const handle = new FileSystemFileHandle(
     locator,
     realm.definition,
   );
