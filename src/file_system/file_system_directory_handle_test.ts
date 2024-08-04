@@ -6,6 +6,12 @@ import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
 import { define } from "./helper.ts";
 import type { FileSystemWriteChunkType } from "./type.ts";
 import { FileSystemFileHandle } from "./file_system_file_handle.ts";
+import {
+  createDirectory,
+  createEmptyFile,
+  createFileWithContents,
+  pathSeparators,
+} from "@test";
 
 interface Context {
   root: FileSystemDirectoryHandle;
@@ -675,6 +681,227 @@ describe("FileSystemDirectoryHandle", () => {
       },
     );
   });
+
+  describe("removeEntry", () => {
+    it<Context>(
+      "removeEntry() to remove a file",
+      { ignore: true },
+      async function () {
+        const handle = await createFileWithContents(
+          this.root,
+          "file-to-remove",
+          "12345",
+        );
+
+        await createFileWithContents(this.root, "file-to-keep", "abc");
+
+        await this.root.removeEntry("file-to-remove");
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
+          "file-to-keep",
+        ]);
+
+        await expect(getFileContents(handle)).rejects.toThrow();
+      },
+    );
+
+    it<Context>(
+      "removeEntry() on an already removed file should fail",
+      async function () {
+        await createFileWithContents(
+          this.root,
+          "file-to-remove",
+          "12345",
+        );
+
+        await this.root.removeEntry("file-to-remove");
+
+        await expect(this.root.removeEntry("file-to-remove")).rejects.toThrow(
+          DOMException,
+        );
+      },
+    );
+
+    it<Context>(
+      "removeEntry() to remove an empty directory",
+      async function () {
+        await this.root.getDirectoryHandle("dir-to-remove", { create: true });
+        await createFileWithContents(this.root, "file-to-keep", "abc");
+        await this.root.removeEntry("dir-to-remove");
+
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual(
+          ["file-to-keep"],
+        );
+      },
+    );
+
+    it<Context>(
+      "removeEntry() on a non-empty directory should fail",
+      { ignore: true },
+      async function () {
+        const dir = await createDirectory(this.root, "dir-to-remove");
+        await createFileWithContents(dir, "file-in-dir", "abc");
+
+        await expect(this.root.removeEntry("dir-to-remove")).rejects.toThrow(
+          DOMException,
+        );
+      },
+    );
+
+    it<Context>(
+      "removeEntry() on a directory recursively should delete all sub-items",
+      async function () {
+        // root
+        // ├──file-to-keep
+        // ├──dir-to-remove
+        //    ├── file0
+        //    ├── dir1-in-dir
+        //    │   └── file1
+        //    └── dir2
+
+        const dir = await createDirectory(this.root, "dir-to-remove");
+        await createFileWithContents(this.root, "file-to-keep", "abc");
+        await createEmptyFile(dir, "file0");
+        const dir1_in_dir = await createDirectory(dir, "dir1-in-dir");
+        await createEmptyFile(dir1_in_dir, "file1");
+        await createDirectory(dir, "dir2-in-dir");
+
+        await this.root.removeEntry("dir-to-remove", { recursive: true });
+
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual(
+          ["file-to-keep"],
+        );
+      },
+    );
+
+    it<Context>(
+      "removeEntry() with empty name should fail",
+      async function () {
+        const dir = await createDirectory(this.root, "dir");
+
+        await expect(dir.removeEntry("")).rejects.toThrow(TypeError);
+      },
+    );
+
+    it<Context>(
+      "removeEntry() with `.` name should fail",
+      async function () {
+        const dir = await createDirectory(this.root, "dir");
+
+        await expect(dir.removeEntry(".")).rejects.toThrow(TypeError);
+      },
+    );
+
+    it<Context>(
+      "removeEntry() with `..` name should fail",
+      async function () {
+        const dir = await createDirectory(this.root, "dir");
+
+        await expect(dir.removeEntry("..")).rejects.toThrow(TypeError);
+      },
+    );
+
+    it<Context>(
+      "removeEntry() with a path separator should fail.",
+      async function () {
+        const dir_name = "dir-name";
+        const dir = await createDirectory(this.root, dir_name);
+
+        const file_name = "file-name";
+        await createEmptyFile(dir, file_name);
+
+        for (const pathSeparator of pathSeparators) {
+          const path_with_separator = `${dir_name}${pathSeparator}${file_name}`;
+
+          await expect(this.root.removeEntry(path_with_separator)).rejects
+            .toThrow(TypeError);
+        }
+      },
+    );
+
+    it<Context>(
+      "removeEntry() while the file has an open writable fails",
+      { ignore: true },
+      async function () {
+        const handle = await createFileWithContents(
+          this.root,
+          "file-to-remove",
+          "12345",
+        );
+        await createFileWithContents(this.root, "file-to-keep", "abc");
+
+        const writable = await handle.createWritable();
+
+        await expect(this.root.removeEntry("file-to-remove")).rejects.toThrow(
+          DOMException,
+        );
+
+        await writable.close();
+        await this.root.removeEntry("file-to-remove");
+
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
+          "file-to-keep",
+        ]);
+      },
+    );
+
+    it<Context>(
+      "removeEntry() of a directory while a containing file has an open writable fails",
+      { ignore: true },
+      async function () {
+        const dir_name = "dir_name";
+        const dir = await createDirectory(
+          this.root,
+          dir_name,
+        );
+
+        const handle = await createFileWithContents(
+          dir,
+          "file-to-remove",
+          "12345",
+        );
+        await createFileWithContents(dir, "file-to-keep", "abc");
+
+        const writable = await handle.createWritable();
+
+        await expect(this.root.removeEntry(dir_name)).rejects.toThrow(
+          DOMException,
+        );
+
+        await writable.close();
+
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
+          "file-to-keep",
+          "file-to-remove",
+        ]);
+
+        await dir.removeEntry("file-to-remove");
+
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
+          "file-to-keep",
+        ]);
+      },
+    );
+
+    it<Context>(
+      "createWritable after removeEntry succeeds but doesnt recreate the file",
+      { ignore: true },
+      async function () {
+        const handle = await createFileWithContents(
+          this.root,
+          "file-to-remove",
+          "12345",
+        );
+        await this.root.removeEntry("file-to-remove");
+
+        await expect(handle.createWritable({ keepExistingData: true })).rejects
+          .toThrow(
+            DOMException,
+          );
+
+        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([]);
+      },
+    );
+  });
 });
 
 function getAscii(): string {
@@ -699,8 +926,6 @@ function getAscii(): string {
 
   return name;
 }
-
-const pathSeparators = ["/", "\\"];
 
 async function getDirectoryEntryCount(
   handle: FileSystemDirectoryHandle,
