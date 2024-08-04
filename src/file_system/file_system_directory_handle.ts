@@ -352,7 +352,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 4. Enqueue the following steps to the file system queue:
     queueMicrotask(async () => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
-      if (!isValidFileName(name)) return reject();
+      if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
 
       // 2. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(fsLocator);
@@ -472,13 +472,12 @@ export function createFileSystemDirectoryHandle(
   root: string,
   path: string[],
   realm: {
-    FileSystemDirectoryHandle: typeof FileSystemDirectoryHandle;
     definition: Definition;
     fs?: UnderlyingFileSystem;
   },
 ): FileSystemDirectoryHandle {
   const locator = { kind: "directory", root, path } satisfies FileSystemLocator;
-  const handle = new realm.FileSystemDirectoryHandle(
+  const handle = new FileSystemDirectoryHandle(
     locator,
     realm.definition,
     realm.fs,
