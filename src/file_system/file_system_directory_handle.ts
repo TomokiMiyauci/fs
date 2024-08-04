@@ -215,9 +215,10 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 9. Append child to entry’s children.
       entry.children.push(child);
 
+      const locator = makeChildLocator(fsLocator, child);
       // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
       try {
-        this.fs?.create(child, fsLocator);
+        this.fs?.create(locator, child);
       } catch (e) {
         return reject(e);
       }
@@ -322,9 +323,10 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 10. Append child to entry’s children.
       entry.children.push(child);
 
+      const locator = makeChildLocator(fsLocator, child);
       // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
       try {
-        this.fs?.create(child, fsLocator);
+        this.fs?.create(locator, child);
       } catch (e) {
         reject(e);
       }
@@ -395,9 +397,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             child.name !== entry.name
           );
 
+          const locator = makeChildLocator(fsLocator, child);
+
           // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
           try {
-            this.fs?.remove(child, fsLocator);
+            this.fs?.remove(locator);
           } catch (e) {
             return reject(e);
           }
@@ -477,4 +481,16 @@ export function createFileSystemDirectoryHandle(
   );
 
   return handle;
+}
+
+function makeChildLocator(
+  locator: FileSystemLocator,
+  entry: FileSystemEntry,
+): FileSystemLocator {
+  const path = locator.path.concat(entry.name);
+  const root = locator.root;
+
+  const kind = isDirectoryEntry(entry) ? "directory" : "file";
+
+  return { kind, path, root };
 }

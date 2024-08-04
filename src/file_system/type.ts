@@ -155,8 +155,8 @@ export interface FileLocator extends BaseLocator {
 }
 
 export interface UnderlyingFileSystem {
-  create(entry: FileSystemEntry, locator: FileSystemLocator): void;
-  remove(entry: FileSystemEntry, locator: FileSystemLocator): void;
+  create(locator: FileSystemLocator, entry: FileSystemEntry): void;
+  remove(locator: FileSystemLocator): void;
   write(locator: FileLocator, data: Uint8Array): void;
 }
 
