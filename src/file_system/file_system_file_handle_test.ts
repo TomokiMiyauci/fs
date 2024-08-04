@@ -1,8 +1,7 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { define } from "./helper.ts";
-import { createDirectory, createEmptyFile } from "@test";
+import { createDirectory, createEmptyFile, getDirectory } from "@test";
 
 interface Context {
   root: FileSystemDirectoryHandle;
@@ -10,28 +9,7 @@ interface Context {
 
 describe("FileSystemFileHandle", () => {
   beforeEach<Context>(function () {
-    const definition = define({
-      getBinaryData() {
-        return new Uint8Array();
-      },
-      getChildren() {
-        return [];
-      },
-      getModificationTimestamp() {
-        return Date.now();
-      },
-      queryAccess() {
-        return { permissionState: "granted", errorName: "" } as const;
-      },
-      requestAccess() {
-        return { permissionState: "granted", errorName: "" } as const;
-      },
-    });
-
-    this.root = new FileSystemDirectoryHandle(
-      { kind: "directory", path: [""], root: "" },
-      definition,
-    );
+    this.root = getDirectory();
   });
 
   describe("isSameEntry", () => {

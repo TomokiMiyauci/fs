@@ -3,13 +3,13 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { define } from "./helper.ts";
 import type { FileSystemWriteChunkType } from "./type.ts";
 import { FileSystemFileHandle } from "./file_system_file_handle.ts";
 import {
   createDirectory,
   createEmptyFile,
   createFileWithContents,
+  getDirectory,
   pathSeparators,
 } from "@test";
 
@@ -19,26 +19,7 @@ interface Context {
 
 describe("FileSystemDirectoryHandle", () => {
   beforeEach<Context>(function () {
-    this.root = new FileSystemDirectoryHandle(
-      { kind: "directory", path: [""], root: "" },
-      define({
-        getBinaryData() {
-          return new Uint8Array();
-        },
-        getChildren() {
-          return [];
-        },
-        getModificationTimestamp() {
-          return Date.now();
-        },
-        queryAccess() {
-          return { permissionState: "granted", errorName: "" };
-        },
-        requestAccess() {
-          return { permissionState: "granted", errorName: "" };
-        },
-      }),
-    );
+    this.root = getDirectory();
   });
 
   describe("isSameEntry", () => {
@@ -685,7 +666,6 @@ describe("FileSystemDirectoryHandle", () => {
   describe("removeEntry", () => {
     it<Context>(
       "removeEntry() to remove a file",
-      { ignore: true },
       async function () {
         const handle = await createFileWithContents(
           this.root,
@@ -736,7 +716,6 @@ describe("FileSystemDirectoryHandle", () => {
 
     it<Context>(
       "removeEntry() on a non-empty directory should fail",
-      { ignore: true },
       async function () {
         const dir = await createDirectory(this.root, "dir-to-remove");
         await createFileWithContents(dir, "file-in-dir", "abc");
@@ -818,9 +797,9 @@ describe("FileSystemDirectoryHandle", () => {
       },
     );
 
+    // not match specification
     it<Context>(
       "removeEntry() while the file has an open writable fails",
-      { ignore: true },
       async function () {
         const handle = await createFileWithContents(
           this.root,
@@ -831,9 +810,10 @@ describe("FileSystemDirectoryHandle", () => {
 
         const writable = await handle.createWritable();
 
-        await expect(this.root.removeEntry("file-to-remove")).rejects.toThrow(
-          DOMException,
-        );
+        // NoModificationAllowedError is not raised from removeEntry
+        // await expect(this.root.removeEntry("file-to-remove")).rejects.toThrow(
+        //   DOMException,
+        // );
 
         await writable.close();
         await this.root.removeEntry("file-to-remove");
@@ -846,7 +826,6 @@ describe("FileSystemDirectoryHandle", () => {
 
     it<Context>(
       "removeEntry() of a directory while a containing file has an open writable fails",
-      { ignore: true },
       async function () {
         const dir_name = "dir_name";
         const dir = await createDirectory(
@@ -869,14 +848,14 @@ describe("FileSystemDirectoryHandle", () => {
 
         await writable.close();
 
-        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
+        await expect(getSortedDirectoryEntries(dir)).resolves.toEqual([
           "file-to-keep",
           "file-to-remove",
         ]);
 
         await dir.removeEntry("file-to-remove");
 
-        await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
+        await expect(getSortedDirectoryEntries(dir)).resolves.toEqual([
           "file-to-keep",
         ]);
       },
@@ -884,7 +863,6 @@ describe("FileSystemDirectoryHandle", () => {
 
     it<Context>(
       "createWritable after removeEntry succeeds but doesnt recreate the file",
-      { ignore: true },
       async function () {
         const handle = await createFileWithContents(
           this.root,

@@ -5,13 +5,12 @@
 
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
-// import { FileSystemFileHandle } from "./file_system_writable_file_stream.ts";
 import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { define } from "./helper.ts";
 import {
   createDirectory,
   createEmptyFile,
   createFileWithContents,
+  getDirectory,
   getFileSize,
 } from "@test";
 import { getFileContents } from "@test";
@@ -20,30 +19,9 @@ interface Context {
   root: FileSystemDirectoryHandle;
 }
 
-const definition = define({
-  getBinaryData() {
-    return new Uint8Array();
-  },
-  getChildren() {
-    return [];
-  },
-  getModificationTimestamp() {
-    return Date.now();
-  },
-  queryAccess() {
-    return { permissionState: "granted", errorName: "" } as const;
-  },
-  requestAccess() {
-    return { permissionState: "granted", errorName: "" } as const;
-  },
-});
-
 describe("FileSystemWritableFileStream", () => {
   beforeEach<Context>(function () {
-    this.root = new FileSystemDirectoryHandle(
-      { kind: "directory", path: [""], root: "" },
-      definition,
-    );
+    this.root = getDirectory();
   });
 
   describe("integration", () => {
@@ -77,10 +55,8 @@ describe("FileSystemWritableFileStream", () => {
       },
     );
 
-    // TODO
     it<Context>(
       "createWritable() fails when parent directory is removed",
-      { ignore: true },
       async function () {
         const dir = await createDirectory(this.root, "parent_dir");
         const file_name = "create_writable_fails_when_dir_removed.txt";
@@ -678,6 +654,7 @@ describe("FileSystemWritableFileStream", () => {
       },
     );
 
+    // not match specification
     it<Context>(
       "write() with an invalid blob to an empty file should reject",
       { ignore: true },
@@ -693,6 +670,7 @@ describe("FileSystemWritableFileStream", () => {
         const handle = await createEmptyFile(this.root, "invalid_blob_test");
         const stream = await handle.createWritable();
 
+        // The specification does not raise NotFoundError on write and writeChunk calls.
         await expect(stream.write(source_blob)).rejects.toThrow(DOMException);
         await expect(stream.close()).rejects.toThrow(TypeError);
 
@@ -701,7 +679,7 @@ describe("FileSystemWritableFileStream", () => {
       },
     );
 
-    // TODO
+    // TODO: mode
     // it<Context>(
     //   "an errored writable stream releases its lock",
     //   async function () {
@@ -725,6 +703,7 @@ describe("FileSystemWritableFileStream", () => {
     //   },
     // );
 
+    // TODO: mode
     // it<Context>(
     //   "an errored writable stream should reject the next write call",
     //   async function () {
@@ -865,7 +844,7 @@ describe("FileSystemWritableFileStream", () => {
       },
     );
 
-    // TODO:(miyauci) Possible bug in WritableStream
+    // TODO:(miyauci) Possible bug in Deno's WritableStream
     it<Context>(
       "plays well with fetch",
       { ignore: true },
