@@ -9,7 +9,6 @@ import type {
   FileSystemLocator,
   FileSystemWriteChunkType,
 } from "../src/file_system/type.ts";
-import { isDirectoryEntry } from "../src/file_system/algorithm.ts";
 
 export async function createFileWithContents(
   handle: FileSystemDirectoryHandle,
@@ -65,58 +64,27 @@ export function getDirectory(): FileSystemDirectoryHandle {
     requestAccess: () => ({ permissionState: "granted", errorName: "" }),
   } satisfies DirectoryEntry;
 
-  const entry = {
+  const rootLocator = {
     root: "",
     path: [""],
     kind: "directory",
   } satisfies FileSystemLocator;
 
-  const map = new Map<
-    string,
-    { entry: FileSystemEntry; child: StorageStructure }
-  >();
+  const locatorEntry = new LocatorEntry();
+  locatorEntry.set(rootLocator, directory);
 
-  map.set(entry.path[entry.path.length - 1], {
-    entry: directory,
-    child: new Map(),
-  });
-
-  return createFileSystemDirectoryHandle(entry.root, entry.path, {
+  return createFileSystemDirectoryHandle(rootLocator.root, rootLocator.path, {
     definition: {
       locateEntry(locator) {
-        return get(locator, map);
+        return locatorEntry.get(locator);
       },
     },
     fs: {
-      create(entry, locator) {
-        const newLocator: FileSystemLocator = isDirectoryEntry(entry)
-          ? {
-            ...locator,
-            path: locator.path.concat(entry.name),
-            kind: "directory",
-          }
-          : {
-            ...locator,
-            path: locator.path.concat(entry.name),
-            kind: "file",
-          };
-
-        set(newLocator, entry, map);
+      create(locator, entry) {
+        locatorEntry.set(locator, entry);
       },
-      remove(entry, locator) {
-        const newLocator: FileSystemLocator = isDirectoryEntry(entry)
-          ? {
-            ...locator,
-            path: locator.path.concat(entry.name),
-            kind: "directory",
-          }
-          : {
-            ...locator,
-            path: locator.path.concat(entry.name),
-            kind: "file",
-          };
-
-        remove(newLocator, map);
+      remove(locator) {
+        locatorEntry.delete(locator);
       },
 
       write() {},
@@ -124,65 +92,61 @@ export function getDirectory(): FileSystemDirectoryHandle {
   });
 }
 
-type StorageStructure = Map<
-  string,
-  { entry: FileSystemEntry; child: StorageStructure }
->;
-
-function get(
-  locator: FileSystemLocator,
-  map: StorageStructure,
-): FileSystemEntry | null {
-  const [first, ...rest] = locator.path;
-
-  if (map.has(first)) {
-    const { entry, child } = map.get(first)!;
-    if (!rest.length) return entry;
-
-    return get({ ...locator, path: rest }, child);
-  }
-
-  return null;
+interface MappedEntry {
+  child: LocatorEntry;
+  entry: FileSystemEntry;
 }
 
-function set(
-  locator: FileSystemLocator,
-  entry: FileSystemEntry,
-  map: StorageStructure,
-) {
-  const [first, ...rest] = locator.path;
+class LocatorEntry {
+  #map: Map<string, MappedEntry> = new Map();
+  get(locator: FileSystemLocator): FileSystemEntry | null {
+    const [first, ...rest] = locator.path;
 
-  const result = map.get(first);
+    if (this.#map.has(first)) {
+      const { entry, child } = this.#map.get(first)!;
 
-  if (result) {
-    if (rest.length) {
-      set({ ...locator, path: rest }, entry, result.child);
-    } else {
-      result.entry = entry;
+      if (!rest.length) return entry;
+
+      return child.get({ ...locator, path: rest });
     }
 
-    return;
+    return null;
   }
 
-  if (rest.length) throw new Error();
+  set(locator: FileSystemLocator, entry: FileSystemEntry): void {
+    const [first, ...rest] = locator.path;
+    const result = this.#map.get(first);
 
-  map.set(first, { entry, child: new Map() });
-}
+    if (result) {
+      if (rest.length) {
+        result.child.set({ ...locator, path: rest }, entry);
+      } else {
+        result.entry = entry;
+      }
 
-function remove(locator: FileSystemLocator, map: StorageStructure) {
-  const [first, ...rest] = locator.path;
-
-  const result = map.get(first);
-
-  if (result) {
-    if (rest.length) {
-      remove({ ...locator, path: rest }, result.child);
-    } else {
-      map.delete(first);
+      return;
     }
 
-    return;
+    if (rest.length) throw new Error();
+
+    this.#map.set(first, { entry, child: new LocatorEntry() });
   }
 
-  throw new Error();
+  delete(locator: FileSystemLocator): void {
+    const [first, ...rest] = locator.path;
+
+    const result = this.#map.get(first);
+
+    if (result) {
+      if (rest.length) {
+        result.child.delete({ ...locator, path: rest });
+      } else {
+        this.#map.delete(first);
+      }
+
+      return;
+    }
+
+    throw new Error();
+  }
 }
