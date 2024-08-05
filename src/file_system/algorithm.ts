@@ -28,7 +28,7 @@ export function isFileEntry(
   return "binaryData" in entry;
 }
 
-export function resolve(
+export function resolveLocator(
   child: FileSystemLocator,
   root: FileSystemLocator,
 ): Promise<string[] | null> {
