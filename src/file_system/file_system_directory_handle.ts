@@ -1,3 +1,4 @@
+import { OrderedSet } from "@miyauci/infra";
 import { FileSystemHandle } from "./file_system_handle.ts";
 import {
   isDirectoryEntry,
@@ -29,109 +30,21 @@ import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
 import { queueRecord } from "./observer.ts";
 
-interface IterationContext {
-  /**
-   * @see https://fs.spec.whatwg.org/#filesystemdirectoryhandle-iterator-past-results
-   */
-  pastResults: Set<string>;
-}
-
-function next(
-  handle: FileSystemDirectoryHandle,
-  iterator:
-    & AsyncIterableIterator<[string, FileSystemHandle]>
-    & IterationContext,
-): Promise<IteratorResult<[string, FileSystemHandle]>> {
-  const fsLocator = handle[$locator];
-  const fs = handle["fs"];
-  const definition = handle["definition"];
-  const root = handle[$root];
-
-  // // 1. Let promise be a new promise.
-  const { promise, reject, resolve } = Promise.withResolvers<
-    IteratorResult<
-      [string, FileSystemFileHandle | FileSystemDirectoryHandle]
-    >
-  >();
-
-  // // 2. Enqueue the following steps to the file system queue:
-  queueMicrotask(async () => {
-    // // 1. Let directory be the result of locating an entry given handle’s locator.
-    const directory = definition.locateEntry(fsLocator);
-
-    // // 2. Let accessResult be the result of running directory’s query access given "read".
-    const accessResult = await directory?.queryAccess("read");
-
-    // // 3. Queue a storage task with handle’s relevant global object to run these steps:
-
-    // // 1. If accessResult’s permission state is not "granted", reject promise with a DOMException of accessResult’s error name and abort these steps.:
-    if (accessResult && accessResult.permissionState !== "granted") {
-      return reject(new DOMException(accessResult.errorName));
-    }
-
-    // // 2. If directory is null, reject result with a "NotFoundError" DOMException and abort these steps.
-    if (directory === null) {
-      return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-    }
-
-    // // 1. Assert: directory is a directory entry.
-    assertDirectoryEntry(directory);
-
-    // // 3. Let child be a file system entry in directory’s children, such that child’s name is not contained in iterator’s past results, or null if no such entry exists.
-    const child = directory.children.find((child) =>
-      !iterator.pastResults.has(child.name)
-    ) ??
-      null;
-
-    // // 4. If child is null, resolve promise with undefined and abort these steps.
-    if (child === null) {
-      return resolve({ done: true, value: undefined });
-    }
-
-    // // 5. Append child’s name to iterator’s past results.
-    iterator.pastResults.add(child.name);
-
-    let result: FileSystemFileHandle | FileSystemDirectoryHandle;
-    // 6. If child is a file entry:
-    if (isFileEntry(child)) {
-      // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
-      result = createChildFileSystemFileHandle(fsLocator, child.name, {
-        definition,
-        root,
-      });
-    } // 7. Otherwise:
-    else {
-      // 1. Let result be the result of creating a child FileSystemDirectoryHandle with handle’s locator and child’s name in handle’s relevant Realm.
-      result = createChildFileSystemDirectoryHandle(
-        fsLocator,
-        child.name,
-        { definition, fs, root },
-      );
-    }
-
-    // 8. Resolve promise with (child’s name, result).
-    resolve({ done: false, value: [child.name, result] });
-  });
-
-  // 3. Return promise.
-  return promise;
-}
-
 @asynciterator({
   init(_, iterator): void {
     // 1. Set iterator’s past results to an empty set.
-    iterator.pastResults = new Set();
+    iterator.pastResults = new OrderedSet();
   },
   next,
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
   constructor(
-    loc: FileSystemLocator,
+    locator: FileSystemLocator,
     private definition: Definition,
     private fs?: UnderlyingFileSystem,
     root?: FileSystemHandle,
   ) {
-    super(loc, root);
+    super(locator, root);
   }
   override get kind(): "directory" {
     return "directory";
@@ -149,7 +62,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 2. Let realm be this's relevant Realm.
 
     // 3. Let locator be this's locator.
-    const fsLocator = this[$locator];
+    const locator = this[$locator];
 
     // 4. Let global be this's relevant global object.
 
@@ -159,7 +72,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(fsLocator);
+      const entry = this.definition.locateEntry(locator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -196,7 +109,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
           // 2. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm and abort these steps.
           return resolve(
-            createChildFileSystemDirectoryHandle(fsLocator, name, {
+            createChildFileSystemDirectoryHandle(locator, name, {
               definition: this.definition,
               fs: this.fs,
               root: this[$root],
@@ -224,18 +137,19 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 9. Append child to entry’s children.
       entry.children.push(child);
 
-      const locator = makeChildLocator(fsLocator, child);
+      const childLocator = createChildLocator(locator, child);
       // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
       try {
-        this.fs?.create(locator, child);
+        this.fs?.create(childLocator, child);
       } catch (e) {
         return reject(e);
       }
 
-      const handle = createChildFileSystemDirectoryHandle(
-        fsLocator,
-        child.name,
-        { definition: this.definition, fs: this.fs, root: this[$root] },
+      const handle = new FileSystemDirectoryHandle(
+        childLocator,
+        this.definition,
+        this.fs,
+        this[$root],
       );
 
       await queueRecord(
@@ -271,7 +185,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     };
 
     // 3. Let locator be this's locator.
-    const fsLocator = this[$locator];
+    const locator = this[$locator];
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
@@ -280,7 +194,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(fsLocator);
+      const entry = this.definition.locateEntry(locator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -317,7 +231,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
           // 2. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm and abort these steps.
           return resolve(
-            createChildFileSystemFileHandle(fsLocator, child.name, realm),
+            createChildFileSystemFileHandle(locator, child.name, realm),
           );
         }
       }
@@ -345,16 +259,16 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 10. Append child to entry’s children.
       entry.children.push(child);
 
-      const locator = makeChildLocator(fsLocator, child);
+      const childLocator = createChildLocator(locator, child);
       // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
       try {
-        this.fs?.create(locator, child);
+        this.fs?.create(childLocator, child);
       } catch (e) {
         reject(e);
       }
 
       const handle = createChildFileSystemFileHandle(
-        fsLocator,
+        locator,
         child.name,
         realm,
       );
@@ -379,7 +293,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this[$locator];
+    const locator = this[$locator];
 
     // 3. Let global be this's relevant global object.
 
@@ -389,7 +303,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(fsLocator);
+      const entry = this.definition.locateEntry(locator);
 
       // 3. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = await entry?.requestAccess("readwrite");
@@ -434,11 +348,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             child.name !== entry.name
           );
 
-          const locator = makeChildLocator(fsLocator, child);
+          const childLocator = createChildLocator(locator, child);
 
           // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
           try {
-            this.fs?.remove(locator);
+            this.fs?.remove(childLocator);
           } catch (e) {
             return reject(e);
           }
@@ -474,6 +388,94 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
 export interface FileSystemDirectoryHandle
   extends PairAsyncIterable<string, FileSystemHandle> {}
+
+interface IterationContext {
+  /**
+   * @see https://fs.spec.whatwg.org/#filesystemdirectoryhandle-iterator-past-results
+   */
+  pastResults: OrderedSet<string>;
+}
+
+function next(
+  handle: FileSystemDirectoryHandle,
+  iterator:
+    & AsyncIterableIterator<[string, FileSystemHandle]>
+    & IterationContext,
+): Promise<IteratorResult<[string, FileSystemHandle]>> {
+  const locator = handle[$locator];
+  const fs = handle["fs"];
+  const definition = handle["definition"];
+  const root = handle[$root];
+
+  // // 1. Let promise be a new promise.
+  const { promise, reject, resolve } = Promise.withResolvers<
+    IteratorResult<
+      [string, FileSystemFileHandle | FileSystemDirectoryHandle]
+    >
+  >();
+
+  // // 2. Enqueue the following steps to the file system queue:
+  queueMicrotask(async () => {
+    // // 1. Let directory be the result of locating an entry given handle’s locator.
+    const directory = definition.locateEntry(locator);
+
+    // // 2. Let accessResult be the result of running directory’s query access given "read".
+    const accessResult = await directory?.queryAccess("read");
+
+    // // 3. Queue a storage task with handle’s relevant global object to run these steps:
+
+    // // 1. If accessResult’s permission state is not "granted", reject promise with a DOMException of accessResult’s error name and abort these steps.:
+    if (accessResult && accessResult.permissionState !== "granted") {
+      return reject(new DOMException(accessResult.errorName));
+    }
+
+    // // 2. If directory is null, reject result with a "NotFoundError" DOMException and abort these steps.
+    if (directory === null) {
+      return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+    }
+
+    // // 1. Assert: directory is a directory entry.
+    assertDirectoryEntry(directory);
+
+    // // 3. Let child be a file system entry in directory’s children, such that child’s name is not contained in iterator’s past results, or null if no such entry exists.
+    const child = directory.children.find((child) =>
+      !new Set(iterator.pastResults).has(child.name)
+    ) ??
+      null;
+
+    // // 4. If child is null, resolve promise with undefined and abort these steps.
+    if (child === null) {
+      return resolve({ done: true, value: undefined });
+    }
+
+    // // 5. Append child’s name to iterator’s past results.
+    iterator.pastResults.append(child.name);
+
+    let result: FileSystemFileHandle | FileSystemDirectoryHandle;
+    // 6. If child is a file entry:
+    if (isFileEntry(child)) {
+      // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
+      result = createChildFileSystemFileHandle(locator, child.name, {
+        definition,
+        root,
+      });
+    } // 7. Otherwise:
+    else {
+      // 1. Let result be the result of creating a child FileSystemDirectoryHandle with handle’s locator and child’s name in handle’s relevant Realm.
+      result = createChildFileSystemDirectoryHandle(
+        locator,
+        child.name,
+        { definition, fs, root },
+      );
+    }
+
+    // 8. Resolve promise with (child’s name, result).
+    resolve({ done: false, value: [child.name, result] });
+  });
+
+  // 3. Return promise.
+  return promise;
+}
 
 function assertDirectoryEntry(
   _: FileSystemEntry,
@@ -533,7 +535,7 @@ export function createFileSystemDirectoryHandle(
   return handle;
 }
 
-function makeChildLocator(
+function createChildLocator(
   locator: FileSystemLocator,
   entry: FileSystemEntry,
 ): FileSystemLocator {
