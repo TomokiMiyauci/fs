@@ -4,18 +4,20 @@ import type {
   FileEntry,
   FileSystemReadWriteOptions,
 } from "./type.ts";
-import { $file } from "./symbol.ts";
+import { file as $file, state } from "./symbol.ts";
 import { concat } from "@std/bytes";
-
-const state = Symbol("[[state]]");
 
 export class FileSystemSyncAccessHandle {
   /**
    * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-state
    */
   [state]: "open" | "close" = "open";
-  [$file]!: FileEntry;
+  [$file]: FileEntry;
   filePositionCursor: number = 0;
+
+  constructor(entry: FileEntry) {
+    this[$file] = entry;
+  }
 
   read(
     buffer: AllowSharedBufferSource,
@@ -269,10 +271,8 @@ export function createFileSystemSyncAccessHandle(
   file: FileEntry,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
-  const handle = new FileSystemSyncAccessHandle();
-
   // 2. Set handle’s [[file]] to file.
-  handle[$file] = file;
+  const handle = new FileSystemSyncAccessHandle(file);
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";

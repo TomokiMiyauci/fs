@@ -7,8 +7,8 @@ import type {
   WriteParams,
 } from "./type.ts";
 import {
-  $file,
   buffer,
+  file as $file,
   locator,
   registeredObserverList,
   seekOffset,
