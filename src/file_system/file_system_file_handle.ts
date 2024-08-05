@@ -216,7 +216,11 @@ export class FileSystemFileHandle extends FileSystemHandle {
       }
 
       // 2. Let handle be the result of creating a new FileSystemSyncAccessHandle for entry in realm.
-      const handle = createFileSystemSyncAccessHandle(entry);
+      const handle = createFileSystemSyncAccessHandle(
+        fsLocator,
+        entry,
+        this.fs,
+      );
 
       // 3. Resolve result with handle.
       resolve(handle);

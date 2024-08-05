@@ -1,21 +1,34 @@
+import { concat } from "@std/bytes/concat";
 import { releaseLock } from "./algorithm.ts";
 import type {
   AllowSharedBufferSource,
   FileEntry,
+  FileSystemLocator,
   FileSystemReadWriteOptions,
+  UnderlyingFileSystem,
 } from "./type.ts";
-import { file as $file, state } from "./symbol.ts";
-import { concat } from "@std/bytes";
+import { file as $file, locator as $locator, state } from "./symbol.ts";
 
 export class FileSystemSyncAccessHandle {
   /**
    * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-state
    */
   [state]: "open" | "close" = "open";
-  [$file]: FileEntry;
-  filePositionCursor: number = 0;
 
-  constructor(entry: FileEntry) {
+  /**
+   * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-file
+   */
+  [$file]: FileEntry;
+
+  [$locator]: FileSystemLocator;
+  private filePositionCursor: number = 0;
+
+  constructor(
+    locator: FileSystemLocator,
+    entry: FileEntry,
+    private fs?: UnderlyingFileSystem,
+  ) {
+    this[$locator] = locator;
     this[$file] = entry;
   }
 
@@ -136,7 +149,7 @@ export class FileSystemSyncAccessHandle {
     }
 
     // 11. Let newSize be head’s length + bufferSize + tail’s length.
-    const newSize = head.length + bufferSize + tail.length;
+    // const newSize = head.length + bufferSize + tail.length;
 
     // 12. If newSize − oldSize exceeds the available storage quota, throw a "QuotaExceededError" DOMException.
 
@@ -144,6 +157,7 @@ export class FileSystemSyncAccessHandle {
       // 13. Set this's [[file]]'s binary data to the concatenation of head, the contents of buffer and tail.
       this[$file].binaryData = concat([head, contentsOf(buffer), tail]);
 
+      this.fs?.write(this[$locator], this[$file]);
       // 14. If the operations modifying the this's[[file]]'s binary data in the previous steps failed:
     } catch {
       // 1. If there were partial writes and the number of bytes that were written from buffer is known:
@@ -189,6 +203,8 @@ export class FileSystemSyncAccessHandle {
           fileContents.slice(0, newSize),
           new Uint8Array(newSize - oldSize),
         ]);
+
+        this.fs?.write(this[$locator], this[$file]);
       } catch {
         // 3. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
         throw new DOMException("InvalidStateError");
@@ -199,6 +215,8 @@ export class FileSystemSyncAccessHandle {
       try {
         // 1. Set this's [[file]]'s to a byte sequence containing the first newSize bytes in fileContents.
         this[$file].binaryData = fileContents.slice(0, newSize);
+
+        this.fs?.write(this[$locator], this[$file]);
       } catch {
         // 2. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
         throw new DOMException("InvalidStateError");
@@ -268,11 +286,13 @@ function isUnsignedLongLong(value: number): boolean {
 }
 
 export function createFileSystemSyncAccessHandle(
+  locator: FileSystemLocator,
   file: FileEntry,
+  fs?: UnderlyingFileSystem,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle(file);
+  const handle = new FileSystemSyncAccessHandle(locator, file, fs);
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";
