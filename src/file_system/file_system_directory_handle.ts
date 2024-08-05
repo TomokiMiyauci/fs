@@ -3,7 +3,7 @@ import {
   isDirectoryEntry,
   isFileEntry,
   isValidFileName,
-  resolve,
+  resolveLocator,
 } from "./algorithm.ts";
 import type {
   Definition,
@@ -20,9 +20,14 @@ import {
   createChildFileSystemFileHandle,
   FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
-import { locator } from "./symbol.ts";
+import {
+  locator as $locator,
+  registeredObserverList,
+  root as $root,
+} from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
+import { queueRecord } from "./observer.ts";
 
 interface IterationContext {
   /**
@@ -37,9 +42,10 @@ function next(
     & AsyncIterableIterator<[string, FileSystemHandle]>
     & IterationContext,
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
-  const fsLocator = handle[locator];
+  const fsLocator = handle[$locator];
   const fs = handle["fs"];
   const definition = handle["definition"];
+  const root = handle[$root];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<
@@ -91,6 +97,7 @@ function next(
       // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
       result = createChildFileSystemFileHandle(fsLocator, child.name, {
         definition,
+        root,
       });
     } // 7. Otherwise:
     else {
@@ -98,7 +105,7 @@ function next(
       result = createChildFileSystemDirectoryHandle(
         fsLocator,
         child.name,
-        { definition, fs },
+        { definition, fs, root },
       );
     }
 
@@ -122,8 +129,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     loc: FileSystemLocator,
     private definition: Definition,
     private fs?: UnderlyingFileSystem,
+    root?: FileSystemHandle,
   ) {
-    super(loc);
+    super(loc, root);
   }
   override get kind(): "directory" {
     return "directory";
@@ -141,7 +149,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 2. Let realm be this's relevant Realm.
 
     // 3. Let locator be this's locator.
-    const fsLocator = this[locator];
+    const fsLocator = this[$locator];
 
     // 4. Let global be this's relevant global object.
 
@@ -191,6 +199,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             createChildFileSystemDirectoryHandle(fsLocator, name, {
               definition: this.definition,
               fs: this.fs,
+              root: this[$root],
             }),
           );
         }
@@ -223,13 +232,22 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         return reject(e);
       }
 
-      // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
-      resolve(
-        createChildFileSystemDirectoryHandle(fsLocator, child.name, {
-          definition: this.definition,
-          fs: this.fs,
-        }),
+      const handle = createChildFileSystemDirectoryHandle(
+        fsLocator,
+        child.name,
+        { definition: this.definition, fs: this.fs, root: this[$root] },
       );
+
+      await queueRecord(
+        this[registeredObserverList],
+        handle,
+        "appeared",
+        this[$root],
+        this.definition.agent,
+      );
+
+      // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
+      resolve(handle);
     });
 
     // 6.  Return result.
@@ -246,10 +264,14 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     >();
 
     // 2. Let realm be this's relevant Realm.
-    const realm = { FileSystemFileHandle, definition: this.definition };
+    const realm = {
+      FileSystemFileHandle,
+      definition: this.definition,
+      root: this[$root],
+    };
 
     // 3. Let locator be this's locator.
-    const fsLocator = this[locator];
+    const fsLocator = this[$locator];
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
@@ -331,8 +353,21 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         reject(e);
       }
 
+      const handle = createChildFileSystemFileHandle(
+        fsLocator,
+        child.name,
+        realm,
+      );
+      await queueRecord(
+        this[registeredObserverList],
+        handle,
+        "appeared",
+        this[$root],
+        this.definition.agent,
+      );
+
       // 12. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm.
-      resolve(createChildFileSystemFileHandle(fsLocator, child.name, realm));
+      resolve(handle);
     });
 
     // 6. Return result.
@@ -344,7 +379,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this[locator];
+    const fsLocator = this[$locator];
 
     // 3. Let global be this's relevant global object.
 
@@ -392,6 +427,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             }
           }
 
+          const handle = (await findHandle(this, child))!; // This is probably guaranteed.
+
           // 2. Remove child from entry’s children.
           entry.children = entry.children.filter((entry) =>
             child.name !== entry.name
@@ -405,6 +442,14 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           } catch (e) {
             return reject(e);
           }
+
+          await queueRecord(
+            this[registeredObserverList],
+            handle,
+            "disappeared",
+            this[$root],
+            this.definition.agent,
+          );
 
           // 4. Resolve result with undefined.
           return resolve();
@@ -423,7 +468,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     possibleDescendant: FileSystemHandle,
   ): Promise<string[] | null> {
     // steps are to return the result of resolving possibleDescendant’s locator relative to this's locator.
-    return resolve(possibleDescendant[locator], this[locator]);
+    return resolveLocator(possibleDescendant[$locator], this[$locator]);
   }
 }
 
@@ -437,7 +482,11 @@ function assertDirectoryEntry(
 export function createChildFileSystemDirectoryHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: { definition: Definition; fs?: UnderlyingFileSystem },
+  realm: {
+    definition: Definition;
+    fs?: UnderlyingFileSystem;
+    root: FileSystemHandle;
+  },
 ): FileSystemDirectoryHandle {
   // 2. Let childType be "directory".
   const childType = "directory";
@@ -459,6 +508,7 @@ export function createChildFileSystemDirectoryHandle(
     locator,
     realm.definition,
     realm.fs,
+    realm.root,
   );
 
   // 6. Return handle.
@@ -493,4 +543,13 @@ function makeChildLocator(
   const kind = isDirectoryEntry(entry) ? "directory" : "file";
 
   return { kind, path, root };
+}
+
+async function findHandle(
+  dirHandle: FileSystemDirectoryHandle,
+  entry: FileSystemEntry,
+): Promise<FileSystemHandle | undefined> {
+  for await (const [_, handle] of dirHandle) {
+    if (handle.name === entry.name) return handle;
+  }
 }

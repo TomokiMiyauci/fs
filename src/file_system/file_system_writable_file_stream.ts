@@ -3,10 +3,19 @@ import { releaseLock } from "./algorithm.ts";
 import type {
   FileEntry,
   FileSystemWriteChunkType,
+  UnderlyingFileSystem,
   WriteParams,
 } from "./type.ts";
-import { $file, buffer, seekOffset } from "./symbol.ts";
+import {
+  $file,
+  buffer,
+  locator,
+  registeredObserverList,
+  seekOffset,
+} from "./symbol.ts";
 import { Msg } from "./constant.ts";
+import { Agent, queueRecord } from "./observer.ts";
+import { FileSystemHandle } from "./file_system_handle.ts";
 
 export class FileSystemWritableFileStream
   extends WritableStream<FileSystemWriteChunkType> {
@@ -66,6 +75,12 @@ export class FileSystemWritableFileStream
  */
 export function createFileSystemWritableFileStream(
   file: FileEntry,
+  context: {
+    fs?: UnderlyingFileSystem;
+    agent: Agent;
+    root: FileSystemHandle;
+    handle: FileSystemHandle;
+  },
 ): FileSystemWritableFileStream {
   // 3. Let writeAlgorithm be an algorithm which takes a chunk argument and returns the result of running the write a chunk algorithm with stream and chunk.
   const writeAlgorithm: UnderlyingSinkWriteCallback<FileSystemWriteChunkType> =
@@ -94,6 +109,16 @@ export function createFileSystemWritableFileStream(
 
       // 3. Set stream’s [[file]]'s binary data to stream’s [[buffer]]. If that throws an exception, reject closeResult with that exception and abort these steps.
       stream[$file].binaryData = stream[buffer];
+
+      context.fs?.write(context.handle[locator], stream[$file]);
+
+      queueRecord(
+        context.handle[registeredObserverList],
+        context.handle,
+        "modified",
+        context.root,
+        context.agent,
+      );
 
       // 4. Enqueue the following steps to the file system queue:
 
@@ -235,9 +260,7 @@ export function writeChunk(
       }
 
       // 13. Set stream’s [[buffer]] to the concatenation of head, data and tail.
-      const i = concat([head, dataBytes, tail]);
-
-      stream[buffer] = i;
+      stream[buffer] = concat([head, dataBytes, tail]);
 
       // 14. If the operations modifying stream’s [[buffer]] in the previous steps failed due to exceeding the storage quota, reject p with a "QuotaExceededError" DOMException and abort these steps, leaving stream’s [[buffer]] unmodified.
 

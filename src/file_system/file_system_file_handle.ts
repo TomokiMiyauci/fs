@@ -5,10 +5,11 @@ import type {
   FileSystemCreateWritableOptions,
   FileSystemEntry,
   FileSystemLocator,
+  UnderlyingFileSystem,
 } from "./type.ts";
 import { takeLock } from "./algorithm.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
-import { buffer, locator } from "./symbol.ts";
+import { buffer, locator, root } from "./symbol.ts";
 import { extname } from "@std/path";
 import { typeByExtension } from "@std/media-types";
 import {
@@ -21,10 +22,12 @@ import { Msg } from "./constant.ts";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
-    loc: FileSystemLocator,
+    locator: FileSystemLocator,
     private definition: Definition,
+    private fs?: UnderlyingFileSystem,
+    root?: FileSystemHandle,
   ) {
-    super(loc);
+    super(locator, root);
   }
   override get kind(): "file" {
     return "file";
@@ -138,7 +141,12 @@ export class FileSystemFileHandle extends FileSystemHandle {
       }
 
       // 2. Let stream be the result of creating a new FileSystemWritableFileStream for entry in realm.
-      const stream = createFileSystemWritableFileStream(entry);
+      const stream = createFileSystemWritableFileStream(entry, {
+        fs: this.fs,
+        handle: this,
+        root: this[root],
+        agent: this.definition.agent,
+      });
 
       // 3. If options["keepExistingData"] is true:
       if (options?.keepExistingData) {
@@ -224,7 +232,11 @@ function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
 export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: { definition: Definition },
+  realm: {
+    definition: Definition;
+    root: FileSystemHandle;
+    fs?: UnderlyingFileSystem;
+  },
 ): FileSystemFileHandle {
   // 2. Let childType be "file".
   const childType = "file";
@@ -244,6 +256,8 @@ export function createChildFileSystemFileHandle(
   const handle = new FileSystemFileHandle(
     locator,
     realm.definition,
+    realm.fs,
+    realm.root,
   );
 
   // 6. Return handle.

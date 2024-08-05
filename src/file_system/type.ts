@@ -1,3 +1,5 @@
+import type { Agent } from "./observer.ts";
+
 export interface FileSystemGetFileOptions {
   create?: boolean;
 }
@@ -157,9 +159,11 @@ export interface FileLocator extends BaseLocator {
 export interface UnderlyingFileSystem {
   create(locator: FileSystemLocator, entry: FileSystemEntry): void;
   remove(locator: FileSystemLocator): void;
-  write(locator: FileLocator, data: Uint8Array): void;
+  write(locator: FileSystemLocator, entry: FileEntry): void;
 }
 
 export interface Definition {
   locateEntry(locator: FileSystemLocator): FileSystemEntry | null;
+
+  agent: Agent;
 }
