@@ -3,12 +3,18 @@ import {
   createFileSystemDirectoryHandle,
   FileSystemDirectoryHandle,
 } from "../src/file_system/file_system_directory_handle.ts";
-import type {
-  DirectoryEntry,
-  FileSystemEntry,
-  FileSystemLocator,
-  FileSystemWriteChunkType,
+import {
+  type DirectoryEntry,
+  type FileSystemEntry,
+  type FileSystemLocator,
+  type FileSystemWriteChunkType,
+  ParallelQueue,
 } from "../src/file_system/type.ts";
+import { OrderedSet } from "../src/infra/mod.ts";
+
+export interface Context {
+  root: FileSystemDirectoryHandle;
+}
 
 export async function createFileWithContents(
   handle: FileSystemDirectoryHandle,
@@ -78,6 +84,10 @@ export function getDirectory(): FileSystemDirectoryHandle {
       locateEntry(locator) {
         return locatorEntry.get(locator);
       },
+      agent: {
+        pendingFileSystemObservers: new OrderedSet(),
+        fileSystemObserverMicrotaskQueued: false,
+      },
     },
     fs: {
       create(locator, entry) {
@@ -88,6 +98,10 @@ export function getDirectory(): FileSystemDirectoryHandle {
       },
 
       write() {},
+    },
+    userAgent: {
+      fileSystemQueue: new ParallelQueue(),
+      storageTask: new ParallelQueue(),
     },
   });
 }

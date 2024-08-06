@@ -167,3 +167,14 @@ export interface Definition {
 
   agent: Agent;
 }
+
+export interface UserAgent {
+  fileSystemQueue: ParallelQueue;
+  storageTask: ParallelQueue;
+}
+
+export class ParallelQueue {
+  enqueue(algorithm: () => void): void {
+    queueMicrotask(algorithm);
+  }
+}

@@ -1,9 +1,7 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
-import { createEmptyFile, createFileWithContents } from "@test";
-import { FileSystemHandle } from "./file_system_handle.ts";
+import { createEmptyFile, createFileWithContents, getDirectory } from "@test";
 import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { define } from "./helper.ts";
 
 interface Context {
   root: FileSystemDirectoryHandle;
@@ -11,57 +9,27 @@ interface Context {
 
 describe("FileSystemHandle", () => {
   beforeEach<Context>(function () {
-    this.root = new FileSystemDirectoryHandle(
-      { kind: "directory", path: [""], root: "" },
-      define({
-        getBinaryData() {
-          return new Uint8Array();
-        },
-        getChildren() {
-          return [];
-        },
-        getModificationTimestamp() {
-          return Date.now();
-        },
-        queryAccess() {
-          return { permissionState: "granted", errorName: "" };
-        },
-        requestAccess() {
-          return { permissionState: "granted", errorName: "" };
-        },
-      }),
-    );
+    this.root = getDirectory();
   });
 
   describe("isSameEntry", () => {
-    it("isSameEntry for identical directory handles returns true", async () => {
-      const root = new FileSystemHandle({
-        kind: "directory",
-        path: [""],
-        root: "",
-      });
-
-      await expect(root.isSameEntry(root)).resolves.toBeTruthy();
-    });
+    it<Context>(
+      "isSameEntry for identical directory handles returns true",
+      async function () {
+        await expect(this.root.isSameEntry(this.root)).resolves.toBeTruthy();
+      },
+    );
   });
 
   describe("kind", () => {
-    it("should return directory or file", () => {
-      const root = new FileSystemHandle(
-        { kind: "directory", path: [""], root: "" },
-      );
-
-      expect(root.kind).toBe("directory");
+    it<Context>("should return directory or file", function () {
+      expect(this.root.kind).toBe("directory");
     });
   });
 
   describe("name", () => {
-    it("should return end of path segment", () => {
-      const root = new FileSystemHandle(
-        { kind: "directory", path: [""], root: "" },
-      );
-
-      expect(root.name).toBe("");
+    it<Context>("should return end of path segment", function () {
+      expect(this.root.name).toBe("");
     });
   });
 

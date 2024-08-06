@@ -6,8 +6,7 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { FileSystemSyncAccessHandle } from "./file_system_sync_access_handle.ts";
-import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { define } from "./helper.ts";
+import { getDirectory } from "@test";
 
 interface Context {
   handle: FileSystemSyncAccessHandle;
@@ -15,26 +14,7 @@ interface Context {
 
 describe("FileSystemSyncAccessHandle", () => {
   beforeEach<Context>(async function () {
-    const root = new FileSystemDirectoryHandle(
-      { kind: "directory", path: [""], root: "" },
-      define({
-        getBinaryData() {
-          return new Uint8Array();
-        },
-        getChildren() {
-          return [];
-        },
-        getModificationTimestamp() {
-          return Date.now();
-        },
-        queryAccess() {
-          return { permissionState: "granted", errorName: "" };
-        },
-        requestAccess() {
-          return { permissionState: "granted", errorName: "" };
-        },
-      }),
-    );
+    const root = getDirectory();
 
     const handle = await root.getFileHandle("file.txt", { create: true });
 

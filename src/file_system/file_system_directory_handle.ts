@@ -16,6 +16,7 @@ import type {
   FileSystemLocator,
   FileSystemRemoveOptions,
   UnderlyingFileSystem,
+  UserAgent,
 } from "./type.ts";
 import {
   createChildFileSystemFileHandle,
@@ -25,6 +26,7 @@ import {
   locator as $locator,
   registeredObserverList,
   root as $root,
+  userAgent as $userAgent,
 } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
@@ -41,10 +43,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
   constructor(
     locator: FileSystemLocator,
     private definition: Definition,
+    userAgent: UserAgent,
     private fs?: UnderlyingFileSystem,
     root?: FileSystemHandle,
   ) {
-    super(locator, root);
+    super(locator, userAgent, root);
   }
   override get kind(): "directory" {
     return "directory";
@@ -67,9 +70,13 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 4. Let global be this's relevant global object.
 
     // 5. Enqueue the following steps to the file system queue:
-    queueMicrotask(async () => {
+    this[$userAgent].fileSystemQueue.enqueue(async () => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
-      if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
+      if (!isValidFileName(name)) {
+        return this[$userAgent].storageTask.enqueue(() => {
+          reject(new TypeError(Msg.InvalidName));
+        });
+      }
 
       // 2. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(locator);
@@ -83,85 +90,91 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         : await entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
-
-      // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
-      if (accessResult && accessResult.permissionState !== "granted") {
-        return reject(new DOMException(accessResult.errorName));
-      }
-
-      // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
-      if (entry === null) {
-        return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-      }
-
-      // 3. Assert: entry is a directory entry.
-      assertDirectoryEntry(entry);
-
-      // 4. For each child of entry’s children:
-      for (const child of entry.children) {
-        // 1. If child’s name equals name:
-        if (child.name === name) {
-          // 1. If child is a file entry:
-          if (isFileEntry(child)) {
-            // 1. Reject result with a "TypeMismatchError" DOMException and abort these steps.
-            return reject(new DOMException(Msg.Mismatch, "TypeMismatchError"));
-          }
-
-          // 2. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm and abort these steps.
-          return resolve(
-            createChildFileSystemDirectoryHandle(locator, name, {
-              definition: this.definition,
-              fs: this.fs,
-              root: this[$root],
-            }),
-          );
+      this[$userAgent].storageTask.enqueue(async () => {
+        // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
+        if (accessResult && accessResult.permissionState !== "granted") {
+          return reject(new DOMException(accessResult.errorName));
         }
-      }
 
-      // 5. If options["create"] is false:
-      if (!options?.create) {
-        // 1. Reject result with a "NotFoundError" DOMException and abort these steps.
-        return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-      }
+        // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
+        if (entry === null) {
+          return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        }
 
-      // 6. Let child be a new directory entry whose query access and request access algorithms are those of entry.
-      const child = {
-        // 7. Set child’s name to name.
-        name,
-        queryAccess: entry.queryAccess.bind(entry),
-        requestAccess: entry.requestAccess.bind(entry),
-        // 8. Set child’s children to an empty set.
-        children: [],
-      } satisfies DirectoryEntry;
+        // 3. Assert: entry is a directory entry.
+        assertDirectoryEntry(entry);
 
-      // 9. Append child to entry’s children.
-      entry.children.push(child);
+        // 4. For each child of entry’s children:
+        for (const child of entry.children) {
+          // 1. If child’s name equals name:
+          if (child.name === name) {
+            // 1. If child is a file entry:
+            if (isFileEntry(child)) {
+              // 1. Reject result with a "TypeMismatchError" DOMException and abort these steps.
+              return reject(
+                new DOMException(Msg.Mismatch, "TypeMismatchError"),
+              );
+            }
 
-      const childLocator = createChildLocator(locator, child);
-      // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
-      try {
-        this.fs?.create(childLocator, child);
-      } catch (e) {
-        return reject(e);
-      }
+            // 2. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm and abort these steps.
+            return resolve(
+              createChildFileSystemDirectoryHandle(locator, name, {
+                definition: this.definition,
+                fs: this.fs,
+                root: this[$root],
+                userAgent: this[$userAgent],
+              }),
+            );
+          }
+        }
 
-      const handle = new FileSystemDirectoryHandle(
-        childLocator,
-        this.definition,
-        this.fs,
-        this[$root],
-      );
+        // 5. If options["create"] is false:
+        if (!options?.create) {
+          // 1. Reject result with a "NotFoundError" DOMException and abort these steps.
+          return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        }
 
-      await queueRecord(
-        this[registeredObserverList],
-        handle,
-        "appeared",
-        this[$root],
-        this.definition.agent,
-      );
+        // 6. Let child be a new directory entry whose query access and request access algorithms are those of entry.
+        const child = {
+          // 7. Set child’s name to name.
+          name,
+          queryAccess: entry.queryAccess.bind(entry),
+          requestAccess: entry.requestAccess.bind(entry),
+          // 8. Set child’s children to an empty set.
+          children: [],
+        } satisfies DirectoryEntry;
 
-      // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
-      resolve(handle);
+        // 9. Append child to entry’s children.
+        entry.children.push(child);
+
+        const childLocator = createChildLocator(locator, child);
+        // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
+        try {
+          this.fs?.create(childLocator, child);
+        } catch (e) {
+          return reject(e);
+        }
+
+        const handle = new FileSystemDirectoryHandle(
+          childLocator,
+          this.definition,
+          this[$userAgent],
+          this.fs,
+          this[$root],
+        );
+
+        await queueRecord(
+          this[registeredObserverList],
+          handle,
+          "appeared",
+          this[$root],
+          this.definition.agent,
+          this[$userAgent],
+        );
+
+        // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
+        resolve(handle);
+      });
     });
 
     // 6.  Return result.
@@ -181,7 +194,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     const realm = {
       FileSystemFileHandle,
       definition: this.definition,
+      userAgent: this[$userAgent],
       root: this[$root],
+      fs: this.fs,
     };
 
     // 3. Let locator be this's locator.
@@ -189,9 +204,13 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
-    queueMicrotask(async () => {
+    this[$userAgent].fileSystemQueue.enqueue(async () => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
-      if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
+      if (!isValidFileName(name)) {
+        return this[$userAgent].storageTask.enqueue(() => {
+          reject(new TypeError(Msg.InvalidName));
+        });
+      }
 
       // 2. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(locator);
@@ -205,83 +224,87 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         : await entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
-
-      // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
-      if (accessResult && accessResult.permissionState !== "granted") {
-        return reject(new DOMException(accessResult.errorName));
-      }
-
-      // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
-      if (entry === null) {
-        return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-      }
-
-      // 3. Assert: entry is a directory entry.
-      assertDirectoryEntry(entry);
-
-      // 4. For each child of entry’s children:
-      for (const child of entry.children) {
-        // 1. If child’s name equals name:
-        if (child.name === name) {
-          // 1. If child is a directory entry:
-          if (isDirectoryEntry(child)) {
-            // 1. Reject result with a "TypeMismatchError" DOMException and abort these steps.
-            return reject(new DOMException(Msg.Mismatch, "TypeMismatchError"));
-          }
-
-          // 2. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm and abort these steps.
-          return resolve(
-            createChildFileSystemFileHandle(locator, child.name, realm),
-          );
+      this[$userAgent].storageTask.enqueue(async () => {
+        // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
+        if (accessResult && accessResult.permissionState !== "granted") {
+          return reject(new DOMException(accessResult.errorName));
         }
-      }
 
-      // 5. If options["create"] is false:
-      if (!options?.create) {
-        // 1. Reject result with a "NotFoundError" DOMException and abort these steps.
-        return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-      }
+        // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
+        if (entry === null) {
+          return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        }
 
-      // 6. Let child be a new file entry whose query access and request access algorithms are those of entry.
-      const child = {
-        // 7. Set child’s name to name.
-        name,
-        // 8. Set child’s binary data to an empty byte sequence.
-        binaryData: new Uint8Array(0),
-        queryAccess: entry.queryAccess.bind(entry),
-        requestAccess: entry.requestAccess.bind(entry),
-        // 9. Set child’s modification timestamp to the current time.
-        modificationTimestamp: Date.now(),
-        sharedLockCount: 0,
-        lock: "open",
-      } satisfies FileEntry;
+        // 3. Assert: entry is a directory entry.
+        assertDirectoryEntry(entry);
 
-      // 10. Append child to entry’s children.
-      entry.children.push(child);
+        // 4. For each child of entry’s children:
+        for (const child of entry.children) {
+          // 1. If child’s name equals name:
+          if (child.name === name) {
+            // 1. If child is a directory entry:
+            if (isDirectoryEntry(child)) {
+              // 1. Reject result with a "TypeMismatchError" DOMException and abort these steps.
+              return reject(
+                new DOMException(Msg.Mismatch, "TypeMismatchError"),
+              );
+            }
 
-      const childLocator = createChildLocator(locator, child);
-      // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
-      try {
-        this.fs?.create(childLocator, child);
-      } catch (e) {
-        reject(e);
-      }
+            // 2. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm and abort these steps.
+            return resolve(
+              createChildFileSystemFileHandle(locator, child.name, realm),
+            );
+          }
+        }
 
-      const handle = createChildFileSystemFileHandle(
-        locator,
-        child.name,
-        realm,
-      );
-      await queueRecord(
-        this[registeredObserverList],
-        handle,
-        "appeared",
-        this[$root],
-        this.definition.agent,
-      );
+        // 5. If options["create"] is false:
+        if (!options?.create) {
+          // 1. Reject result with a "NotFoundError" DOMException and abort these steps.
+          return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        }
 
-      // 12. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm.
-      resolve(handle);
+        // 6. Let child be a new file entry whose query access and request access algorithms are those of entry.
+        const child = {
+          // 7. Set child’s name to name.
+          name,
+          // 8. Set child’s binary data to an empty byte sequence.
+          binaryData: new Uint8Array(0),
+          queryAccess: entry.queryAccess.bind(entry),
+          requestAccess: entry.requestAccess.bind(entry),
+          // 9. Set child’s modification timestamp to the current time.
+          modificationTimestamp: Date.now(),
+          sharedLockCount: 0,
+          lock: "open",
+        } satisfies FileEntry;
+
+        // 10. Append child to entry’s children.
+        entry.children.push(child);
+
+        const childLocator = createChildLocator(locator, child);
+        // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
+        try {
+          this.fs?.create(childLocator, child);
+        } catch (e) {
+          reject(e);
+        }
+
+        const handle = createChildFileSystemFileHandle(
+          locator,
+          child.name,
+          realm,
+        );
+        await queueRecord(
+          this[registeredObserverList],
+          handle,
+          "appeared",
+          this[$root],
+          this.definition.agent,
+          this[$userAgent],
+        );
+
+        // 12. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm.
+        resolve(handle);
+      });
     });
 
     // 6. Return result.
@@ -298,9 +321,13 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    queueMicrotask(async () => {
+    this[$userAgent].fileSystemQueue.enqueue(async () => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
-      if (!isValidFileName(name)) return reject(new TypeError(Msg.InvalidName));
+      if (!isValidFileName(name)) {
+        return this[$userAgent].storageTask.enqueue(() => {
+          reject(new TypeError(Msg.InvalidName));
+        });
+      }
 
       // 2. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(locator);
@@ -309,69 +336,71 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       const accessResult = await entry?.requestAccess("readwrite");
 
       // 4. Queue a storage task with global to run these steps:
-
-      // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
-      if (accessResult && accessResult.permissionState !== "granted") {
-        return reject(new DOMException(accessResult.errorName));
-      }
-
-      // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
-      if (entry === null) {
-        return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-      }
-
-      // 3. Assert: entry is a directory entry.
-      assertDirectoryEntry(entry);
-
-      // 4. For each child of entry’s children:
-      for (const child of entry.children) {
-        // 1. If child’s name equals name:
-        if (child.name === name) {
-          // 1. If child is a directory entry:
-          if (isDirectoryEntry(child)) {
-            // 1. If child’s children is not empty and options["recursive"] is false:
-            if (child.children.length && !options?.recursive) {
-              // 1. Reject result with an "InvalidModificationError" DOMException and abort these steps.
-              return reject(
-                new DOMException(
-                  Msg.InvalidModification,
-                  "InvalidModificationError",
-                ),
-              );
-            }
-          }
-
-          const handle = (await findHandle(this, child))!; // This is probably guaranteed.
-
-          // 2. Remove child from entry’s children.
-          entry.children = entry.children.filter((entry) =>
-            child.name !== entry.name
-          );
-
-          const childLocator = createChildLocator(locator, child);
-
-          // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
-          try {
-            this.fs?.remove(childLocator);
-          } catch (e) {
-            return reject(e);
-          }
-
-          await queueRecord(
-            this[registeredObserverList],
-            handle,
-            "disappeared",
-            this[$root],
-            this.definition.agent,
-          );
-
-          // 4. Resolve result with undefined.
-          return resolve();
+      this[$userAgent].storageTask.enqueue(async () => {
+        // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
+        if (accessResult && accessResult.permissionState !== "granted") {
+          return reject(new DOMException(accessResult.errorName));
         }
-      }
 
-      // 5. Reject result with a "NotFoundError" DOMException.
-      reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
+        if (entry === null) {
+          return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        }
+
+        // 3. Assert: entry is a directory entry.
+        assertDirectoryEntry(entry);
+
+        // 4. For each child of entry’s children:
+        for (const child of entry.children) {
+          // 1. If child’s name equals name:
+          if (child.name === name) {
+            // 1. If child is a directory entry:
+            if (isDirectoryEntry(child)) {
+              // 1. If child’s children is not empty and options["recursive"] is false:
+              if (child.children.length && !options?.recursive) {
+                // 1. Reject result with an "InvalidModificationError" DOMException and abort these steps.
+                return reject(
+                  new DOMException(
+                    Msg.InvalidModification,
+                    "InvalidModificationError",
+                  ),
+                );
+              }
+            }
+
+            const handle = (await findHandle(this, child))!; // This is probably guaranteed.
+
+            // 2. Remove child from entry’s children.
+            entry.children = entry.children.filter((entry) =>
+              child.name !== entry.name
+            );
+
+            const childLocator = createChildLocator(locator, child);
+
+            // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
+            try {
+              this.fs?.remove(childLocator);
+            } catch (e) {
+              return reject(e);
+            }
+
+            await queueRecord(
+              this[registeredObserverList],
+              handle,
+              "disappeared",
+              this[$root],
+              this.definition.agent,
+              this[$userAgent],
+            );
+
+            // 4. Resolve result with undefined.
+            return resolve();
+          }
+        }
+
+        // 5. Reject result with a "NotFoundError" DOMException.
+        reject(new DOMException(Msg.NotFound, "NotFoundError"));
+      });
     });
 
     // 5. Return result.
@@ -382,7 +411,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     possibleDescendant: FileSystemHandle,
   ): Promise<string[] | null> {
     // steps are to return the result of resolving possibleDescendant’s locator relative to this's locator.
-    return resolveLocator(possibleDescendant[$locator], this[$locator]);
+    return resolveLocator(
+      possibleDescendant[$locator],
+      this[$locator],
+      this[$userAgent],
+    );
   }
 }
 
@@ -406,6 +439,7 @@ function next(
   const fs = handle["fs"];
   const definition = handle["definition"];
   const root = handle[$root];
+  const userAgent = handle[$userAgent];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<
@@ -415,7 +449,7 @@ function next(
   >();
 
   // // 2. Enqueue the following steps to the file system queue:
-  queueMicrotask(async () => {
+  userAgent.fileSystemQueue.enqueue(async () => {
     // // 1. Let directory be the result of locating an entry given handle’s locator.
     const directory = definition.locateEntry(locator);
 
@@ -423,54 +457,57 @@ function next(
     const accessResult = await directory?.queryAccess("read");
 
     // // 3. Queue a storage task with handle’s relevant global object to run these steps:
+    userAgent.storageTask.enqueue(() => {
+      // // 1. If accessResult’s permission state is not "granted", reject promise with a DOMException of accessResult’s error name and abort these steps.:
+      if (accessResult && accessResult.permissionState !== "granted") {
+        return reject(new DOMException(accessResult.errorName));
+      }
 
-    // // 1. If accessResult’s permission state is not "granted", reject promise with a DOMException of accessResult’s error name and abort these steps.:
-    if (accessResult && accessResult.permissionState !== "granted") {
-      return reject(new DOMException(accessResult.errorName));
-    }
+      // // 2. If directory is null, reject result with a "NotFoundError" DOMException and abort these steps.
+      if (directory === null) {
+        return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+      }
 
-    // // 2. If directory is null, reject result with a "NotFoundError" DOMException and abort these steps.
-    if (directory === null) {
-      return reject(new DOMException(Msg.NotFound, "NotFoundError"));
-    }
+      // // 1. Assert: directory is a directory entry.
+      assertDirectoryEntry(directory);
 
-    // // 1. Assert: directory is a directory entry.
-    assertDirectoryEntry(directory);
+      // // 3. Let child be a file system entry in directory’s children, such that child’s name is not contained in iterator’s past results, or null if no such entry exists.
+      const child = directory.children.find((child) =>
+        !new Set(iterator.pastResults).has(child.name)
+      ) ??
+        null;
 
-    // // 3. Let child be a file system entry in directory’s children, such that child’s name is not contained in iterator’s past results, or null if no such entry exists.
-    const child = directory.children.find((child) =>
-      !new Set(iterator.pastResults).has(child.name)
-    ) ??
-      null;
+      // // 4. If child is null, resolve promise with undefined and abort these steps.
+      if (child === null) {
+        return resolve({ done: true, value: undefined });
+      }
 
-    // // 4. If child is null, resolve promise with undefined and abort these steps.
-    if (child === null) {
-      return resolve({ done: true, value: undefined });
-    }
+      // // 5. Append child’s name to iterator’s past results.
+      iterator.pastResults.append(child.name);
 
-    // // 5. Append child’s name to iterator’s past results.
-    iterator.pastResults.append(child.name);
+      let result: FileSystemFileHandle | FileSystemDirectoryHandle;
+      // 6. If child is a file entry:
+      if (isFileEntry(child)) {
+        // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
+        result = createChildFileSystemFileHandle(locator, child.name, {
+          definition,
+          root,
+          userAgent,
+          fs,
+        });
+      } // 7. Otherwise:
+      else {
+        // 1. Let result be the result of creating a child FileSystemDirectoryHandle with handle’s locator and child’s name in handle’s relevant Realm.
+        result = createChildFileSystemDirectoryHandle(
+          locator,
+          child.name,
+          { definition, fs, root, userAgent },
+        );
+      }
 
-    let result: FileSystemFileHandle | FileSystemDirectoryHandle;
-    // 6. If child is a file entry:
-    if (isFileEntry(child)) {
-      // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
-      result = createChildFileSystemFileHandle(locator, child.name, {
-        definition,
-        root,
-      });
-    } // 7. Otherwise:
-    else {
-      // 1. Let result be the result of creating a child FileSystemDirectoryHandle with handle’s locator and child’s name in handle’s relevant Realm.
-      result = createChildFileSystemDirectoryHandle(
-        locator,
-        child.name,
-        { definition, fs, root },
-      );
-    }
-
-    // 8. Resolve promise with (child’s name, result).
-    resolve({ done: false, value: [child.name, result] });
+      // 8. Resolve promise with (child’s name, result).
+      resolve({ done: false, value: [child.name, result] });
+    });
   });
 
   // 3. Return promise.
@@ -488,6 +525,7 @@ export function createChildFileSystemDirectoryHandle(
     definition: Definition;
     fs?: UnderlyingFileSystem;
     root: FileSystemHandle;
+    userAgent: UserAgent;
   },
 ): FileSystemDirectoryHandle {
   // 2. Let childType be "directory".
@@ -509,6 +547,7 @@ export function createChildFileSystemDirectoryHandle(
   const handle = new FileSystemDirectoryHandle(
     locator,
     realm.definition,
+    realm.userAgent,
     realm.fs,
     realm.root,
   );
@@ -523,12 +562,14 @@ export function createFileSystemDirectoryHandle(
   realm: {
     definition: Definition;
     fs?: UnderlyingFileSystem;
+    userAgent: UserAgent;
   },
 ): FileSystemDirectoryHandle {
   const locator = { kind: "directory", root, path } satisfies FileSystemLocator;
   const handle = new FileSystemDirectoryHandle(
     locator,
     realm.definition,
+    realm.userAgent,
     realm.fs,
   );
 

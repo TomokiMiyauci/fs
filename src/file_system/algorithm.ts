@@ -3,6 +3,7 @@ import type {
   FileEntry,
   FileSystemEntry,
   FileSystemLocator,
+  UserAgent,
 } from "./type.ts";
 
 export function isValidFileName(fileName: string): boolean {
@@ -31,11 +32,13 @@ export function isFileEntry(
 export function resolveLocator(
   child: FileSystemLocator,
   root: FileSystemLocator,
+  userAgent: UserAgent,
 ): Promise<string[] | null> {
   // 1. Let result be a new promise.
   const { promise, resolve } = Promise.withResolvers<string[] | null>();
+
   // 2. Enqueue the following steps to the file system queue:
-  queueMicrotask(() => {
+  userAgent.fileSystemQueue.enqueue(() => {
     // 1. If child’s locator's root is not root’s locator's root, resolve result with null, and abort these steps. // maybe type miss
     // 1. If child’s root is not root’s root, resolve result with null, and abort these steps.
     if (child.root !== root.root) return resolve(null);
@@ -50,7 +53,6 @@ export function resolveLocator(
     if (isSamePath(childPath, rootPath)) return resolve([]);
 
     // 5. If rootPath’s size is greater than childPath’s size, resolve result with null, and abort these steps.
-
     if (rootPath.length > childPath.length) return resolve([]);
 
     // 6. For each index of rootPath’s indices:

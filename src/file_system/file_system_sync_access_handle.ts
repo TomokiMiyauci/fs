@@ -6,6 +6,7 @@ import type {
   FileSystemLocator,
   FileSystemReadWriteOptions,
   UnderlyingFileSystem,
+  UserAgent,
 } from "./type.ts";
 import { file as $file, locator as $locator, state } from "./symbol.ts";
 
@@ -26,6 +27,7 @@ export class FileSystemSyncAccessHandle {
   constructor(
     locator: FileSystemLocator,
     entry: FileEntry,
+    private userAgent: UserAgent,
     private fs?: UnderlyingFileSystem,
   ) {
     this[$locator] = locator;
@@ -256,7 +258,7 @@ export class FileSystemSyncAccessHandle {
     const file = this[$file];
 
     // 5. Enqueue the following steps to the file system queue:
-    queueMicrotask(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. Release the lock on file.
       releaseLock(file);
 
@@ -288,11 +290,12 @@ function isUnsignedLongLong(value: number): boolean {
 export function createFileSystemSyncAccessHandle(
   locator: FileSystemLocator,
   file: FileEntry,
+  userAgent: UserAgent,
   fs?: UnderlyingFileSystem,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle(locator, file, fs);
+  const handle = new FileSystemSyncAccessHandle(locator, file, userAgent, fs);
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";

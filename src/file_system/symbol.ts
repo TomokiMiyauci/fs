@@ -7,3 +7,4 @@ export const registeredObserverList = Symbol("[[registeredObserverList]]");
 export const recordQueue = Symbol("[[recordQueue]]");
 export const callback = Symbol("[[callback]]");
 export const state = Symbol("[[state]]");
+export const userAgent = Symbol("[[userAgent]]");
