@@ -68,7 +68,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 4. Let global be this's relevant global object.
 
     // 5. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(async () => {
+    this[$userAgent].fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
         return this[$userAgent].storageTask.enqueue(() => {
@@ -84,8 +84,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 4. Otherwise:
       // 1. Let accessResult be the result of running entry’s query access given "read".
       const accessResult = options?.create
-        ? await entry?.requestAccess("readwrite")
-        : await entry?.queryAccess("read");
+        ? entry?.requestAccess("readwrite")
+        : entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
       this[$userAgent].storageTask.enqueue(async () => {
@@ -198,7 +198,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(async () => {
+    this[$userAgent].fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
         return this[$userAgent].storageTask.enqueue(() => {
@@ -214,8 +214,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       // 4. Otherwise:
       // 1. Let accessResult be the result of running entry’s query access given "read".
       const accessResult = options?.create
-        ? await entry?.queryAccess("readwrite")
-        : await entry?.queryAccess("read");
+        ? entry?.queryAccess("readwrite")
+        : entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
       this[$userAgent].storageTask.enqueue(async () => {
@@ -312,7 +312,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(async () => {
+    this[$userAgent].fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
         return this[$userAgent].storageTask.enqueue(() => {
@@ -324,7 +324,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       const entry = this.definition.locateEntry(locator);
 
       // 3. Let accessResult be the result of running entry’s request access given "readwrite".
-      const accessResult = await entry?.requestAccess("readwrite");
+      const accessResult = entry?.requestAccess("readwrite");
 
       // 4. Queue a storage task with global to run these steps:
       this[$userAgent].storageTask.enqueue(async () => {
@@ -433,12 +433,12 @@ function next(
   >();
 
   // // 2. Enqueue the following steps to the file system queue:
-  userAgent.fileSystemQueue.enqueue(async () => {
+  userAgent.fileSystemQueue.enqueue(() => {
     // // 1. Let directory be the result of locating an entry given handle’s locator.
     const directory = definition.locateEntry(locator);
 
     // // 2. Let accessResult be the result of running directory’s query access given "read".
-    const accessResult = await directory?.queryAccess("read");
+    const accessResult = directory?.queryAccess("read");
 
     // // 3. Queue a storage task with handle’s relevant global object to run these steps:
     userAgent.storageTask.enqueue(() => {

@@ -18,7 +18,6 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
-// import { BlobDataItem } from "./blob.ts";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
@@ -43,12 +42,12 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    this[userAgent].fileSystemQueue.enqueue(async () => {
+    this[userAgent].fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s query access given "read".
-      const accessResult = await entry?.queryAccess("read");
+      const accessResult = entry?.queryAccess("read");
 
       // 3. Queue a storage task with global to run these steps:
       this[userAgent].storageTask.enqueue(() => {
@@ -107,12 +106,12 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
     // 5. Enqueue the following steps to the file system queue:
 
-    this[userAgent].fileSystemQueue.enqueue(async () => {
+    this[userAgent].fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
-      const accessResult = await entry?.requestAccess("readwrite");
+      const accessResult = entry?.requestAccess("readwrite");
 
       // 3. If accessResult’s permission state is not "granted", queue a storage task with global to reject result with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {
@@ -185,12 +184,12 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 5. Let isInABucketFileSystem be true if this is in a bucket file system; otherwise false.
 
     // 6. Enqueue the following steps to the file system queue:
-    this[userAgent].fileSystemQueue.enqueue(async () => {
+    this[userAgent].fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
       const entry = this.definition.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
-      const accessResult = await entry?.requestAccess("readwrite");
+      const accessResult = entry?.requestAccess("readwrite");
 
       // 3. If accessResult’s permission state is not "granted", queue a storage task with global to reject result with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {

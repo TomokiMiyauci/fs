@@ -1,4 +1,4 @@
-import { OrderedSet } from "@miyauci/infra";
+import { List, OrderedSet } from "@miyauci/infra";
 import type { Agent } from "./observer.ts";
 
 export interface FileSystemGetFileOptions {
@@ -17,6 +17,9 @@ export interface FileSystemCreateWritableOptions {
   keepExistingData?: boolean;
 }
 
+/**
+ * @see https://fs.spec.whatwg.org/#enumdef-filesystemhandlekind
+ */
 export type FileSystemHandleKind = "directory" | "file";
 
 export type AllowSharedBufferSource = ArrayBuffer | ArrayBufferView;
@@ -51,16 +54,12 @@ interface BaseEntry {
   /**
    * @see https://fs.spec.whatwg.org/#entry-query-access
    */
-  queryAccess(
-    mode: AccessMode,
-  ): FileSystemAccessResult | Promise<FileSystemAccessResult>;
+  queryAccess(mode: AccessMode): FileSystemAccessResult;
 
   /**
    * @see https://fs.spec.whatwg.org/#entry-request-access
    */
-  requestAccess(
-    mode: AccessMode,
-  ): FileSystemAccessResult | Promise<FileSystemAccessResult>;
+  requestAccess(mode: AccessMode): FileSystemAccessResult;
 }
 
 export type AccessMode = "read" | "readwrite";
@@ -112,12 +111,12 @@ export interface FileSystemAccessResult {
   /**
    * @see https://fs.spec.whatwg.org/#file-system-access-result-permission-state
    */
-  permissionState: PermissionState;
+  readonly permissionState: PermissionState;
 
   /** A string which must be the empty string if {@link permissionState permission state} is "granted"; otherwise an name listed in the DOMException names table. It is expected that in most cases when {@link permissionState permission state} is not "granted", this should be "NotAllowedError".
    * @see https://fs.spec.whatwg.org/#file-system-access-result-error-name
    */
-  errorName: string;
+  readonly errorName: string;
 }
 
 /** A potential location of a {@link FileSystemEntry file system entry}.
@@ -130,18 +129,28 @@ interface BaseLocator {
   /**
    * @see https://fs.spec.whatwg.org/#locator-path
    */
-  path: string[];
+  readonly path: FileSystemPath;
 
   /**
    * @see https://fs.spec.whatwg.org/#locator-kind
    */
-  kind: FileSystemHandleKind;
+  readonly kind: FileSystemHandleKind;
 
   /**
    * @see https://fs.spec.whatwg.org/#locator-root
    */
-  root: string;
+  readonly root: FileSystemRoot;
 }
+
+/** A list of one or more strings.
+ * @see https://fs.spec.whatwg.org/#file-system-path
+ */
+export type FileSystemPath = string[]; // TODO: List
+
+/** An opaque string whose value is implementation-defined.
+ * @see https://fs.spec.whatwg.org/#file-system-root
+ */
+export type FileSystemRoot = string;
 
 /**
  * @see https://fs.spec.whatwg.org/#directory-locator
@@ -150,7 +159,7 @@ export interface DirectoryLocator extends BaseLocator {
   /**
    * @see https://fs.spec.whatwg.org/#locator-kind
    */
-  kind: "directory";
+  readonly kind: "directory";
 }
 
 /**
@@ -160,7 +169,7 @@ export interface FileLocator extends BaseLocator {
   /**
    * @see https://fs.spec.whatwg.org/#locator-kind
    */
-  kind: "file";
+  readonly kind: "file";
 }
 
 export interface Definition {
