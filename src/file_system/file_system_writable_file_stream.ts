@@ -3,14 +3,12 @@ import { releaseLock } from "./algorithm.ts";
 import type {
   FileEntry,
   FileSystemWriteChunkType,
-  UnderlyingFileSystem,
   UserAgent,
   WriteParams,
 } from "./type.ts";
 import {
   buffer,
   file as $file,
-  locator,
   registeredObserverList,
   seekOffset,
 } from "./symbol.ts";
@@ -77,7 +75,6 @@ export class FileSystemWritableFileStream
 export function createFileSystemWritableFileStream(
   file: FileEntry,
   context: {
-    fs?: UnderlyingFileSystem;
     agent: Agent;
     root: FileSystemHandle;
     handle: FileSystemHandle;
@@ -110,10 +107,12 @@ export function createFileSystemWritableFileStream(
 
         // 2. Run implementation-defined malware scans and safe browsing checks. If these checks fail, reject closeResult with an "AbortError" DOMException and abort these steps.
 
-        // 3. Set stream’s [[file]]'s binary data to stream’s [[buffer]]. If that throws an exception, reject closeResult with that exception and abort these steps.
-        stream[$file].binaryData = stream[buffer];
-
-        context.fs?.write(context.handle[locator], stream[$file]);
+        try {
+          // 3. Set stream’s [[file]]'s binary data to stream’s [[buffer]]. If that throws an exception, reject closeResult with that exception and abort these steps.
+          stream[$file].binaryData = stream[buffer];
+        } catch (e) {
+          return reject(e);
+        }
 
         queueRecord(
           context.handle[registeredObserverList],

@@ -5,7 +5,6 @@ import type {
   FileSystemCreateWritableOptions,
   FileSystemEntry,
   FileSystemLocator,
-  UnderlyingFileSystem,
   UserAgent,
 } from "./type.ts";
 import { takeLock } from "./algorithm.ts";
@@ -26,7 +25,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
     locator: FileSystemLocator,
     private definition: Definition,
     userAgent: UserAgent,
-    private fs?: UnderlyingFileSystem,
     root?: FileSystemHandle,
   ) {
     super(locator, userAgent, root);
@@ -150,7 +148,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
         // 2. Let stream be the result of creating a new FileSystemWritableFileStream for entry in realm.
         const stream = createFileSystemWritableFileStream(entry, {
-          fs: this.fs,
           handle: this,
           root: this[root],
           agent: this.definition.agent,
@@ -234,7 +231,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
           fsLocator,
           entry,
           this[userAgent],
-          this.fs,
         );
 
         // 3. Resolve result with handle.
@@ -255,7 +251,6 @@ export function createChildFileSystemFileHandle(
   realm: {
     definition: Definition;
     root: FileSystemHandle;
-    fs?: UnderlyingFileSystem;
     userAgent: UserAgent;
   },
 ): FileSystemFileHandle {
@@ -278,7 +273,6 @@ export function createChildFileSystemFileHandle(
     locator,
     realm.definition,
     realm.userAgent,
-    realm.fs,
     realm.root,
   );
 
@@ -291,7 +285,6 @@ export function createFileSystemFileHandle(
   path: string[],
   definition: Definition,
   userAgent: UserAgent,
-  fs?: UnderlyingFileSystem,
 ): FileSystemFileHandle {
   const locator = {
     kind: "file",
@@ -305,7 +298,6 @@ export function createFileSystemFileHandle(
     locator,
     definition,
     userAgent,
-    fs,
   );
 
   // 3. Return handle.

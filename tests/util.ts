@@ -5,12 +5,16 @@ import {
 } from "../src/file_system/file_system_directory_handle.ts";
 import {
   type DirectoryEntry,
+  FileEntry,
   type FileSystemEntry,
   type FileSystemLocator,
   type FileSystemWriteChunkType,
   ParallelQueue,
+  PartialOrderedSet,
 } from "../src/file_system/type.ts";
-import { OrderedSet } from "../src/infra/mod.ts";
+import { OrderedSet } from "@miyauci/infra";
+import { isDirectoryEntry } from "@miyauci/file-system";
+import { VirtualFileSystem } from "./virtual.ts";
 
 export interface Context {
   root: FileSystemDirectoryHandle;
@@ -63,41 +67,30 @@ export function createDirectory(
 export const pathSeparators = ["/", "\\"];
 
 export function getDirectory(): FileSystemDirectoryHandle {
-  const directory = {
-    children: [],
-    name: "",
-    queryAccess: () => ({ permissionState: "granted", errorName: "" }),
-    requestAccess: () => ({ permissionState: "granted", errorName: "" }),
-  } satisfies DirectoryEntry;
-
   const rootLocator = {
     root: "",
     path: [""],
     kind: "directory",
   } satisfies FileSystemLocator;
 
-  const locatorEntry = new LocatorEntry();
-  locatorEntry.set(rootLocator, directory);
+  const vfs = new VirtualFileSystem();
+
+  vfs.mkdir(rootLocator.path);
 
   return createFileSystemDirectoryHandle(rootLocator.root, rootLocator.path, {
     definition: {
       locateEntry(locator) {
-        return locatorEntry.get(locator);
+        const source = vfs.getSource(locator.path);
+
+        if (!source) return null;
+
+        if (source instanceof Map) return renderDirectory(locator, vfs);
+        return createFileEntry(locator, vfs);
       },
       agent: {
         pendingFileSystemObservers: new OrderedSet(),
         fileSystemObserverMicrotaskQueued: false,
       },
-    },
-    fs: {
-      create(locator, entry) {
-        locatorEntry.set(locator, entry);
-      },
-      remove(locator) {
-        locatorEntry.delete(locator);
-      },
-
-      write() {},
     },
     userAgent: {
       fileSystemQueue: new ParallelQueue(),
@@ -106,61 +99,90 @@ export function getDirectory(): FileSystemDirectoryHandle {
   });
 }
 
-interface MappedEntry {
-  child: LocatorEntry;
-  entry: FileSystemEntry;
+function renderDirectory(
+  locator: FileSystemLocator,
+  vfs: VirtualFileSystem,
+): DirectoryEntry {
+  return {
+    get children(): PartialOrderedSet<FileSystemEntry> {
+      return {
+        append(item) {
+          const paths = locator.path.concat(item.name);
+
+          if (isDirectoryEntry(item)) {
+            vfs.mkdir(paths);
+          } else {
+            vfs.touch(paths);
+          }
+        },
+        remove(item) {
+          const paths = locator.path.concat(item.name);
+
+          vfs.remove(paths);
+        },
+
+        get isEmpty(): boolean {
+          for (const _ of this[Symbol.iterator]()) return false;
+
+          return true;
+        },
+
+        *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+          for (const item of vfs.readDir(locator.path)) {
+            if (item.isFile) {
+              yield createFileEntry({
+                kind: "file",
+                root: locator.root,
+                path: locator.path.concat(item.name),
+              }, vfs);
+            } else {
+              yield renderDirectory({
+                kind: "directory",
+                root: locator.root,
+                path: locator.path.concat(item.name),
+              }, vfs);
+            }
+          }
+        },
+      };
+    },
+    name: locator.path[locator.path.length - 1],
+    queryAccess() {
+      return { permissionState: "granted", errorName: "" };
+    },
+    requestAccess() {
+      return { permissionState: "granted", errorName: "" };
+    },
+  };
 }
 
-class LocatorEntry {
-  #map: Map<string, MappedEntry> = new Map();
-  get(locator: FileSystemLocator): FileSystemEntry | null {
-    const [first, ...rest] = locator.path;
+function createFileEntry(
+  locator: FileSystemLocator,
+  vfs: VirtualFileSystem,
+): FileEntry {
+  const paths = locator.path;
 
-    if (this.#map.has(first)) {
-      const { entry, child } = this.#map.get(first)!;
+  return {
+    get modificationTimestamp() {
+      return vfs.stat(paths).lastModified;
+    },
 
-      if (!rest.length) return entry;
+    name: locator.path[locator.path.length - 1],
+    get binaryData() {
+      return vfs.readFile(paths);
+    },
 
-      return child.get({ ...locator, path: rest });
-    }
+    set binaryData(value: Uint8Array) {
+      vfs.writeFile(paths, value);
+    },
 
-    return null;
-  }
-
-  set(locator: FileSystemLocator, entry: FileSystemEntry): void {
-    const [first, ...rest] = locator.path;
-    const result = this.#map.get(first);
-
-    if (result) {
-      if (rest.length) {
-        result.child.set({ ...locator, path: rest }, entry);
-      } else {
-        result.entry = entry;
-      }
-
-      return;
-    }
-
-    if (rest.length) throw new Error();
-
-    this.#map.set(first, { entry, child: new LocatorEntry() });
-  }
-
-  delete(locator: FileSystemLocator): void {
-    const [first, ...rest] = locator.path;
-
-    const result = this.#map.get(first);
-
-    if (result) {
-      if (rest.length) {
-        result.child.delete({ ...locator, path: rest });
-      } else {
-        this.#map.delete(first);
-      }
-
-      return;
-    }
-
-    throw new Error();
-  }
+    lock: "open",
+    queryAccess() {
+      return { permissionState: "granted", errorName: "" };
+    },
+    requestAccess() {
+      return { permissionState: "granted", errorName: "" };
+    },
+    sharedLockCount: 0,
+  };
 }

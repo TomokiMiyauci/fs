@@ -1,3 +1,4 @@
+import { OrderedSet } from "@miyauci/infra";
 import type { Agent } from "./observer.ts";
 
 export interface FileSystemGetFileOptions {
@@ -45,7 +46,7 @@ interface BaseEntry {
   /**
    * @see https://fs.spec.whatwg.org/#entry-name
    */
-  name: string;
+  readonly name: string;
 
   /**
    * @see https://fs.spec.whatwg.org/#entry-query-access
@@ -68,7 +69,8 @@ export interface FileEntry extends BaseEntry {
   /**
    * @see https://fs.spec.whatwg.org/#file-entry-binary-data
    */
-  binaryData: Uint8Array;
+  get binaryData(): Uint8Array;
+  set binaryData(value: Uint8Array);
 
   /** A number representing the number of milliseconds since the Unix Epoch.
    * @see https://fs.spec.whatwg.org/#file-entry-modification-timestamp
@@ -86,11 +88,16 @@ export interface FileEntry extends BaseEntry {
   sharedLockCount: number;
 }
 
+export type PartialOrderedSet<T> = Pick<
+  OrderedSet<T>,
+  "append" | "isEmpty" | "remove" | typeof Symbol.iterator
+>;
+
 export interface DirectoryEntry extends BaseEntry {
   /** File system entries.
    * @see https://fs.spec.whatwg.org/#directory-entry-children
    */
-  children: FileSystemEntry[];
+  readonly children: PartialOrderedSet<FileSystemEntry>;
 }
 
 /**
@@ -154,12 +161,6 @@ export interface FileLocator extends BaseLocator {
    * @see https://fs.spec.whatwg.org/#locator-kind
    */
   kind: "file";
-}
-
-export interface UnderlyingFileSystem {
-  create(locator: FileSystemLocator, entry: FileSystemEntry): void;
-  remove(locator: FileSystemLocator): void;
-  write(locator: FileSystemLocator, entry: FileEntry): void;
 }
 
 export interface Definition {

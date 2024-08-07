@@ -15,7 +15,6 @@ import type {
   FileSystemGetFileOptions,
   FileSystemLocator,
   FileSystemRemoveOptions,
-  UnderlyingFileSystem,
   UserAgent,
 } from "./type.ts";
 import {
@@ -44,7 +43,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     locator: FileSystemLocator,
     private definition: Definition,
     userAgent: UserAgent,
-    private fs?: UnderlyingFileSystem,
     root?: FileSystemHandle,
   ) {
     super(locator, userAgent, root);
@@ -120,7 +118,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             return resolve(
               createChildFileSystemDirectoryHandle(locator, name, {
                 definition: this.definition,
-                fs: this.fs,
                 root: this[$root],
                 userAgent: this[$userAgent],
               }),
@@ -141,25 +138,23 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           queryAccess: entry.queryAccess.bind(entry),
           requestAccess: entry.requestAccess.bind(entry),
           // 8. Set child’s children to an empty set.
-          children: [],
+          children: new OrderedSet(),
         } satisfies DirectoryEntry;
 
-        // 9. Append child to entry’s children.
-        entry.children.push(child);
-
-        const childLocator = createChildLocator(locator, child);
-        // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
         try {
-          this.fs?.create(childLocator, child);
+          // 9. Append child to entry’s children.
+          entry.children.append(child);
         } catch (e) {
+          // 10. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
           return reject(e);
         }
+
+        const childLocator = createChildLocator(locator, child);
 
         const handle = new FileSystemDirectoryHandle(
           childLocator,
           this.definition,
           this[$userAgent],
-          this.fs,
           this[$root],
         );
 
@@ -196,7 +191,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       definition: this.definition,
       userAgent: this[$userAgent],
       root: this[$root],
-      fs: this.fs,
     };
 
     // 3. Let locator be this's locator.
@@ -277,14 +271,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           lock: "open",
         } satisfies FileEntry;
 
-        // 10. Append child to entry’s children.
-        entry.children.push(child);
-
-        const childLocator = createChildLocator(locator, child);
-        // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
         try {
-          this.fs?.create(childLocator, child);
+          // 10. Append child to entry’s children.
+          entry.children.append(child);
         } catch (e) {
+          // 11. If creating child in the underlying file system throws an exception, reject result with that exception and abort these steps.
           reject(e);
         }
 
@@ -357,7 +348,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             // 1. If child is a directory entry:
             if (isDirectoryEntry(child)) {
               // 1. If child’s children is not empty and options["recursive"] is false:
-              if (child.children.length && !options?.recursive) {
+              if (!child.children.isEmpty && !options?.recursive) {
                 // 1. Reject result with an "InvalidModificationError" DOMException and abort these steps.
                 return reject(
                   new DOMException(
@@ -370,17 +361,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
             const handle = (await findHandle(this, child))!; // This is probably guaranteed.
 
-            // 2. Remove child from entry’s children.
-            entry.children = entry.children.filter((entry) =>
-              child.name !== entry.name
-            );
-
-            const childLocator = createChildLocator(locator, child);
-
-            // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
             try {
-              this.fs?.remove(childLocator);
+              // 2. Remove child from entry’s children.
+              entry.children.remove(child);
             } catch (e) {
+              // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
               return reject(e);
             }
 
@@ -436,7 +421,6 @@ function next(
     & IterationContext,
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
   const locator = handle[$locator];
-  const fs = handle["fs"];
   const definition = handle["definition"];
   const root = handle[$root];
   const userAgent = handle[$userAgent];
@@ -471,16 +455,18 @@ function next(
       // // 1. Assert: directory is a directory entry.
       assertDirectoryEntry(directory);
 
+      const names = new Set(iterator.pastResults);
       // // 3. Let child be a file system entry in directory’s children, such that child’s name is not contained in iterator’s past results, or null if no such entry exists.
-      const child = directory.children.find((child) =>
-        !new Set(iterator.pastResults).has(child.name)
-      ) ??
-        null;
+      const child = find(directory.children) ?? null;
+
+      function find(
+        iter: Iterable<FileSystemEntry>,
+      ): FileSystemEntry | undefined {
+        for (const item of iter) if (!names.has(item.name)) return item;
+      }
 
       // // 4. If child is null, resolve promise with undefined and abort these steps.
-      if (child === null) {
-        return resolve({ done: true, value: undefined });
-      }
+      if (child === null) return resolve({ done: true, value: undefined });
 
       // // 5. Append child’s name to iterator’s past results.
       iterator.pastResults.append(child.name);
@@ -493,7 +479,6 @@ function next(
           definition,
           root,
           userAgent,
-          fs,
         });
       } // 7. Otherwise:
       else {
@@ -501,7 +486,7 @@ function next(
         result = createChildFileSystemDirectoryHandle(
           locator,
           child.name,
-          { definition, fs, root, userAgent },
+          { definition, root, userAgent },
         );
       }
 
@@ -523,7 +508,6 @@ export function createChildFileSystemDirectoryHandle(
   name: string,
   realm: {
     definition: Definition;
-    fs?: UnderlyingFileSystem;
     root: FileSystemHandle;
     userAgent: UserAgent;
   },
@@ -548,7 +532,6 @@ export function createChildFileSystemDirectoryHandle(
     locator,
     realm.definition,
     realm.userAgent,
-    realm.fs,
     realm.root,
   );
 
@@ -561,7 +544,6 @@ export function createFileSystemDirectoryHandle(
   path: string[],
   realm: {
     definition: Definition;
-    fs?: UnderlyingFileSystem;
     userAgent: UserAgent;
   },
 ): FileSystemDirectoryHandle {
@@ -570,7 +552,6 @@ export function createFileSystemDirectoryHandle(
     locator,
     realm.definition,
     realm.userAgent,
-    realm.fs,
   );
 
   return handle;

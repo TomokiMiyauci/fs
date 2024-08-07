@@ -33,6 +33,10 @@ export class OrderedSet<T> {
     this.#set.clear();
   }
 
+  remove(item: T): void {
+    this.#set.delete(item);
+  }
+
   /** Return list size. O(1)
    *
    * [Infra Living Standard](https://infra.spec.whatwg.org/#list-size)

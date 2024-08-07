@@ -5,7 +5,6 @@ import type {
   FileEntry,
   FileSystemLocator,
   FileSystemReadWriteOptions,
-  UnderlyingFileSystem,
   UserAgent,
 } from "./type.ts";
 import { file as $file, locator as $locator, state } from "./symbol.ts";
@@ -28,7 +27,6 @@ export class FileSystemSyncAccessHandle {
     locator: FileSystemLocator,
     entry: FileEntry,
     private userAgent: UserAgent,
-    private fs?: UnderlyingFileSystem,
   ) {
     this[$locator] = locator;
     this[$file] = entry;
@@ -159,7 +157,6 @@ export class FileSystemSyncAccessHandle {
       // 13. Set this's [[file]]'s binary data to the concatenation of head, the contents of buffer and tail.
       this[$file].binaryData = concat([head, contentsOf(buffer), tail]);
 
-      this.fs?.write(this[$locator], this[$file]);
       // 14. If the operations modifying the this's[[file]]'s binary data in the previous steps failed:
     } catch {
       // 1. If there were partial writes and the number of bytes that were written from buffer is known:
@@ -205,8 +202,6 @@ export class FileSystemSyncAccessHandle {
           fileContents.slice(0, newSize),
           new Uint8Array(newSize - oldSize),
         ]);
-
-        this.fs?.write(this[$locator], this[$file]);
       } catch {
         // 3. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
         throw new DOMException("InvalidStateError");
@@ -217,8 +212,6 @@ export class FileSystemSyncAccessHandle {
       try {
         // 1. Set this's [[file]]'s to a byte sequence containing the first newSize bytes in fileContents.
         this[$file].binaryData = fileContents.slice(0, newSize);
-
-        this.fs?.write(this[$locator], this[$file]);
       } catch {
         // 2. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
         throw new DOMException("InvalidStateError");
@@ -291,11 +284,10 @@ export function createFileSystemSyncAccessHandle(
   locator: FileSystemLocator,
   file: FileEntry,
   userAgent: UserAgent,
-  fs?: UnderlyingFileSystem,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle(locator, file, userAgent, fs);
+  const handle = new FileSystemSyncAccessHandle(locator, file, userAgent);
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";
