@@ -18,6 +18,7 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
+import { List } from "@miyauci/infra";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
@@ -260,7 +261,8 @@ export function createChildFileSystemFileHandle(
   const childRoot = parentLocator.root;
 
   // 4. Let childPath be the result of cloning parentLocator’s path and appending name.
-  const childPath = parentLocator.path.concat(name);
+  const childPath = parentLocator.path.clone();
+  childPath.append(name);
   const locator = {
     kind: childType,
     root: childRoot,
@@ -281,7 +283,7 @@ export function createChildFileSystemFileHandle(
 
 export function createFileSystemFileHandle(
   root: string,
-  path: string[],
+  path: List<string>,
   definition: Definition,
   userAgent: UserAgent,
 ): FileSystemFileHandle {

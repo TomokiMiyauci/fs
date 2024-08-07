@@ -1,4 +1,4 @@
-import { OrderedSet } from "@miyauci/infra";
+import { List, OrderedSet } from "@miyauci/infra";
 import { FileSystemHandle } from "./file_system_handle.ts";
 import {
   isDirectoryEntry,
@@ -519,7 +519,9 @@ export function createChildFileSystemDirectoryHandle(
   const childRoot = parentLocator.root;
 
   // 4. Let childPath be the result of cloning parentLocator’s path and appending name.
-  const childPath = parentLocator.path.concat(name);
+  const childPath = parentLocator.path.clone();
+  childPath.append(name);
+
   const locator = {
     kind: childType,
     root: childRoot,
@@ -541,7 +543,7 @@ export function createChildFileSystemDirectoryHandle(
 
 export function createFileSystemDirectoryHandle(
   root: string,
-  path: string[],
+  path: List<string>,
   realm: {
     definition: Definition;
     userAgent: UserAgent;
@@ -561,7 +563,8 @@ function createChildLocator(
   locator: FileSystemLocator,
   entry: FileSystemEntry,
 ): FileSystemLocator {
-  const path = locator.path.concat(entry.name);
+  const path = locator.path.clone();
+  path.append(entry.name);
   const root = locator.root;
 
   const kind = isDirectoryEntry(entry) ? "directory" : "file";

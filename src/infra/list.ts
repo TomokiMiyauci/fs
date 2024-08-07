@@ -1,34 +1,40 @@
-export class List<T> {
-  #item: T[] = [];
+export class List<T> extends Array<T> {
+  [index: number]: T;
 
   get isEmpty(): boolean {
-    return !this.#item.length;
+    return !this.size;
+  }
+
+  get size(): number {
+    return this.length;
   }
 
   append(item: T): void {
-    this.#item.push(item);
+    super.push(item);
   }
 
   prepend(item: T): void {
-    this.#item.unshift(item);
+    super.unshift(item);
   }
 
   [Symbol.iterator](): IterableIterator<T> {
-    return this.#item[Symbol.iterator]();
+    return super[Symbol.iterator]();
   }
 
   empty(): void {
-    this.#item.length = 0;
+    super.length = 0;
   }
 
   remove(condition: (item: T) => boolean): void {
-    this.#item = this.#item.filter((item) => !condition(item));
+    for (const [index, item] of super.toSorted().entries()) {
+      if (condition(item)) super.splice(index, 1);
+    }
   }
 
   clone(): List<T> {
     const list = new List<T>();
 
-    for (const item of this.#item) list.append(item);
+    for (const item of this) list.append(item);
 
     return list;
   }

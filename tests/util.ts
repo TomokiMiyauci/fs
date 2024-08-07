@@ -12,7 +12,7 @@ import {
   ParallelQueue,
   PartialOrderedSet,
 } from "../src/file_system/type.ts";
-import { OrderedSet } from "@miyauci/infra";
+import { List, OrderedSet } from "@miyauci/infra";
 import { isDirectoryEntry } from "@miyauci/file-system";
 import { VirtualFileSystem } from "./virtual.ts";
 
@@ -69,7 +69,7 @@ export const pathSeparators = ["/", "\\"];
 export function getDirectory(): FileSystemDirectoryHandle {
   const rootLocator = {
     root: "",
-    path: [""],
+    path: new List(""),
     kind: "directory",
   } satisfies FileSystemLocator;
 
@@ -129,24 +129,27 @@ function renderDirectory(
 
         *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
           for (const item of vfs.readDir(locator.path)) {
+            const path = locator.path.clone();
+            path.append(item.name);
+
             if (item.isFile) {
               yield createFileEntry({
                 kind: "file",
                 root: locator.root,
-                path: locator.path.concat(item.name),
+                path,
               }, vfs);
             } else {
               yield renderDirectory({
                 kind: "directory",
                 root: locator.root,
-                path: locator.path.concat(item.name),
+                path,
               }, vfs);
             }
           }
         },
       };
     },
-    name: locator.path[locator.path.length - 1],
+    name: locator.path[locator.path.size - 1],
     queryAccess() {
       return { permissionState: "granted", errorName: "" };
     },

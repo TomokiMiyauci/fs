@@ -145,7 +145,7 @@ interface BaseLocator {
 /** A list of one or more strings.
  * @see https://fs.spec.whatwg.org/#file-system-path
  */
-export type FileSystemPath = string[]; // TODO: List
+export type FileSystemPath = List<string>;
 
 /** An opaque string whose value is implementation-defined.
  * @see https://fs.spec.whatwg.org/#file-system-root
