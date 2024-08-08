@@ -5,8 +5,8 @@ import type {
   FileEntry,
   FileSystemLocator,
   FileSystemReadWriteOptions,
-  UserAgent,
 } from "./type.ts";
+import type { UserAgent } from "./observer.ts";
 import { file as $file, locator as $locator, state } from "./symbol.ts";
 
 export class FileSystemSyncAccessHandle {

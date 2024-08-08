@@ -6,7 +6,6 @@ import type { List, OrderedSet, Queue } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { resolveLocator } from "./algorithm.ts";
 import { callback, locator, recordQueue } from "./symbol.ts";
-import { UserAgent } from "./type.ts";
 
 export interface FileSystemObserverCallback {
   (records: FileSystemChangeRecord[], observer: FileSystemObserver): void;
@@ -134,4 +133,13 @@ export interface WindowAgent {
    * @default new OrderedSet()
    */
   pendingFileSystemObservers: OrderedSet<FileSystemObserver>;
+}
+
+export interface UserAgent extends WindowAgent {
+  fileSystemQueue: ParallelQueue;
+  storageTask: ParallelQueue;
+}
+
+export interface ParallelQueue {
+  enqueue(algorithm: () => void): void;
 }

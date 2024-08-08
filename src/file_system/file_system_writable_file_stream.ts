@@ -3,9 +3,9 @@ import { releaseLock } from "./algorithm.ts";
 import type {
   FileEntry,
   FileSystemWriteChunkType,
-  UserAgent,
   WriteParams,
 } from "./type.ts";
+import type { UserAgent } from "./observer.ts";
 import {
   buffer,
   file as $file,

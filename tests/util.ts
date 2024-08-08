@@ -9,12 +9,12 @@ import {
   type FileSystemEntry,
   type FileSystemLocator,
   type FileSystemWriteChunkType,
-  ParallelQueue,
   PartialOrderedSet,
 } from "../src/file_system/type.ts";
-import { List, OrderedSet } from "@miyauci/infra";
+import { List } from "@miyauci/infra";
 import { isDirectoryEntry } from "@miyauci/file-system";
 import { VirtualFileSystem } from "./virtual.ts";
+import { UserAgent } from "../src/file_system/helper.ts";
 
 export interface Context {
   root: FileSystemDirectoryHandle;
@@ -88,12 +88,7 @@ export function getDirectory(): FileSystemDirectoryHandle {
         return createFileEntry(locator, vfs);
       },
     },
-    userAgent: {
-      pendingFileSystemObservers: new OrderedSet(),
-      fileSystemObserverMicrotaskQueued: false,
-      fileSystemQueue: new ParallelQueue(),
-      storageTask: new ParallelQueue(),
-    },
+    userAgent: new UserAgent(),
   });
 }
 

@@ -1,12 +1,12 @@
 import { FileSystemHandle } from "./file_system_handle.ts";
 import type {
-  Definition,
   FileEntry,
   FileSystemCreateWritableOptions,
   FileSystemEntry,
   FileSystemLocator,
-  UserAgent,
 } from "./type.ts";
+import type { Definition } from "./definition.ts";
+import type { UserAgent } from "./observer.ts";
 import { takeLock } from "./algorithm.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { buffer, locator, root, userAgent } from "./symbol.ts";

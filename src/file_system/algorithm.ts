@@ -3,8 +3,8 @@ import type {
   FileEntry,
   FileSystemEntry,
   FileSystemLocator,
-  UserAgent,
 } from "./type.ts";
+import type { UserAgent } from "./observer.ts";
 
 export function isValidFileName(fileName: string): boolean {
   // a string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.

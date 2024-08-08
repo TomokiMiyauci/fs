@@ -7,7 +7,6 @@ import {
   resolveLocator,
 } from "./algorithm.ts";
 import type {
-  Definition,
   DirectoryEntry,
   FileEntry,
   FileSystemEntry,
@@ -15,8 +14,9 @@ import type {
   FileSystemGetFileOptions,
   FileSystemLocator,
   FileSystemRemoveOptions,
-  UserAgent,
 } from "./type.ts";
+import type { Definition } from "./definition.ts";
+import type { UserAgent } from "./observer.ts";
 import {
   createChildFileSystemFileHandle,
   FileSystemFileHandle,

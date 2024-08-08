@@ -1,10 +1,7 @@
 import { isSameLocator } from "./algorithm.ts";
 import type { RegisteredObserver } from "./observer.ts";
-import type {
-  FileSystemHandleKind,
-  FileSystemLocator,
-  UserAgent,
-} from "./type.ts";
+import type { FileSystemHandleKind, FileSystemLocator } from "./type.ts";
+import type { UserAgent } from "./observer.ts";
 import {
   locator as $locator,
   registeredObserverList as $registeredObserverList,

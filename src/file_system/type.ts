@@ -1,5 +1,4 @@
 import { List, OrderedSet } from "@miyauci/infra";
-import type { WindowAgent } from "./observer.ts";
 
 export interface FileSystemGetFileOptions {
   create?: boolean;
@@ -170,19 +169,4 @@ export interface FileLocator extends BaseLocator {
    * @see https://fs.spec.whatwg.org/#locator-kind
    */
   readonly kind: "file";
-}
-
-export interface Definition {
-  locateEntry(locator: FileSystemLocator): FileSystemEntry | null;
-}
-
-export interface UserAgent extends WindowAgent {
-  fileSystemQueue: ParallelQueue;
-  storageTask: ParallelQueue;
-}
-
-export class ParallelQueue {
-  enqueue(algorithm: () => void): void {
-    queueMicrotask(algorithm);
-  }
 }
