@@ -10,8 +10,6 @@ import type { UserAgent } from "./observer.ts";
 import { takeLock } from "./algorithm.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { buffer, locator, root, userAgent } from "./symbol.ts";
-import { extname } from "@std/path";
-import { typeByExtension } from "@std/media-types";
 import {
   createFileSystemSyncAccessHandle,
   type FileSystemSyncAccessHandle,
@@ -69,7 +67,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         // 5. Set f’s snapshot state to the current state of entry.
         // 6. Set f’s underlying byte sequence to a copy of entry’s binary data.
         // 9. Set f’s type to an implementation-defined value, based on for example entry’s name or its file extension.
-        const type = typeByExtension(extname(entry.name));
+        const type = this.definition.typeByEntry(entry);
 
         // `getFile` reads binaries at the time of the `getFile` call, according to the current specification.
         // @see https://github.com/whatwg/fs/issues/157

@@ -15,6 +15,8 @@ import { List } from "@miyauci/infra";
 import { isDirectoryEntry } from "@miyauci/file-system";
 import { VirtualFileSystem } from "./virtual.ts";
 import { UserAgent } from "../src/file_system/helper.ts";
+import { extname } from "@std/path";
+import { typeByExtension } from "@std/media-types";
 
 export interface Context {
   root: FileSystemDirectoryHandle;
@@ -86,6 +88,10 @@ export function getDirectory(): FileSystemDirectoryHandle {
 
         if (source instanceof Map) return renderDirectory(locator, vfs);
         return createFileEntry(locator, vfs);
+      },
+
+      typeByEntry(entry) {
+        return typeByExtension(extname(entry.name));
       },
     },
     userAgent: new UserAgent(),
