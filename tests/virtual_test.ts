@@ -169,4 +169,25 @@ describe("VirtualFileSystem", () => {
       },
     );
   });
+
+  describe("writeFile", () => {
+    it<Context>(
+      "should throw error if resource does not exist",
+      function () {
+        expect(() => this.fs.writeFile([""], new Uint8Array())).toThrow();
+      },
+    );
+    it<Context>("should throw error if resource is not file", function () {
+      this.fs.createDirectory([""]);
+
+      expect(() => this.fs.writeFile([""], new Uint8Array())).toThrow();
+    });
+    it<Context>("should update data", function () {
+      this.fs.createFile([""]);
+
+      this.fs.writeFile([""], new Uint8Array(3));
+
+      expect(this.fs.readFile([""])).toEqual(new Uint8Array(3));
+    });
+  });
 });

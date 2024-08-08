@@ -57,13 +57,20 @@ export class VirtualFileSystem {
     return { lastModified: maybe.lastModified };
   }
 
+  /** Write file contents in the specified path.
+   *
+   * @throws {Error} If the file does not exist.
+   * @throws {Error} If the resource is not a file.
+   */
   writeFile(keys: string[], value: Uint8Array): void {
-    const maybe = this.get(keys, this.map);
+    const [key, parent] = this.getParentDir(keys);
 
-    if (!maybe) throw new Error("not found");
-    if (maybe instanceof Map) throw new Error();
+    const resource = parent.get(key);
 
-    maybe.data = value;
+    if (!resource) throw new Error(Msg.NotFound);
+    if (resource instanceof Map) throw new Error(Msg.IsDirectory);
+
+    resource.data = value.slice();
   }
 
   /** Gets a file contents in the specified path.
@@ -159,7 +166,7 @@ function headTail<T>(input: T[]): [head: T[], tail: T] {
 }
 
 export interface FileHeader {
-  lastModified: number;
+  readonly lastModified: number;
 }
 
 export interface FileInfo extends FileHeader {
