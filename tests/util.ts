@@ -75,7 +75,7 @@ export function getDirectory(): FileSystemDirectoryHandle {
 
   const vfs = new VirtualFileSystem();
 
-  vfs.mkdir(rootLocator.path);
+  vfs.createDirectory(rootLocator.path);
 
   return createFileSystemDirectoryHandle(rootLocator.root, rootLocator.path, {
     definition: {
@@ -109,11 +109,8 @@ function renderDirectory(
         append(item) {
           const paths = locator.path.concat(item.name);
 
-          if (isDirectoryEntry(item)) {
-            vfs.mkdir(paths);
-          } else {
-            vfs.touch(paths);
-          }
+          if (isDirectoryEntry(item)) vfs.createDirectory(paths);
+          else vfs.createFile(paths);
         },
         remove(item) {
           const paths = locator.path.concat(item.name);
@@ -128,7 +125,7 @@ function renderDirectory(
         },
 
         *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-          for (const item of vfs.readDir(locator.path)) {
+          for (const item of vfs.readDirectory(locator.path)) {
             const path = locator.path.clone();
             path.append(item.name);
 

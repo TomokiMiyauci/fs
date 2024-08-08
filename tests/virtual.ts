@@ -3,25 +3,24 @@ type Structure = Map<string, FileInfo | Structure>;
 export class VirtualFileSystem {
   private map: Structure = new Map();
 
-  remove(keys: string[]) {
-    if (keys.length <= 1) {
-      const key = keys[0];
+  /** Removes resource of a given path. */
+  remove(keys: string[]): void {
+    const [key, parent] = this.getParentDir(keys);
 
-      this.map.delete(key);
-      return;
-    }
+    parent.delete(key);
+  }
+
+  private getParentDir(keys: string[]): [childKey: string, Structure] {
+    if (keys.length <= 1) return [keys[0], this.map];
 
     const [head, tail] = headTail(keys);
 
     const parent = this.get(head, this.map);
 
-    if (!parent) {
-      //
-    } else if (parent instanceof Map) {
-      parent.delete(tail);
-    } else {
-      throw new Error("delete");
-    }
+    if (!parent) throw new Error(Msg.NotFound);
+    if (parent instanceof Map) return [tail, parent];
+
+    throw new Error(Msg.NotDirectory);
   }
 
   private get(keys: string[], map: Structure): FileInfo | Structure | null {
@@ -49,41 +48,6 @@ export class VirtualFileSystem {
     return this.get(keys, this.map);
   }
 
-  readDir(keys: string[]): Iterable<DirEntry> {
-    const maybe = this.get(keys, this.map);
-
-    if (!maybe) throw new Error();
-    if (!(maybe instanceof Map)) throw new Error();
-
-    return {
-      *[Symbol.iterator](): Iterator<DirEntry> {
-        for (const [name, value] of maybe) {
-          if (value instanceof Map) {
-            yield {
-              get isDirectory() {
-                return true;
-              },
-              get isFile() {
-                return false;
-              },
-              name,
-            };
-          } else {
-            yield {
-              get isDirectory() {
-                return false;
-              },
-              get isFile() {
-                return true;
-              },
-              name,
-            };
-          }
-        }
-      },
-    };
-  }
-
   stat(paths: string[]): FileHeader {
     const maybe = this.get(paths, this.map);
 
@@ -102,89 +66,87 @@ export class VirtualFileSystem {
     maybe.data = value;
   }
 
+  /** Gets a file contents in the specified path.
+   *
+   * @throws {Error} If the file does not exist.
+   * @throws {Error} If the resource is not a file.
+   */
   readFile(keys: string[]): Uint8Array {
-    const maybe = this.get(keys, this.map);
+    const [key, parent] = this.getParentDir(keys);
+    const resource = parent.get(key);
 
-    if (!maybe) throw new Error();
-    if (maybe instanceof Map) throw new Error();
+    if (!resource) throw new Error(Msg.NotFound);
+    if (resource instanceof Map) throw new Error(Msg.IsDirectory);
 
-    return maybe.data;
+    return resource.data;
   }
 
-  mkdir(keys: string[]): void {
-    const [head, tail] = headTail(keys);
+  /** Gets a directory in the specified path.
+   *
+   * @throws {Error} If the directory does not exist.
+   * @throws {Error} If the resource is not a directory.
+   */
+  readDirectory(keys: string[]): Iterable<DirEntry> {
+    const [key, parent] = this.getParentDir(keys);
+    const child = parent.get(key);
 
-    if (!head.length) {
-      const result = this.map.get(tail);
-
-      if (!result) {
-        this.map.set(tail, new Map());
-        return;
-      } else if (result instanceof Map) {
-        return;
-        // loop
-      } else {
-        throw new Error("it is already exist but it is file");
-      }
-    }
-
-    const result = this.get(head, this.map);
-
-    if (result instanceof Map) {
-      const child = result.get(tail);
-
-      if (child instanceof Map) {
-        // loop
-      } else if (!child) {
-        result.set(tail, new Map());
-      } else {
-        throw new Error("it is already exist but it is file");
-      }
-    } else if (!result) {
-      throw new Error("parent is not exist");
-    } else {
-      throw new Error("parent is not directory");
-    }
+    if (!child) throw new Error(Msg.NotFound);
+    if (child instanceof Map) {
+      return {
+        *[Symbol.iterator](): Iterator<DirEntry> {
+          for (const [name, value] of child) {
+            if (value instanceof Map) {
+              yield {
+                get isDirectory() {
+                  return true;
+                },
+                get isFile() {
+                  return false;
+                },
+                name,
+              };
+            } else {
+              yield {
+                get isDirectory() {
+                  return false;
+                },
+                get isFile() {
+                  return true;
+                },
+                name,
+              };
+            }
+          }
+        },
+      };
+    } else throw new Error(Msg.IsFile);
   }
 
-  touch(keys: string[]): void {
-    if (keys.length <= 1) {
-      const result = this.map.get(keys[0]);
+  /** Create a file in the specified path.
+   *
+   * @throws {Error} If the resource already exists and it is a directory.
+   */
+  createFile(keys: string[]): void {
+    const [key, parent] = this.getParentDir(keys);
+    const resource = parent.get(key);
 
-      if (!result) {
-        this.map.set(keys[0], {
-          data: new Uint8Array(),
-          lastModified: Date.now(),
-        });
-        return;
-      } else if (result instanceof Map) {
-        throw new Error("it is already exit");
-      } else {
-        // noop
-        return;
-      }
-    }
+    if (!resource) {
+      parent.set(key, { data: new Uint8Array(), lastModified: Date.now() });
+    } else if (resource instanceof Map) throw new Error(Msg.IsDirectory);
+  }
 
-    const [head, tail] = headTail(keys);
+  /** Create a directory in the specified path.
+   *
+   * @throws {Error} If the resource already exists and it is a file.
+   */
+  createDirectory(keys: string[]): void {
+    const [key, parent] = this.getParentDir(keys);
+    const resource = parent.get(key);
 
-    const result = this.get(head, this.map);
-
-    if (result instanceof Map) {
-      const child = result.get(tail);
-
-      if (child instanceof Map) {
-        throw new Error("it is already exist but it is file");
-      } else if (!child) {
-        result.set(tail, { data: new Uint8Array(), lastModified: Date.now() });
-      } else {
-        return;
-        // noop
-      }
-    } else if (!result) {
-      throw new Error("parent is not exist");
-    } else {
-      throw new Error("parent is not directory");
-    }
+    if (!resource) parent.set(key, new Map());
+    else if (resource instanceof Map) {
+      //
+    } else throw new Error(Msg.IsFile);
   }
 }
 
@@ -208,4 +170,12 @@ export interface DirEntry {
   get isDirectory(): boolean;
   get isFile(): boolean;
   readonly name: string;
+}
+
+const enum Msg {
+  IsDirectory = "Is a directory",
+  IsFile = "Is a file",
+  AlreadyExists = "File exists",
+  NotFound = "No such file or directory",
+  NotDirectory = "Not a directory",
 }
