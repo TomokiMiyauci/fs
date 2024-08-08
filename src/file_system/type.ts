@@ -1,5 +1,5 @@
 import { List, OrderedSet } from "@miyauci/infra";
-import type { Agent } from "./observer.ts";
+import type { WindowAgent } from "./observer.ts";
 
 export interface FileSystemGetFileOptions {
   create?: boolean;
@@ -174,11 +174,9 @@ export interface FileLocator extends BaseLocator {
 
 export interface Definition {
   locateEntry(locator: FileSystemLocator): FileSystemEntry | null;
-
-  agent: Agent;
 }
 
-export interface UserAgent {
+export interface UserAgent extends WindowAgent {
   fileSystemQueue: ParallelQueue;
   storageTask: ParallelQueue;
 }

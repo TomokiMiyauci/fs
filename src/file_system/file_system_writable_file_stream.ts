@@ -13,7 +13,7 @@ import {
   seekOffset,
 } from "./symbol.ts";
 import { Msg } from "./constant.ts";
-import { Agent, queueRecord } from "./observer.ts";
+import { queueRecord } from "./observer.ts";
 import { FileSystemHandle } from "./file_system_handle.ts";
 
 export class FileSystemWritableFileStream
@@ -75,7 +75,6 @@ export class FileSystemWritableFileStream
 export function createFileSystemWritableFileStream(
   file: FileEntry,
   context: {
-    agent: Agent;
     root: FileSystemHandle;
     handle: FileSystemHandle;
     userAgent: UserAgent;
@@ -94,9 +93,9 @@ export function createFileSystemWritableFileStream(
     >();
 
     // 2. Enqueue the following steps to the file system queue:
-    context.userAgent.fileSystemQueue.enqueue(async () => {
+    context.userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let accessResult be the result of running file’s query access given "readwrite".
-      const accessResult = await file.queryAccess("readwrite");
+      const accessResult = file.queryAccess("readwrite");
 
       // 2. Queue a storage task with file’s relevant global object to run these steps:
       context.userAgent.storageTask.enqueue(() => {
@@ -119,7 +118,6 @@ export function createFileSystemWritableFileStream(
           context.handle,
           "modified",
           context.root,
-          context.agent,
           context.userAgent,
         );
 

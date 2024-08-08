@@ -87,12 +87,10 @@ export function getDirectory(): FileSystemDirectoryHandle {
         if (source instanceof Map) return renderDirectory(locator, vfs);
         return createFileEntry(locator, vfs);
       },
-      agent: {
-        pendingFileSystemObservers: new OrderedSet(),
-        fileSystemObserverMicrotaskQueued: false,
-      },
     },
     userAgent: {
+      pendingFileSystemObservers: new OrderedSet(),
+      fileSystemObserverMicrotaskQueued: false,
       fileSystemQueue: new ParallelQueue(),
       storageTask: new ParallelQueue(),
     },

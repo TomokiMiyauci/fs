@@ -150,7 +150,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
         const stream = createFileSystemWritableFileStream(entry, {
           handle: this,
           root: this[root],
-          agent: this.definition.agent,
           userAgent: this[userAgent],
         });
 

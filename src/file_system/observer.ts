@@ -61,7 +61,6 @@ export async function queueRecord(
   handle: FileSystemHandle,
   type: FileSystemChangeType,
   root: FileSystemHandle,
-  agent: Agent,
   userAgent: UserAgent,
 ): Promise<void> {
   const interestedObservers = new Set<FileSystemObserver>();
@@ -85,14 +84,14 @@ export async function queueRecord(
 
     observer[recordQueue].enqueue(record);
 
-    agent.pendingFileSystemObservers.append(observer);
+    userAgent.pendingFileSystemObservers.append(observer);
   }
 
   // queue
-  queue(agent);
+  queue(userAgent);
 }
 
-export function queue(agent: Agent): void {
+export function queue(agent: WindowAgent): void {
   if (agent.fileSystemObserverMicrotaskQueued) return;
 
   agent.fileSystemObserverMicrotaskQueued = true;
@@ -100,7 +99,7 @@ export function queue(agent: Agent): void {
   queueMicrotask(() => notify(agent));
 }
 
-function notify(agent: Agent): void {
+function notify(agent: WindowAgent): void {
   agent.fileSystemObserverMicrotaskQueued = false;
 
   const notifySet = agent.pendingFileSystemObservers.clone();
@@ -125,7 +124,7 @@ function notify(agent: Agent): void {
 /**
  * Reference @see https://dom.spec.whatwg.org/#mutation-observers
  */
-export interface Agent {
+export interface WindowAgent {
   /**
    * @default false
    */

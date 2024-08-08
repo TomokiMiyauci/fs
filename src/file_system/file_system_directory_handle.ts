@@ -163,7 +163,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           handle,
           "appeared",
           this[$root],
-          this.definition.agent,
           this[$userAgent],
         );
 
@@ -289,7 +288,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           handle,
           "appeared",
           this[$root],
-          this.definition.agent,
           this[$userAgent],
         );
 
@@ -374,7 +372,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
               handle,
               "disappeared",
               this[$root],
-              this.definition.agent,
               this[$userAgent],
             );
 
