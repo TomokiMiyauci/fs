@@ -6,6 +6,9 @@ import type {
 } from "./type.ts";
 import type { UserAgent } from "./observer.ts";
 
+/**
+ * @see https://fs.spec.whatwg.org/#valid-file-name
+ */
 export function isValidFileName(fileName: string): boolean {
   // a string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.
   if (!fileName) return false;
@@ -29,6 +32,9 @@ export function isFileEntry(
   return "binaryData" in entry;
 }
 
+/**
+ * @see https://fs.spec.whatwg.org/#locator-resolve
+ */
 export function resolveLocator(
   child: FileSystemLocator,
   root: FileSystemLocator,
