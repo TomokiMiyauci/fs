@@ -389,15 +389,19 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
-  resolve(
+  async resolve(
     possibleDescendant: FileSystemHandle,
   ): Promise<string[] | null> {
     // steps are to return the result of resolving possibleDescendant’s locator relative to this's locator.
-    return resolveLocator(
+    const result = await resolveLocator(
       possibleDescendant[$locator],
       this[$locator],
       this[$userAgent],
     );
+
+    if (result) return [...result];
+
+    return result;
   }
 }
 

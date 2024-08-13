@@ -2,7 +2,7 @@
  * @see https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md
  */
 
-import type { List, OrderedSet, Queue } from "@miyauci/infra";
+import { List, OrderedSet, Queue } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { resolveLocator } from "./algorithm.ts";
 import { callback, locator, recordQueue } from "./symbol.ts";
@@ -64,7 +64,8 @@ export async function queueRecord(
 ): Promise<void> {
   const interestedObservers = new Set<FileSystemObserver>();
   const relativePathComponents =
-    (await resolveLocator(handle[locator], root[locator], userAgent)) ?? [];
+    (await resolveLocator(handle[locator], root[locator], userAgent)) ??
+      new List();
 
   for (const registered of registeredList) {
     // TODO: treat options.recursive
@@ -78,7 +79,7 @@ export async function queueRecord(
       type,
       changedHandle: handle,
       root,
-      relativePathComponents,
+      relativePathComponents: [...relativePathComponents],
     } satisfies FileSystemChangeRecord;
 
     observer[recordQueue].enqueue(record);

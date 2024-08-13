@@ -5,6 +5,7 @@ import type {
   FileSystemLocator,
 } from "./type.ts";
 import type { UserAgent } from "./observer.ts";
+import { List, range } from "@miyauci/infra";
 
 /**
  * @see https://fs.spec.whatwg.org/#valid-file-name
@@ -39,9 +40,9 @@ export function resolveLocator(
   child: FileSystemLocator,
   root: FileSystemLocator,
   userAgent: UserAgent,
-): Promise<string[] | null> {
+): Promise<List<string> | null> {
   // 1. Let result be a new promise.
-  const { promise, resolve } = Promise.withResolvers<string[] | null>();
+  const { promise, resolve } = Promise.withResolvers<List<string> | null>();
 
   // 2. Enqueue the following steps to the file system queue:
   userAgent.fileSystemQueue.enqueue(() => {
@@ -56,23 +57,23 @@ export function resolveLocator(
     const rootPath = root.path;
 
     // 4. If childPath is the same path as rootPath, resolve result with « », and abort these steps.
-    if (isSamePath(childPath, rootPath)) return resolve([]);
+    if (isSamePath(childPath, rootPath)) return resolve(new List());
 
     // 5. If rootPath’s size is greater than childPath’s size, resolve result with null, and abort these steps.
-    if (rootPath.length > childPath.length) return resolve([]);
+    if (rootPath.size > childPath.size) return resolve(null);
 
     // 6. For each index of rootPath’s indices:
-    for (const index of rootPath.keys()) {
+    for (const index of rootPath.indices()) {
       // 1. If rootPath.\[[index]] is not childPath.\[[index]], then resolve result with null, and abort these steps.
       if (rootPath[index] !== childPath[index]) return resolve(null);
     }
 
     // 7. Let relativePath be « ».
-    const relativePath: string[] = [];
+    const relativePath = new List<string>();
 
     // 8. For each index of the range from rootPath’s size to rootPath’s size, exclusive, append childPath.\[[index]] to relativePath.
-    for (const index of exclusiveRange(rootPath.length, childPath.length)) {
-      relativePath.push(childPath[index]);
+    for (const index of range(rootPath.size, childPath.size, "exclusive")) {
+      relativePath.append(childPath[index]);
     }
 
     // 9. Resolve result with relativePath.
@@ -86,23 +87,15 @@ export function resolveLocator(
 /**
  * @see https://fs.spec.whatwg.org/#file-system-path-the-same-path-as
  */
-export function isSamePath(a: string[], b: string[]): boolean {
+export function isSamePath(a: List<string>, b: List<string>): boolean {
   // if a’s size is the same as b’s size and for each index of a’s indices a.\[[index]] is b.\[[index]].
-  return a.length === b.length &&
-    a.every((aValue, index) => aValue === b[index]);
-}
+  if (a.size !== b.size) return false;
 
-function exclusiveRange(n: number, m: number): number[] {
-  // If m equals n, then it creates an empty ordered set.
-  if (m === n) return [];
-
-  const items: number[] = [];
-  // creates a new ordered set containing all of the integers from n up to and including m − 1 in consecutively increasing order, as long as m is greater than n.
-  for (let i = n; i < m; i++) {
-    items.push(i);
+  for (const index of a.indices()) {
+    if (a[index] !== b[index]) return false;
   }
 
-  return items;
+  return true;
 }
 
 /**

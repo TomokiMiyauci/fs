@@ -27,7 +27,7 @@ export class FileSystemHandle {
 
   get name(): string {
     // steps are to return the last item (a string) of this's locator's path.
-    return this[$locator].path[this[$locator].path.length - 1];
+    return this[$locator].path[this[$locator].path.size - 1];
   }
 
   isSameEntry(other: FileSystemHandle): Promise<boolean> {

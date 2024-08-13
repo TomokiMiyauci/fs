@@ -11,12 +11,12 @@ import {
   type FileSystemWriteChunkType,
   PartialOrderedSet,
 } from "../src/file_system/type.ts";
-import { List } from "@miyauci/infra";
 import { isDirectoryEntry } from "@miyauci/file-system";
 import { VirtualFileSystem } from "./virtual.ts";
 import { UserAgent } from "../src/file_system/helper.ts";
 import { extname } from "@std/path";
 import { typeByExtension } from "@std/media-types";
+import { List } from "@miyauci/infra";
 
 export interface Context {
   root: FileSystemDirectoryHandle;
@@ -71,18 +71,18 @@ export const pathSeparators = ["/", "\\"];
 export function getDirectory(): FileSystemDirectoryHandle {
   const rootLocator = {
     root: "",
-    path: new List(""),
+    path: new List([""]),
     kind: "directory",
   } satisfies FileSystemLocator;
 
   const vfs = new VirtualFileSystem();
 
-  vfs.createDirectory(rootLocator.path);
+  vfs.createDirectory([...rootLocator.path]);
 
   return createFileSystemDirectoryHandle(rootLocator.root, rootLocator.path, {
     definition: {
       locateEntry(locator) {
-        const source = vfs.getSource(locator.path);
+        const source = vfs.getSource([...locator.path]);
 
         if (!source) return null;
 
@@ -106,13 +106,13 @@ function renderDirectory(
     get children(): PartialOrderedSet<FileSystemEntry> {
       return {
         append(item) {
-          const paths = locator.path.concat(item.name);
+          const paths = [...locator.path].concat(item.name);
 
           if (isDirectoryEntry(item)) vfs.createDirectory(paths);
           else vfs.createFile(paths);
         },
         remove(item) {
-          const paths = locator.path.concat(item.name);
+          const paths = [...locator.path].concat(item.name);
 
           vfs.remove(paths);
         },
@@ -124,7 +124,7 @@ function renderDirectory(
         },
 
         *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-          for (const item of vfs.readDirectory(locator.path)) {
+          for (const item of vfs.readDirectory([...locator.path])) {
             const path = locator.path.clone();
             path.append(item.name);
 
@@ -159,14 +159,14 @@ function createFileEntry(
   locator: FileSystemLocator,
   vfs: VirtualFileSystem,
 ): FileEntry {
-  const paths = locator.path;
+  const paths = [...locator.path];
 
   return {
     get modificationTimestamp() {
       return vfs.stat(paths).lastModified;
     },
 
-    name: locator.path[locator.path.length - 1],
+    name: locator.path[locator.path.size - 1],
     get binaryData() {
       return vfs.readFile(paths);
     },

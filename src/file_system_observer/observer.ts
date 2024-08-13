@@ -40,10 +40,10 @@ export class FileSystemObserver implements _FileSystemObserver {
   }
 
   unobserve(handle: FileSystemHandle): void {
-    handle[registeredObserverList].remove((registered) => {
+    handle[registeredObserverList].removeIf((registered) => {
       return registered.observer === this;
     });
-    this[$fileSystemHandleList].remove((ref) => {
+    this[$fileSystemHandleList].removeIf((ref) => {
       return ref.deref() === handle;
     });
   }
@@ -53,7 +53,7 @@ export class FileSystemObserver implements _FileSystemObserver {
       const handle = ref.deref();
 
       if (handle) {
-        handle[registeredObserverList].remove((registered) =>
+        handle[registeredObserverList].removeIf((registered) =>
           registered.observer === this
         );
       }
