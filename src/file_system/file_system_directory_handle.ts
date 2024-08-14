@@ -27,7 +27,7 @@ import {
   root as $root,
   userAgent as $userAgent,
 } from "./symbol.ts";
-import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
+import { asynciterator, type PairAsyncIterable } from "../webidl/async.ts";
 import { Msg } from "./constant.ts";
 import { queueRecord } from "./observer.ts";
 
