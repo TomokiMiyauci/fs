@@ -1,4 +1,4 @@
-import type { List, OrderedSet } from "@miyauci/infra";
+import type { List, Set } from "@miyauci/infra";
 
 export interface FileSystemGetFileOptions {
   create?: boolean;
@@ -86,8 +86,8 @@ export interface FileEntry extends BaseEntry {
   sharedLockCount: number;
 }
 
-export type PartialOrderedSet<T> = Pick<
-  OrderedSet<T>,
+export type PartialSet<T> = Pick<
+  Set<T>,
   "append" | "isEmpty" | "remove" | typeof Symbol.iterator
 >;
 
@@ -95,7 +95,7 @@ export interface DirectoryEntry extends BaseEntry {
   /** File system entries.
    * @see https://fs.spec.whatwg.org/#directory-entry-children
    */
-  readonly children: PartialOrderedSet<FileSystemEntry>;
+  readonly children: PartialSet<FileSystemEntry>;
 }
 
 /**

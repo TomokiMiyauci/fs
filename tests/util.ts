@@ -9,12 +9,12 @@ import {
   type FileSystemEntry,
   type FileSystemLocator,
   type FileSystemWriteChunkType,
-  PartialOrderedSet,
+  PartialSet,
 } from "../src/type.ts";
 import { isDirectoryEntry } from "../src/algorithm.ts";
 import { VirtualFileSystem } from "./virtual.ts";
 import { UserAgent } from "../src/helper.ts";
-import { extname } from "@std/path";
+import { extname } from "@std/path/extname";
 import { typeByExtension } from "@std/media-types";
 import { List } from "@miyauci/infra";
 
@@ -103,7 +103,7 @@ function renderDirectory(
   vfs: VirtualFileSystem,
 ): DirectoryEntry {
   return {
-    get children(): PartialOrderedSet<FileSystemEntry> {
+    get children(): PartialSet<FileSystemEntry> {
       return {
         append(item) {
           const paths = [...locator.path].concat(item.name);

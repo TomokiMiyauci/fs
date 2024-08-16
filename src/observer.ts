@@ -2,7 +2,7 @@
  * @see https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md
  */
 
-import { List, OrderedSet, Queue } from "@miyauci/infra";
+import { List, Queue, Set } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { resolveLocator } from "./algorithm.ts";
 import { callback, locator, recordQueue } from "./symbol.ts";
@@ -71,7 +71,7 @@ export async function queueRecord(
     // TODO: treat options.recursive
     // const options = registered.options;
 
-    interestedObservers.add(registered.observer);
+    interestedObservers.append(registered.observer);
   }
 
   for (const observer of interestedObservers) {
@@ -131,9 +131,9 @@ export interface WindowAgent {
   fileSystemObserverMicrotaskQueued: boolean;
 
   /** A [set](https://infra.spec.whatwg.org/#ordered-set) of zero or more {@link FileSystemObserver} objects.
-   * @default new OrderedSet()
+   * @default new Set()
    */
-  pendingFileSystemObservers: OrderedSet<FileSystemObserver>;
+  pendingFileSystemObservers: Set<FileSystemObserver>;
 }
 
 export interface UserAgent extends WindowAgent {

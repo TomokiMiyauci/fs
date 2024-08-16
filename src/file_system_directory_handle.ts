@@ -1,4 +1,4 @@
-import { List, OrderedSet } from "@miyauci/infra";
+import { List, Set } from "@miyauci/infra";
 import { FileSystemHandle } from "./file_system_handle.ts";
 import {
   isDirectoryEntry,
@@ -34,7 +34,7 @@ import { queueRecord } from "./observer.ts";
 @asynciterator({
   init(_, iterator): void {
     // 1. Set iterator’s past results to an empty set.
-    iterator.pastResults = new OrderedSet();
+    iterator.pastResults = new Set();
   },
   next,
 })
@@ -138,7 +138,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           queryAccess: entry.queryAccess.bind(entry),
           requestAccess: entry.requestAccess.bind(entry),
           // 8. Set child’s children to an empty set.
-          children: new OrderedSet(),
+          children: new Set(),
         } satisfies DirectoryEntry;
 
         try {
@@ -412,7 +412,7 @@ interface IterationContext {
   /**
    * @see https://fs.spec.whatwg.org/#filesystemdirectoryhandle-iterator-past-results
    */
-  pastResults: OrderedSet<string>;
+  pastResults: Set<string>;
 }
 
 function next(
@@ -456,7 +456,7 @@ function next(
       // // 1. Assert: directory is a directory entry.
       assertDirectoryEntry(directory);
 
-      const names = new Set(iterator.pastResults);
+      const names = new globalThis.Set(iterator.pastResults);
       // // 3. Let child be a file system entry in directory’s children, such that child’s name is not contained in iterator’s past results, or null if no such entry exists.
       const child = find(directory.children) ?? null;
 

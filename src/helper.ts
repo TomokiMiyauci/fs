@@ -1,4 +1,4 @@
-import { OrderedSet } from "@miyauci/infra";
+import { Set } from "@miyauci/infra";
 import {
   FileSystemObserver,
   ParallelQueue as _ParallelQueue,
@@ -6,7 +6,7 @@ import {
 } from "./observer.ts";
 
 export class UserAgent implements _UserAgent {
-  pendingFileSystemObservers: OrderedSet<FileSystemObserver> = new OrderedSet();
+  pendingFileSystemObservers: Set<FileSystemObserver> = new Set();
   fileSystemObserverMicrotaskQueued: boolean = false;
   fileSystemQueue: ParallelQueue = new ParallelQueue();
   storageTask: ParallelQueue = new ParallelQueue();
