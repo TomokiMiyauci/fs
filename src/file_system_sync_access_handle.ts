@@ -3,11 +3,14 @@ import { releaseLock } from "./algorithm.ts";
 import type {
   AllowSharedBufferSource,
   FileEntry,
-  FileSystemLocator,
   FileSystemReadWriteOptions,
 } from "./type.ts";
 import type { UserAgent } from "./observer.ts";
-import { file as $file, locator as $locator, state } from "./symbol.ts";
+import {
+  file as $file,
+  filePositionCursor as $filePositionCursor,
+  state,
+} from "./symbol.ts";
 
 export class FileSystemSyncAccessHandle {
   /**
@@ -20,15 +23,15 @@ export class FileSystemSyncAccessHandle {
    */
   [$file]: FileEntry;
 
-  [$locator]: FileSystemLocator;
-  private filePositionCursor: number = 0;
+  /**
+   * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-file-position-cursor
+   */
+  [$filePositionCursor]: number = 0;
 
   constructor(
-    locator: FileSystemLocator,
     entry: FileEntry,
     private userAgent: UserAgent,
   ) {
-    this[$locator] = locator;
     this[$file] = entry;
   }
 
@@ -54,14 +57,14 @@ export class FileSystemSyncAccessHandle {
       // 5. Let readStart be options["at"] if options["at"] exists; otherwise this's file position cursor.
       const readStart = typeof options?.at === "number"
         ? options.at
-        : this.filePositionCursor;
+        : this[$filePositionCursor];
 
       // 6. If the underlying file system does not support reading from a file offset of readStart, throw a TypeError.
 
       // 7. If readStart is larger than fileSize:
       if (readStart > fileSize) {
         // 1. Set this's file position cursor to fileSize.
-        this.filePositionCursor = fileSize;
+        this[$filePositionCursor] = fileSize;
 
         // 2. Return 0.
         return 0;
@@ -87,7 +90,7 @@ export class FileSystemSyncAccessHandle {
       write(arrayBuffer, bytes);
 
       // 15. Set this's file position cursor to readStart + result.
-      this.filePositionCursor = readStart + result;
+      this[$filePositionCursor] = readStart + result;
 
       // 16. Return result.
       return result;
@@ -114,7 +117,7 @@ export class FileSystemSyncAccessHandle {
     // 2. Let writePosition be options["at"] if options["at"] exists; otherwise this's file position cursor.
     const writePosition = typeof options?.at === "number"
       ? options.at
-      : this.filePositionCursor;
+      : this[$filePositionCursor];
 
     // 3. If the underlying file system does not support writing to a file offset of writePosition, throw a TypeError.
 
@@ -172,7 +175,7 @@ export class FileSystemSyncAccessHandle {
     }
 
     // 15. Set this's file position cursor to writePosition + bufferSize.
-    this.filePositionCursor = writePosition + bufferSize;
+    this[$filePositionCursor] = writePosition + bufferSize;
 
     // 16. Return bufferSize.
     return bufferSize;
@@ -219,7 +222,9 @@ export class FileSystemSyncAccessHandle {
     }
 
     // 7. If this's file position cursor is greater than newSize, then set file position cursor to newSize.
-    if (this.filePositionCursor > newSize) this.filePositionCursor = newSize;
+    if (this[$filePositionCursor] > newSize) {
+      this[$filePositionCursor] = newSize;
+    }
   }
 
   getSize(): number {
@@ -281,13 +286,12 @@ function isUnsignedLongLong(value: number): boolean {
 }
 
 export function createFileSystemSyncAccessHandle(
-  locator: FileSystemLocator,
   file: FileEntry,
   userAgent: UserAgent,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle(locator, file, userAgent);
+  const handle = new FileSystemSyncAccessHandle(file, userAgent);
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";

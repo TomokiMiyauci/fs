@@ -55,8 +55,13 @@ export class FileSystemHandle {
     return promise;
   }
 
+  /**
+   * @see https://fs.spec.whatwg.org/#filesystemhandle-locator
+   */
   [$locator]: FileSystemLocator;
+
+  [$userAgent]: UserAgent;
+
   [$root]: FileSystemHandle;
   [$registeredObserverList]: List<RegisteredObserver> = new List();
-  [$userAgent]: UserAgent;
 }
