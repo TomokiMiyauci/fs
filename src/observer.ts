@@ -2,7 +2,7 @@
  * @see https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md
  */
 
-import { List, Queue, Set } from "@miyauci/infra";
+import { List, type Queue, Set } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { resolveLocator } from "./algorithm.ts";
 import { callback, locator, recordQueue } from "./symbol.ts";

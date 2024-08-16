@@ -5,7 +5,7 @@
 
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
-import { FileSystemSyncAccessHandle } from "./file_system_sync_access_handle.ts";
+import type { FileSystemSyncAccessHandle } from "./file_system_sync_access_handle.ts";
 import { getDirectory } from "@test";
 
 interface Context {

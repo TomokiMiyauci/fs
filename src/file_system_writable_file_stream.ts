@@ -14,7 +14,7 @@ import {
 } from "./symbol.ts";
 import { Msg } from "./constant.ts";
 import { queueRecord } from "./observer.ts";
-import { FileSystemHandle } from "./file_system_handle.ts";
+import type { FileSystemHandle } from "./file_system_handle.ts";
 
 export class FileSystemWritableFileStream
   extends WritableStream<FileSystemWriteChunkType> {

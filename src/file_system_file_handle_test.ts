@@ -1,6 +1,6 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
-import { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
+import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
 import { createDirectory, createEmptyFile, getDirectory } from "@test";
 
 interface Context {

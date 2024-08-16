@@ -1,5 +1,5 @@
 import { Set } from "@miyauci/infra";
-import {
+import type {
   FileSystemObserver,
   ParallelQueue as _ParallelQueue,
   UserAgent as _UserAgent,

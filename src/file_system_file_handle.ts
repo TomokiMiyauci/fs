@@ -16,7 +16,7 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
-import { List } from "@miyauci/infra";
+import type { List } from "@miyauci/infra";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(

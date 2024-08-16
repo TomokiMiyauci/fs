@@ -1,4 +1,4 @@
-import { List, Set } from "@miyauci/infra";
+import { type List, Set } from "@miyauci/infra";
 import { FileSystemHandle } from "./file_system_handle.ts";
 import {
   isDirectoryEntry,

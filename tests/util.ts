@@ -1,14 +1,14 @@
-import { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
+import type { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
 import {
   createFileSystemDirectoryHandle,
-  FileSystemDirectoryHandle,
+  type FileSystemDirectoryHandle,
 } from "../src/file_system_directory_handle.ts";
-import {
-  type DirectoryEntry,
+import type {
+  DirectoryEntry,
   FileEntry,
-  type FileSystemEntry,
-  type FileSystemLocator,
-  type FileSystemWriteChunkType,
+  FileSystemEntry,
+  FileSystemLocator,
+  FileSystemWriteChunkType,
   PartialSet,
 } from "../src/type.ts";
 import { isDirectoryEntry } from "../src/algorithm.ts";
