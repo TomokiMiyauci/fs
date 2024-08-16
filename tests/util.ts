@@ -1,8 +1,8 @@
-import { FileSystemFileHandle } from "../src/file_system/file_system_file_handle.ts";
+import { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
 import {
   createFileSystemDirectoryHandle,
   FileSystemDirectoryHandle,
-} from "../src/file_system/file_system_directory_handle.ts";
+} from "../src/file_system_directory_handle.ts";
 import {
   type DirectoryEntry,
   FileEntry,
@@ -10,10 +10,10 @@ import {
   type FileSystemLocator,
   type FileSystemWriteChunkType,
   PartialOrderedSet,
-} from "../src/file_system/type.ts";
-import { isDirectoryEntry } from "@miyauci/file-system";
+} from "../src/type.ts";
+import { isDirectoryEntry } from "../src/algorithm.ts";
 import { VirtualFileSystem } from "./virtual.ts";
-import { UserAgent } from "../src/file_system/helper.ts";
+import { UserAgent } from "../src/helper.ts";
 import { extname } from "@std/path";
 import { typeByExtension } from "@std/media-types";
 import { List } from "@miyauci/infra";

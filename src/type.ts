@@ -1,4 +1,4 @@
-import { List, OrderedSet } from "@miyauci/infra";
+import type { List, OrderedSet } from "@miyauci/infra";
 
 export interface FileSystemGetFileOptions {
   create?: boolean;
