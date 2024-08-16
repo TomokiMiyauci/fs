@@ -11,7 +11,7 @@ import type {
 } from "./type.ts";
 import { takeLock } from "./algorithm.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
-import { buffer, locator, root, userAgent } from "./symbol.ts";
+import { buffer, locator } from "./symbol.ts";
 import {
   createFileSystemSyncAccessHandle,
   type FileSystemSyncAccessHandle,
@@ -40,7 +40,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    this[userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
       const entry = this.context.locateEntry(fsLocator);
 
@@ -48,7 +48,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       const accessResult = entry?.queryAccess("read");
 
       // 3. Queue a storage task with global to run these steps:
-      this[userAgent].storageTask.enqueue(() => {
+      this.userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -104,7 +104,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
     // 5. Enqueue the following steps to the file system queue:
 
-    this[userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
       const entry = this.context.locateEntry(fsLocator);
 
@@ -113,14 +113,14 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
       // 3. If accessResult’s permission state is not "granted", queue a storage task with global to reject result with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {
-        return this[userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new DOMException(accessResult.errorName));
         });
       }
 
       // 4. If entry is null, queue a storage task with global to reject result with a "NotFoundError" DOMException and abort these steps.
       if (entry === null) {
-        return this[userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new DOMException(Msg.NotFound, "NotFoundError"));
         });
       }
@@ -132,7 +132,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       const lockResult = takeLock("shared", entry);
 
       // 7. Queue a storage task with global to run these steps:
-      this[userAgent].storageTask.enqueue(() => {
+      this.userAgent.storageTask.enqueue(() => {
         // 1. If lockResult is "failure", reject result with a "NoModificationAllowedError" DOMException and abort these steps.
         if (lockResult === "failure") {
           return reject(
@@ -146,8 +146,8 @@ export class FileSystemFileHandle extends FileSystemHandle {
         // 2. Let stream be the result of creating a new FileSystemWritableFileStream for entry in realm.
         const stream = createFileSystemWritableFileStream(entry, {
           handle: this,
-          root: this[root],
-          userAgent: this[userAgent],
+          root: this.root,
+          userAgent: this.userAgent,
         });
 
         // 3. If options["keepExistingData"] is true:
@@ -181,7 +181,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 5. Let isInABucketFileSystem be true if this is in a bucket file system; otherwise false.
 
     // 6. Enqueue the following steps to the file system queue:
-    this[userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
       const entry = this.context.locateEntry(fsLocator);
 
@@ -190,7 +190,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
       // 3. If accessResult’s permission state is not "granted", queue a storage task with global to reject result with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {
-        return this[userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new DOMException(accessResult.errorName));
         });
       }
@@ -199,7 +199,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
       // 5. If entry is null, queue a storage task with global to reject result with a "NotFoundError" DOMException and abort these steps.
       if (entry === null) {
-        return this[userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new DOMException(Msg.NotFound, "NotFoundError"));
         });
       }
@@ -211,7 +211,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       const lockResult = takeLock("exclusive", entry);
 
       // 8. Queue a storage task with global to run these steps:
-      this[userAgent].storageTask.enqueue(() => {
+      this.userAgent.storageTask.enqueue(() => {
         // 1. If lockResult is "failure", reject result with a "NoModificationAllowedError" DOMException and abort these steps.
         if (lockResult === "failure") {
           return reject(
@@ -223,7 +223,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         }
 
         // 2. Let handle be the result of creating a new FileSystemSyncAccessHandle for entry in realm.
-        const handle = createFileSystemSyncAccessHandle(entry, this[userAgent]);
+        const handle = createFileSystemSyncAccessHandle(entry, this.userAgent);
 
         // 3. Resolve result with handle.
         resolve(handle);

@@ -6,19 +6,21 @@ import type {
   WriteParams,
 } from "./type.ts";
 import type { UserAgent } from "./observer.ts";
-import {
-  buffer,
-  file as $file,
-  registeredObserverList,
-  seekOffset,
-} from "./symbol.ts";
+import { buffer, file as $file, seekOffset } from "./symbol.ts";
 import { Msg } from "./constant.ts";
 import { queueRecord } from "./observer.ts";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 
 export class FileSystemWritableFileStream
   extends WritableStream<FileSystemWriteChunkType> {
+  /**
+   * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-file
+   */
   [$file]!: FileEntry;
+
+  /**
+   * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-seekoffset
+   */
   [seekOffset]: number = 0;
 
   /**
@@ -114,7 +116,7 @@ export function createFileSystemWritableFileStream(
         }
 
         queueRecord(
-          context.handle[registeredObserverList],
+          context.handle["registeredObserverList"],
           context.handle,
           "modified",
           context.root,

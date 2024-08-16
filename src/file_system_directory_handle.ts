@@ -23,12 +23,7 @@ import {
   createChildFileSystemFileHandle,
   FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
-import {
-  locator as $locator,
-  registeredObserverList,
-  root as $root,
-  userAgent as $userAgent,
-} from "./symbol.ts";
+import { locator as $locator } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
 import { queueRecord } from "./observer.ts";
@@ -68,10 +63,10 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 4. Let global be this's relevant global object.
 
     // 5. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
-        return this[$userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new TypeError(Msg.InvalidName));
         });
       }
@@ -88,7 +83,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         : entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
-      this[$userAgent].storageTask.enqueue(async () => {
+      this.userAgent.storageTask.enqueue(async () => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -120,7 +115,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
                 locator,
                 name,
                 this.context,
-                { root: this[$root] },
+                { root: this.root },
               ),
             );
           }
@@ -154,15 +149,15 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
         const handle = new FileSystemDirectoryHandle(
           { ...this.context, locator: childLocator },
-          { root: this[$root] },
+          { root: this.root },
         );
 
         await queueRecord(
-          this[registeredObserverList],
+          this.registeredObserverList,
           handle,
           "appeared",
-          this[$root],
-          this[$userAgent],
+          this.root,
+          this.userAgent,
         );
 
         // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
@@ -194,10 +189,10 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
-        return this[$userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new TypeError(Msg.InvalidName));
         });
       }
@@ -214,7 +209,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         : entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
-      this[$userAgent].storageTask.enqueue(async () => {
+      this.userAgent.storageTask.enqueue(async () => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -243,7 +238,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             // 2. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm and abort these steps.
             return resolve(
               createChildFileSystemFileHandle(locator, child.name, realm, {
-                root: this[$root],
+                root: this.root,
               }),
             );
           }
@@ -281,14 +276,14 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           locator,
           child.name,
           realm,
-          { root: this[$root] },
+          { root: this.root },
         );
         await queueRecord(
-          this[registeredObserverList],
+          this.registeredObserverList,
           handle,
           "appeared",
-          this[$root],
-          this[$userAgent],
+          this.root,
+          this.userAgent,
         );
 
         // 12. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm.
@@ -310,10 +305,10 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
-        return this[$userAgent].storageTask.enqueue(() => {
+        return this.userAgent.storageTask.enqueue(() => {
           reject(new TypeError(Msg.InvalidName));
         });
       }
@@ -325,7 +320,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       const accessResult = entry?.requestAccess("readwrite");
 
       // 4. Queue a storage task with global to run these steps:
-      this[$userAgent].storageTask.enqueue(async () => {
+      this.userAgent.storageTask.enqueue(async () => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -368,11 +363,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
             }
 
             await queueRecord(
-              this[registeredObserverList],
+              this.registeredObserverList,
               handle,
               "disappeared",
-              this[$root],
-              this[$userAgent],
+              this.root,
+              this.userAgent,
             );
 
             // 4. Resolve result with undefined.
@@ -396,7 +391,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     const result = await resolveLocator(
       possibleDescendant[$locator],
       this[$locator],
-      this[$userAgent],
+      this.userAgent,
     );
 
     if (result) return [...result];
@@ -423,8 +418,8 @@ function next(
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
   const locator = handle[$locator];
   const context = handle["context"];
-  const root = handle[$root];
-  const userAgent = handle[$userAgent];
+  const root = handle["root"];
+  const userAgent = handle["userAgent"];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<

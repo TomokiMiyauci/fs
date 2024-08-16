@@ -6,12 +6,7 @@ import type {
   FileSystemLocator,
 } from "./type.ts";
 import type { UserAgent } from "./observer.ts";
-import {
-  locator as $locator,
-  registeredObserverList as $registeredObserverList,
-  root as $root,
-  userAgent as $userAgent,
-} from "./symbol.ts";
+import { locator as $locator } from "./symbol.ts";
 import { List } from "@miyauci/infra";
 
 export interface FileSystemHandleOptions {
@@ -24,8 +19,8 @@ export class FileSystemHandle {
     options?: FileSystemHandleOptions,
   ) {
     this[$locator] = context.locator;
-    this[$root] = options?.root ?? this;
-    this[$userAgent] = context.userAgent;
+    this.root = options?.root ?? this;
+    this.userAgent = context.userAgent;
   }
   get kind(): FileSystemHandleKind {
     // steps are to return this's locator's kind.
@@ -44,7 +39,7 @@ export class FileSystemHandle {
     const { promise, resolve } = Promise.withResolvers<boolean>();
 
     // 3. Enqueue the following steps to the file system queue:
-    this[$userAgent].fileSystemQueue.enqueue(() => {
+    this.userAgent.fileSystemQueue.enqueue(() => {
       // 1. If this's locator is the same locator as other’s locator, resolve p with true.
       if (isSameLocator(this[$locator], other[$locator])) resolve(true);
       // 2. Otherwise resolve p with false.
@@ -60,8 +55,8 @@ export class FileSystemHandle {
    */
   [$locator]: FileSystemLocator;
 
-  [$userAgent]: UserAgent;
-
-  [$root]: FileSystemHandle;
-  [$registeredObserverList]: List<RegisteredObserver> = new List();
+  // Non-standard internal slot
+  protected userAgent: UserAgent;
+  protected root: FileSystemHandle;
+  protected registeredObserverList: List<RegisteredObserver> = new List();
 }
