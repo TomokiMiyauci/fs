@@ -172,9 +172,12 @@ export interface FileLocator extends BaseLocator {
   readonly kind: "file";
 }
 
-export interface FileSystemHandleContext {
-  locator: FileSystemLocator;
+export interface FileSystemContext {
   userAgent: UserAgent;
+}
+
+export interface FileSystemHandleContext extends FileSystemContext {
+  locator: FileSystemLocator;
 }
 
 export interface FileSystemFileOrDirectoryHandleContext

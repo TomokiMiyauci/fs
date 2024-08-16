@@ -3,6 +3,7 @@ import { releaseLock } from "./algorithm.ts";
 import type {
   AllowSharedBufferSource,
   FileEntry,
+  FileSystemContext,
   FileSystemReadWriteOptions,
 } from "./type.ts";
 import type { UserAgent } from "./observer.ts";
@@ -11,6 +12,10 @@ import {
   filePositionCursor as $filePositionCursor,
   state,
 } from "./symbol.ts";
+
+export interface FileSystemSyncAccessHandleContext extends FileSystemContext {
+  entry: FileEntry;
+}
 
 export class FileSystemSyncAccessHandle {
   /**
@@ -28,11 +33,13 @@ export class FileSystemSyncAccessHandle {
    */
   [$filePositionCursor]: number = 0;
 
+  private userAgent: UserAgent;
+
   constructor(
-    entry: FileEntry,
-    private userAgent: UserAgent,
+    context: FileSystemSyncAccessHandleContext,
   ) {
-    this[$file] = entry;
+    this[$file] = context.entry;
+    this.userAgent = context.userAgent;
   }
 
   read(
@@ -286,12 +293,12 @@ function isUnsignedLongLong(value: number): boolean {
 }
 
 export function createFileSystemSyncAccessHandle(
-  file: FileEntry,
+  entry: FileEntry,
   userAgent: UserAgent,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle(file, userAgent);
+  const handle = new FileSystemSyncAccessHandle({ entry, userAgent });
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";

@@ -16,7 +16,7 @@ export class FileSystemWritableFileStream
   /**
    * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-file
    */
-  [$file]!: FileEntry;
+  [$file]: FileEntry;
 
   /**
    * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-seekoffset
@@ -27,6 +27,16 @@ export class FileSystemWritableFileStream
    * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-buffer
    */
   [buffer]: Uint8Array = new Uint8Array(0);
+
+  constructor(
+    entry: FileEntry,
+    underlyingSink?: UnderlyingSink<FileSystemWriteChunkType> | undefined,
+    strategy?: QueuingStrategy<FileSystemWriteChunkType> | undefined,
+  ) {
+    super(underlyingSink, strategy);
+
+    this[$file] = entry;
+  }
 
   seek(position: number): Promise<void> {
     // 1. Let writer be the result of getting a writer for this.
@@ -156,14 +166,12 @@ export function createFileSystemWritableFileStream(
   const sizeAlgorithm: QueuingStrategySize<FileSystemWriteChunkType> = () => 1;
 
   // 1. Let stream be a new FileSystemWritableFileStream in realm.
-  const stream = new FileSystemWritableFileStream({
+  // 2. Set stream’s [[file]] to file.
+  const stream = new FileSystemWritableFileStream(file, {
     abort: abortAlgorithm,
     close: closeAlgorithm,
     write: writeAlgorithm,
   }, { highWaterMark, size: sizeAlgorithm });
-
-  // 2. Set stream’s [[file]] to file.
-  stream[$file] = file;
 
   // 8. Set up stream with writeAlgorithm set to writeAlgorithm, closeAlgorithm set to closeAlgorithm, abortAlgorithm set to abortAlgorithm, highWaterMark set to highWaterMark, and sizeAlgorithm set to sizeAlgorithm.
   // setup(
