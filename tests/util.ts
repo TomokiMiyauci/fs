@@ -80,19 +80,17 @@ export function getDirectory(): FileSystemDirectoryHandle {
   vfs.createDirectory([...rootLocator.path]);
 
   return createFileSystemDirectoryHandle(rootLocator.root, rootLocator.path, {
-    definition: {
-      locateEntry(locator) {
-        const source = vfs.getSource([...locator.path]);
+    locateEntry(locator) {
+      const source = vfs.getSource([...locator.path]);
 
-        if (!source) return null;
+      if (!source) return null;
 
-        if (source instanceof Map) return renderDirectory(locator, vfs);
-        return createFileEntry(locator, vfs);
-      },
+      if (source instanceof Map) return renderDirectory(locator, vfs);
+      return createFileEntry(locator, vfs);
+    },
 
-      typeByEntry(entry) {
-        return typeByExtension(extname(entry.name));
-      },
+    typeByEntry(entry) {
+      return typeByExtension(extname(entry.name));
     },
     userAgent: new UserAgent(),
   });

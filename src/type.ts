@@ -1,4 +1,5 @@
 import type { List, Set } from "@miyauci/infra";
+import type { UserAgent } from "./observer.ts";
 
 export interface FileSystemGetFileOptions {
   create?: boolean;
@@ -169,4 +170,20 @@ export interface FileLocator extends BaseLocator {
    * @see https://fs.spec.whatwg.org/#locator-kind
    */
   readonly kind: "file";
+}
+
+export interface FileSystemHandleContext {
+  locator: FileSystemLocator;
+  userAgent: UserAgent;
+}
+
+export interface FileSystemFileOrDirectoryHandleContext
+  extends FileSystemHandleContext {
+  locateEntry(locator: FileSystemLocator): FileSystemEntry | null;
+
+  /** Specify the content type from the entry.
+   *
+   * Used for File API.
+   */
+  typeByEntry(entry: FileEntry): string | undefined;
 }

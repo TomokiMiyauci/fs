@@ -1,5 +1,8 @@
 import { type List, Set } from "@miyauci/infra";
-import { FileSystemHandle } from "./file_system_handle.ts";
+import {
+  FileSystemHandle,
+  type FileSystemHandleOptions,
+} from "./file_system_handle.ts";
 import {
   isDirectoryEntry,
   isFileEntry,
@@ -10,13 +13,12 @@ import type {
   DirectoryEntry,
   FileEntry,
   FileSystemEntry,
+  FileSystemFileOrDirectoryHandleContext,
   FileSystemGetDirectoryOptions,
   FileSystemGetFileOptions,
   FileSystemLocator,
   FileSystemRemoveOptions,
 } from "./type.ts";
-import type { Definition } from "./definition.ts";
-import type { UserAgent } from "./observer.ts";
 import {
   createChildFileSystemFileHandle,
   FileSystemFileHandle,
@@ -40,12 +42,10 @@ import { queueRecord } from "./observer.ts";
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
   constructor(
-    locator: FileSystemLocator,
-    private definition: Definition,
-    userAgent: UserAgent,
-    root?: FileSystemHandle,
+    private context: FileSystemFileOrDirectoryHandleContext,
+    options?: FileSystemHandleOptions,
   ) {
-    super(locator, userAgent, root);
+    super(context, options);
   }
   override get kind(): "directory" {
     return "directory";
@@ -77,7 +77,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       }
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(locator);
+      const entry = this.context.locateEntry(locator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -116,11 +116,12 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
             // 2. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm and abort these steps.
             return resolve(
-              createChildFileSystemDirectoryHandle(locator, name, {
-                definition: this.definition,
-                root: this[$root],
-                userAgent: this[$userAgent],
-              }),
+              createChildFileSystemDirectoryHandle(
+                locator,
+                name,
+                this.context,
+                { root: this[$root] },
+              ),
             );
           }
         }
@@ -152,10 +153,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         const childLocator = createChildLocator(locator, child);
 
         const handle = new FileSystemDirectoryHandle(
-          childLocator,
-          this.definition,
-          this[$userAgent],
-          this[$root],
+          { ...this.context, locator: childLocator },
+          { root: this[$root] },
         );
 
         await queueRecord(
@@ -187,9 +186,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 2. Let realm be this's relevant Realm.
     const realm = {
       FileSystemFileHandle,
-      definition: this.definition,
-      userAgent: this[$userAgent],
-      root: this[$root],
+      ...this.context,
     };
 
     // 3. Let locator be this's locator.
@@ -206,7 +203,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       }
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(locator);
+      const entry = this.context.locateEntry(locator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -245,7 +242,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
             // 2. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm and abort these steps.
             return resolve(
-              createChildFileSystemFileHandle(locator, child.name, realm),
+              createChildFileSystemFileHandle(locator, child.name, realm, {
+                root: this[$root],
+              }),
             );
           }
         }
@@ -282,6 +281,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           locator,
           child.name,
           realm,
+          { root: this[$root] },
         );
         await queueRecord(
           this[registeredObserverList],
@@ -319,7 +319,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
       }
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(locator);
+      const entry = this.context.locateEntry(locator);
 
       // 3. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
@@ -422,7 +422,7 @@ function next(
     & IterationContext,
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
   const locator = handle[$locator];
-  const definition = handle["definition"];
+  const context = handle["context"];
   const root = handle[$root];
   const userAgent = handle[$userAgent];
 
@@ -436,7 +436,7 @@ function next(
   // // 2. Enqueue the following steps to the file system queue:
   userAgent.fileSystemQueue.enqueue(() => {
     // // 1. Let directory be the result of locating an entry given handle’s locator.
-    const directory = definition.locateEntry(locator);
+    const directory = context.locateEntry(locator);
 
     // // 2. Let accessResult be the result of running directory’s query access given "read".
     const accessResult = directory?.queryAccess("read");
@@ -476,10 +476,8 @@ function next(
       // 6. If child is a file entry:
       if (isFileEntry(child)) {
         // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
-        result = createChildFileSystemFileHandle(locator, child.name, {
-          definition,
+        result = createChildFileSystemFileHandle(locator, child.name, context, {
           root,
-          userAgent,
         });
       } // 7. Otherwise:
       else {
@@ -487,7 +485,8 @@ function next(
         result = createChildFileSystemDirectoryHandle(
           locator,
           child.name,
-          { definition, root, userAgent },
+          context,
+          { root },
         );
       }
 
@@ -507,11 +506,11 @@ function assertDirectoryEntry(
 export function createChildFileSystemDirectoryHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: {
-    definition: Definition;
-    root: FileSystemHandle;
-    userAgent: UserAgent;
-  },
+  realm: Pick<
+    FileSystemFileOrDirectoryHandleContext,
+    "locateEntry" | "typeByEntry" | "userAgent"
+  >,
+  options: FileSystemHandleOptions,
 ): FileSystemDirectoryHandle {
   // 2. Let childType be "directory".
   const childType = "directory";
@@ -532,10 +531,8 @@ export function createChildFileSystemDirectoryHandle(
   // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
   const handle = new FileSystemDirectoryHandle(
-    locator,
-    realm.definition,
-    realm.userAgent,
-    realm.root,
+    { ...realm, locator },
+    options,
   );
 
   // 6. Return handle.
@@ -545,17 +542,13 @@ export function createChildFileSystemDirectoryHandle(
 export function createFileSystemDirectoryHandle(
   root: string,
   path: List<string>,
-  realm: {
-    definition: Definition;
-    userAgent: UserAgent;
-  },
+  realm: Pick<
+    FileSystemFileOrDirectoryHandleContext,
+    "locateEntry" | "typeByEntry" | "userAgent"
+  >,
 ): FileSystemDirectoryHandle {
   const locator = { kind: "directory", root, path } satisfies FileSystemLocator;
-  const handle = new FileSystemDirectoryHandle(
-    locator,
-    realm.definition,
-    realm.userAgent,
-  );
+  const handle = new FileSystemDirectoryHandle({ ...realm, locator });
 
   return handle;
 }

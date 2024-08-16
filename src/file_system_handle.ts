@@ -1,6 +1,10 @@
 import { isSameLocator } from "./algorithm.ts";
 import type { RegisteredObserver } from "./observer.ts";
-import type { FileSystemHandleKind, FileSystemLocator } from "./type.ts";
+import type {
+  FileSystemHandleContext,
+  FileSystemHandleKind,
+  FileSystemLocator,
+} from "./type.ts";
 import type { UserAgent } from "./observer.ts";
 import {
   locator as $locator,
@@ -10,15 +14,18 @@ import {
 } from "./symbol.ts";
 import { List } from "@miyauci/infra";
 
+export interface FileSystemHandleOptions {
+  root?: FileSystemHandle;
+}
+
 export class FileSystemHandle {
   constructor(
-    locator: FileSystemLocator,
-    userAgent: UserAgent,
-    root?: FileSystemHandle,
+    context: FileSystemHandleContext,
+    options?: FileSystemHandleOptions,
   ) {
-    this[$locator] = locator;
-    this[$root] = root ?? this;
-    this[$userAgent] = userAgent;
+    this[$locator] = context.locator;
+    this[$root] = options?.root ?? this;
+    this[$userAgent] = context.userAgent;
   }
   get kind(): FileSystemHandleKind {
     // steps are to return this's locator's kind.

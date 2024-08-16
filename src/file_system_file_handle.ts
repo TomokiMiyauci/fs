@@ -1,12 +1,14 @@
-import { FileSystemHandle } from "./file_system_handle.ts";
+import {
+  FileSystemHandle,
+  type FileSystemHandleOptions,
+} from "./file_system_handle.ts";
 import type {
   FileEntry,
   FileSystemCreateWritableOptions,
   FileSystemEntry,
+  FileSystemFileOrDirectoryHandleContext,
   FileSystemLocator,
 } from "./type.ts";
-import type { Definition } from "./definition.ts";
-import type { UserAgent } from "./observer.ts";
 import { takeLock } from "./algorithm.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { buffer, locator, root, userAgent } from "./symbol.ts";
@@ -16,16 +18,13 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
-import type { List } from "@miyauci/infra";
 
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
-    locator: FileSystemLocator,
-    private definition: Definition,
-    userAgent: UserAgent,
-    root?: FileSystemHandle,
+    private context: FileSystemFileOrDirectoryHandleContext,
+    options?: FileSystemHandleOptions,
   ) {
-    super(locator, userAgent, root);
+    super(context, options);
   }
   override get kind(): "file" {
     return "file";
@@ -43,7 +42,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 4. Enqueue the following steps to the file system queue:
     this[userAgent].fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(fsLocator);
+      const entry = this.context.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s query access given "read".
       const accessResult = entry?.queryAccess("read");
@@ -67,7 +66,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         // 5. Set f’s snapshot state to the current state of entry.
         // 6. Set f’s underlying byte sequence to a copy of entry’s binary data.
         // 9. Set f’s type to an implementation-defined value, based on for example entry’s name or its file extension.
-        const type = this.definition.typeByEntry(entry);
+        const type = this.context.typeByEntry(entry);
 
         // `getFile` reads binaries at the time of the `getFile` call, according to the current specification.
         // @see https://github.com/whatwg/fs/issues/157
@@ -107,7 +106,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
     this[userAgent].fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(fsLocator);
+      const entry = this.context.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
@@ -184,7 +183,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 6. Enqueue the following steps to the file system queue:
     this[userAgent].fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = this.definition.locateEntry(fsLocator);
+      const entry = this.context.locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
@@ -245,11 +244,11 @@ function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
 export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: {
-    definition: Definition;
-    root: FileSystemHandle;
-    userAgent: UserAgent;
-  },
+  realm: Pick<
+    FileSystemFileOrDirectoryHandleContext,
+    "locateEntry" | "typeByEntry" | "userAgent"
+  >,
+  options: FileSystemHandleOptions,
 ): FileSystemFileHandle {
   // 2. Let childType be "file".
   const childType = "file";
@@ -267,37 +266,8 @@ export function createChildFileSystemFileHandle(
   } satisfies FileSystemLocator;
   // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new FileSystemFileHandle(
-    locator,
-    realm.definition,
-    realm.userAgent,
-    realm.root,
-  );
+  const handle = new FileSystemFileHandle({ ...realm, locator }, options);
 
   // 6. Return handle.
-  return handle;
-}
-
-export function createFileSystemFileHandle(
-  root: string,
-  path: List<string>,
-  definition: Definition,
-  userAgent: UserAgent,
-): FileSystemFileHandle {
-  const locator = {
-    kind: "file",
-    root,
-    path,
-  } satisfies FileSystemLocator;
-
-  // 1. Let handle be a new FileSystemFileHandle in realm.
-  // 2. Set handle’s locator to a file system locator whose kind is "file", root is root, and path is path.
-  const handle = new FileSystemFileHandle(
-    locator,
-    definition,
-    userAgent,
-  );
-
-  // 3. Return handle.
   return handle;
 }
