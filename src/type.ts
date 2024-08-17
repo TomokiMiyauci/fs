@@ -190,3 +190,9 @@ export interface FileSystemFileOrDirectoryHandleContext
    */
   typeByEntry(entry: FileEntry): string | undefined;
 }
+
+export interface StorageManagerContext {
+  root: string;
+
+  locateEntry(locator: FileSystemLocator): FileSystemEntry | null;
+}

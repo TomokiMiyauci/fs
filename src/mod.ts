@@ -6,3 +6,4 @@ export * from "./file_system_handle.ts";
 export * from "./observer.ts";
 export * from "./symbol.ts";
 export { UserAgent as UA } from "./helper.ts";
+export { StorageManager } from "./storage_manager.ts";
