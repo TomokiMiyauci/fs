@@ -3,6 +3,7 @@
   "tasks": {
     "test": "deno test --doc"
   },
+  "exclude": ["CHANGELOG.md"],
   "imports": {
     "@miyauci/fs": "./src/mod.ts",
     "@miyauci/fs/deno": "./src/deno/mod.ts",
