@@ -1,10 +1,9 @@
-# file-system
+# fs
 
-> 🚧 WIP at
-> [beta branch](https://github.com/TomokiMiyauci/file-system/tree/beta)
+> 🚧 WIP at [beta branch](https://github.com/TomokiMiyauci/fs/tree/beta)
 
-[File System](https://fs.spec.whatwg.org), based on WHATWG spec reference
-implementation.
+[File System Standard](https://fs.spec.whatwg.org), based on WHATWG spec
+reference implementation.
 
 ## Usage
 
@@ -30,7 +29,7 @@ API.
 
 ## API
 
-See [jsr doc](https://jsr.io/@miyauci/file-system) for all APIs.
+See [jsr doc](https://jsr.io/@miyauci/fs) for all APIs.
 
 ## Contributing
 
