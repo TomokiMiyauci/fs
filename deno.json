@@ -1,11 +1,11 @@
 {
-  "name": "@miyauci/file-system",
+  "name": "@miyauci/fs",
   "tasks": {
     "test": "deno test --doc"
   },
   "imports": {
-    "@miyauci/file-system": "./src/mod.ts",
-    "@miyauci/file-system/deno": "./src/deno/mod.ts",
+    "@miyauci/fs": "./src/mod.ts",
+    "@miyauci/fs/deno": "./src/deno/mod.ts",
     "@miyauci/infra": "jsr:@miyauci/infra@1.0.0-beta.2",
     "@std/bytes": "jsr:@std/bytes@^1.0.2",
     "@std/expect": "jsr:@std/expect@^1.0.0",
