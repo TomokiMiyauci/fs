@@ -1,0 +1,102 @@
+name: release
+
+on:
+  push:
+    branches:
+      - beta
+      - main
+
+jobs:
+  lint:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        deno: [v1.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Lint
+        run: |
+          deno fmt --check
+          deno lint
+
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        deno: [v1.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Test
+        run: deno task test --coverage=coverage
+
+      - name: Generate coverage
+        run: deno coverage coverage --output=cov_profile.lcov --lcov
+
+      - uses: codecov/codecov-action@v4
+        with:
+          files: cov_profile.lcov
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  release:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    outputs:
+      new_release: ${{ steps.semantic.outputs.new_release_published }}
+      new_version: ${{ steps.semantic.outputs.new_release_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: cycjimmy/semantic-release-action@v4
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  publish:
+    needs: [release]
+    if: ${{ needs.release.outputs.new_release == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Modify jsr config
+        uses: maxgfr/github-change-json@main
+        with:
+          key: version
+          value: ${{ needs.release.outputs.new_version }}
+          path: ./deno.json
+
+      - name: publish
+        # --allow-dirty is required because the uncommit file exists because the jsr config was changed in the previous job.
+        run: deno publish --allow-dirty
