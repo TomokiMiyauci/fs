@@ -1,0 +1,22 @@
+{
+  "name": "@miyauci/file-system",
+  "tasks": {
+    "test": "deno test --doc"
+  },
+  "imports": {
+    "@miyauci/file-system": "./src/mod.ts",
+    "@miyauci/file-system/deno": "./src/deno/mod.ts",
+    "@miyauci/infra": "jsr:@miyauci/infra@1.0.0-beta.2",
+    "@std/bytes": "jsr:@std/bytes@^1.0.2",
+    "@std/expect": "jsr:@std/expect@^1.0.0",
+    "@std/media-types": "jsr:@std/media-types@^1.0.2",
+    "@std/path": "jsr:@std/path@^1.0.2",
+    "@std/testing": "jsr:@std/testing@^0.225.3",
+    "@test": "./tests/util.ts"
+  },
+  "exports": {
+    ".": "./src/mod.ts",
+    "./deno": "./src/deno/mod.ts"
+  },
+  "version": "0.1.0-placeholder"
+}
