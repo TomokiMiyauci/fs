@@ -1,3 +1,10 @@
+# [1.0.0-beta.2](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.1...1.0.0-beta.2) (2024-08-18)
+
+
+### Features
+
+* **file_system_observer:** add FileSystemObserver implementation ([16c2e48](https://github.com/TomokiMiyauci/fs/commit/16c2e4858672f35566289025934c848bd8afd7e5))
+
 # 1.0.0-beta.1 (2024-08-17)
 
 
