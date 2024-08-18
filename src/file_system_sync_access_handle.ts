@@ -6,7 +6,7 @@ import type {
   FileSystemContext,
   FileSystemReadWriteOptions,
 } from "./type.ts";
-import type { UserAgent } from "./observer.ts";
+import type { UserAgent } from "./file_system_observer.ts";
 import {
   file as $file,
   filePositionCursor as $filePositionCursor,

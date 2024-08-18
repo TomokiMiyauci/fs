@@ -1,11 +1,11 @@
 import { isSameLocator } from "./algorithm.ts";
-import type { RegisteredObserver } from "./observer.ts";
+import type { RegisteredObserver } from "./file_system_observer.ts";
 import type {
   FileSystemHandleContext,
   FileSystemHandleKind,
   FileSystemLocator,
 } from "./type.ts";
-import type { UserAgent } from "./observer.ts";
+import type { UserAgent } from "./file_system_observer.ts";
 import { locator as $locator } from "./symbol.ts";
 import { List } from "@miyauci/infra";
 

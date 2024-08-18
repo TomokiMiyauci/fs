@@ -1,5 +1,5 @@
 import type { List, Set } from "@miyauci/infra";
-import type { UserAgent } from "./observer.ts";
+import type { UserAgent } from "./file_system_observer.ts";
 
 export interface FileSystemGetFileOptions {
   create?: boolean;

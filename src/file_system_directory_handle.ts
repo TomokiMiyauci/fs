@@ -26,7 +26,7 @@ import {
 import { locator as $locator } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
-import { queueRecord } from "./observer.ts";
+import { queueRecord } from "./file_system_observer.ts";
 
 @asynciterator({
   init(_, iterator): void {

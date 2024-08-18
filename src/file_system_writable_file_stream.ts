@@ -5,10 +5,10 @@ import type {
   FileSystemWriteChunkType,
   WriteParams,
 } from "./type.ts";
-import type { UserAgent } from "./observer.ts";
+import type { UserAgent } from "./file_system_observer.ts";
 import { buffer, file as $file, seekOffset } from "./symbol.ts";
 import { Msg } from "./constant.ts";
-import { queueRecord } from "./observer.ts";
+import { queueRecord } from "./file_system_observer.ts";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 
 export class FileSystemWritableFileStream

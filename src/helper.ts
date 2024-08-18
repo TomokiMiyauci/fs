@@ -3,7 +3,7 @@ import type {
   FileSystemObserver,
   ParallelQueue as _ParallelQueue,
   UserAgent as _UserAgent,
-} from "./observer.ts";
+} from "./file_system_observer.ts";
 
 export class UserAgent implements _UserAgent {
   pendingFileSystemObservers: Set<FileSystemObserver> = new Set();

@@ -4,7 +4,7 @@ import type {
   FileSystemEntry,
   FileSystemLocator,
 } from "./type.ts";
-import type { UserAgent } from "./observer.ts";
+import type { UserAgent } from "./file_system_observer.ts";
 import { List, range } from "@miyauci/infra";
 
 /**
