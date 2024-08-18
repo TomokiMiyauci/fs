@@ -27,6 +27,32 @@ const contents = await file.text();
 This allows operations to be performed on the File System using the File System
 API.
 
+### FileSystemObserver
+
+> [!NOTE]
+>
+> This is a draft and the exact specification does not exist at this time.
+
+[FileSystemObserver](https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md)
+monitors changes to the `FileSystemHandle`.
+
+```ts
+import { type FileSystemHandle, FileSystemObserver } from "@miyauci/fs";
+
+declare const handle: FileSystemHandle;
+const observer = new FileSystemObserver((records) => {
+  for (const record of records) {
+    switch (record.type) {
+      case "appeared": {}
+      case "disappeared": {}
+      case "modified": {}
+    }
+  }
+});
+
+await observer.observe(handle);
+```
+
 ## API
 
 See [jsr doc](https://jsr.io/@miyauci/fs) for all APIs.
