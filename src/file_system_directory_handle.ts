@@ -21,7 +21,7 @@ import type {
 } from "./type.ts";
 import {
   createChildFileSystemFileHandle,
-  FileSystemFileHandle,
+  type FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
 import { locator as $locator } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
@@ -179,10 +179,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     >();
 
     // 2. Let realm be this's relevant Realm.
-    const realm = {
-      FileSystemFileHandle,
-      ...this.context,
-    };
+    const realm = this.context;
 
     // 3. Let locator be this's locator.
     const locator = this[$locator];

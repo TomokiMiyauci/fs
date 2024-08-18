@@ -2,10 +2,10 @@
  * @see https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md
  */
 
-import { List, type Queue, Set } from "@miyauci/infra";
+import { List, Queue, Set } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { resolveLocator } from "./algorithm.ts";
-import { callback, locator, recordQueue } from "./symbol.ts";
+import { locator } from "./symbol.ts";
 
 export interface FileSystemObserverCallback {
   (records: FileSystemChangeRecord[], observer: FileSystemObserver): void;
@@ -43,16 +43,56 @@ export interface RegisteredObserver {
   options: FileSystemObserverObserveOptions;
 }
 
-export interface FileSystemObserver {
+export class FileSystemObserver {
+  protected fileSystemHandleList: List<WeakRef<FileSystemHandle>> = new List();
+
+  protected callback: FileSystemObserverCallback;
+  protected recordQueue: Queue<FileSystemChangeRecord> = new Queue();
+
+  constructor(callback: FileSystemObserverCallback) {
+    this.callback = callback;
+  }
+
   observe(
     handle: FileSystemHandle,
     options?: FileSystemObserverObserveOptions,
-  ): Promise<void>;
-  unobserve(handle: FileSystemHandle): void;
-  disconnect(): void;
+  ): Promise<void> {
+    options ??= {};
 
-  [recordQueue]: Queue<FileSystemChangeRecord>;
-  [callback]: FileSystemObserverCallback;
+    for (const registered of handle["registeredObserverList"]) {
+      if (registered.observer === this) registered.options = options;
+    }
+
+    if (handle["registeredObserverList"].isEmpty) {
+      handle["registeredObserverList"].append({ observer: this, options });
+      this.fileSystemHandleList.append(new WeakRef(handle));
+    }
+
+    return Promise.resolve();
+  }
+
+  unobserve(handle: FileSystemHandle): void {
+    handle["registeredObserverList"].removeIf((registered) => {
+      return registered.observer === this;
+    });
+    this.fileSystemHandleList.removeIf((ref) => {
+      return ref.deref() === handle;
+    });
+  }
+
+  disconnect(): void {
+    for (const ref of this.fileSystemHandleList) {
+      const handle = ref.deref();
+
+      if (handle) {
+        handle["registeredObserverList"].removeIf((registered) =>
+          registered.observer === this
+        );
+      }
+    }
+
+    this.recordQueue.empty();
+  }
 }
 
 export async function queueRecord(
@@ -82,7 +122,7 @@ export async function queueRecord(
       relativePathComponents: [...relativePathComponents],
     } satisfies FileSystemChangeRecord;
 
-    observer[recordQueue].enqueue(record);
+    observer["recordQueue"].enqueue(record);
 
     userAgent.pendingFileSystemObservers.append(observer);
   }
@@ -107,13 +147,13 @@ function notify(agent: WindowAgent): void {
   agent.pendingFileSystemObservers.empty();
 
   for (const fso of notifySet) {
-    const records = fso[recordQueue].clone();
+    const records = fso["recordQueue"].clone();
 
-    fso[recordQueue].empty();
+    fso["recordQueue"].empty();
 
     if (!records.isEmpty) {
       try {
-        fso[callback]([...records], fso);
+        fso["callback"]([...records], fso);
       } catch (e) {
         throw e;
       }
