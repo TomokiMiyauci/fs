@@ -18,17 +18,17 @@ export interface FileSystemReadWriteOptions {
  */
 export class FileSystemSyncAccessHandle {
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-state
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state)
    */
   protected state: "open" | "close" = "open";
 
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-file
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file)
    */
   protected file: FileEntry;
 
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-file-position-cursor
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file-position-cursor)
    */
   protected filePositionCursor: number = 0;
 

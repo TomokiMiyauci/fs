@@ -48,17 +48,17 @@ export type FileSystemWriteChunkType =
 export class FileSystemWritableFileStream
   extends WritableStream<FileSystemWriteChunkType> {
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-file
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-file)
    */
   protected file: FileEntry;
 
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-seekoffset
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-seekoffset)
    */
   protected seekOffset: number = 0;
 
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemwritablefilestream-buffer
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-buffer)
    */
   protected buffer: Uint8Array = new Uint8Array(0);
 

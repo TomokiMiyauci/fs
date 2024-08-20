@@ -12,7 +12,7 @@ export type FileSystemHandleKind = "directory" | "file";
  */
 export class FileSystemHandle {
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemhandle-locator
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemhandle-locator)
    */
   protected locator: FileSystemLocator;
 
