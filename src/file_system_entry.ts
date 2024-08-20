@@ -3,49 +3,58 @@ import type { List, Set } from "@miyauci/infra";
 
 interface BaseEntry {
   /**
-   * @see https://fs.spec.whatwg.org/#entry-name
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-name)
    */
   readonly name: string;
 
   /**
-   * @see https://fs.spec.whatwg.org/#entry-query-access
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-query-access)
    */
   queryAccess(mode: AccessMode): FileSystemAccessResult;
 
   /**
-   * @see https://fs.spec.whatwg.org/#entry-request-access
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-request-access)
    */
   requestAccess(mode: AccessMode): FileSystemAccessResult;
 }
 
 export type AccessMode = "read" | "readwrite";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#file)
+ */
 export interface FileEntry extends BaseEntry {
   /**
-   * @see https://fs.spec.whatwg.org/#file-entry-binary-data
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-binary-data)
    */
   get binaryData(): Uint8Array;
   set binaryData(value: Uint8Array);
 
   /** A number representing the number of milliseconds since the Unix Epoch.
-   * @see https://fs.spec.whatwg.org/#file-entry-modification-timestamp
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-modification-timestamp)
    */
   modificationTimestamp: number;
 
   /**
-   * @see https://fs.spec.whatwg.org/#file-entry-lock
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock)
    */
   lock: "open" | "taken-exclusive" | "taken-shared";
 
   /** A number representing the number shared locks that are taken at a given point in time
-   * @see https://fs.spec.whatwg.org/#file-entry-shared-lock-count
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-shared-lock-count)
    */
   sharedLockCount: number;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#directory)
+ */
 export interface DirectoryEntry extends BaseEntry {
   /** File system entries.
-   * @see https://fs.spec.whatwg.org/#directory-entry-children
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#directory-entry-children)
    */
   readonly children: PartialSet<FileSystemEntry>;
 }
@@ -56,21 +65,23 @@ export type PartialSet<T> = Pick<
 >;
 
 /**
- * @see https://fs.spec.whatwg.org/#entry
+ * [File System Standard](https://whatpr.org/fs/165.html#entry)
  */
 export type FileSystemEntry = FileEntry | DirectoryEntry;
 
 /** Struct encapsulating the result of {@link BaseEntry.queryAccess querying} or {@link BaseEntry.requestAccess requesting} access to the file system.
- * @see https://fs.spec.whatwg.org/#file-system-access-result
+ *
+ * [File System Standard](https://whatpr.org/fs/165.html#file-system-access-result)
  */
 export interface FileSystemAccessResult {
   /**
-   * @see https://fs.spec.whatwg.org/#file-system-access-result-permission-state
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-access-result-permission-state)
    */
   readonly permissionState: PermissionState;
 
   /** A string which must be the empty string if {@link permissionState permission state} is "granted"; otherwise an name listed in the DOMException names table. It is expected that in most cases when {@link permissionState permission state} is not "granted", this should be "NotAllowedError".
-   * @see https://fs.spec.whatwg.org/#file-system-access-result-error-name
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-access-result-error-name)
    */
   readonly errorName: string;
 }
@@ -81,7 +92,7 @@ export interface FileSystemAccessResult {
 export type PermissionState = "denied" | "granted" | "prompt";
 
 /**
- * @see https://fs.spec.whatwg.org/#valid-file-name
+ * [File System Standard](https://whatpr.org/fs/165.html#valid-file-name)
  */
 export function isValidFileName(fileName: string): boolean {
   // a string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.
@@ -95,7 +106,7 @@ export function isValidFileName(fileName: string): boolean {
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#file-entry-lock-take
+ * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock-take)
  */
 export function takeLock(
   value: "exclusive" | "shared",
@@ -146,7 +157,7 @@ export function takeLock(
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#file-entry-lock-release
+ * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock-release)
  */
 export function releaseLock(file: FileEntry): void {
   // 1. Let lock be the file’s associated lock.
@@ -164,7 +175,7 @@ export function releaseLock(file: FileEntry): void {
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#file-system-path-the-same-path-as
+ * [File System Standard](https://whatpr.org/fs/165.html#file-system-entry-the-same-entry-as)
  */
 export function isSamePath(a: List<string>, b: List<string>): boolean {
   // if a’s size is the same as b’s size and for each index of a’s indices a.\[[index]] is b.\[[index]].
@@ -178,7 +189,7 @@ export function isSamePath(a: List<string>, b: List<string>): boolean {
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#file-system-locator-the-same-locator-as
+ * [File System Standard](https://whatpr.org/fs/165.html#file-system-locator-the-same-locator-as)
  */
 export function isSameLocator(
   a: FileSystemLocator,

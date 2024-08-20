@@ -5,7 +5,7 @@ import { locator as $locator } from "./symbol.ts";
 import { userAgent } from "./user_agent.ts";
 
 /**
- * @see https://fs.spec.whatwg.org/#enumdef-filesystemhandlekind
+ * [File System Standard](https://whatpr.org/fs/165.html#enumdef-filesystemhandlekind)
  */
 export type FileSystemHandleKind = "directory" | "file";
 

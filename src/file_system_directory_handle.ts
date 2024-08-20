@@ -407,7 +407,7 @@ export interface FileSystemDirectoryHandle
 
 interface IterationContext {
   /**
-   * @see https://fs.spec.whatwg.org/#filesystemdirectoryhandle-iterator-past-results
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemdirectoryhandle-iterator-past-results)
    */
   pastResults: Set<string>;
 }

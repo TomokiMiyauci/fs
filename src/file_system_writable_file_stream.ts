@@ -126,7 +126,7 @@ export class FileSystemWritableFileStream
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#create-a-new-filesystemwritablefilestream
+ * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemwritablefilestream)
  */
 export function createFileSystemWritableFileStream(
   file: FileEntry,
@@ -218,7 +218,7 @@ export function createFileSystemWritableFileStream(
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#write-a-chunk
+ * [File System Standard](https://whatpr.org/fs/165.html#write-a-chunk)
  */
 export function writeChunk(
   stream: FileSystemWritableFileStream,

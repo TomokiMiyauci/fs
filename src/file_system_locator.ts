@@ -4,42 +4,45 @@ import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import type { FileSystemHandleKind } from "./file_system_handle.ts";
 
 /**
- * @see https://fs.spec.whatwg.org/#directory-locator
+ * [File System Standard](https://whatpr.org/fs/165.html#directory-locator)
  */
 export interface DirectoryLocator extends BaseLocator {
   /**
-   * @see https://fs.spec.whatwg.org/#locator-kind
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandlekind-directory)
    */
   readonly kind: "directory";
 }
 
 /**
- * @see https://fs.spec.whatwg.org/#file-locator
+ * [File System Standard](https://whatpr.org/fs/165.html#file-locator)
  */
 export interface FileLocator extends BaseLocator {
   /**
-   * @see https://fs.spec.whatwg.org/#locator-kind
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandlekind-file)
    */
   readonly kind: "file";
 }
 
 /** A potential location of a {@link FileSystemEntry file system entry}.
  *
- * @see https://fs.spec.whatwg.org/#file-system-locator
+ * [File System Standard](https://whatpr.org/fs/165.html#file-system-locator)
  */
 export type FileSystemLocator = FileLocator | DirectoryLocator;
 
 interface BaseLocator {
   /**
-   * @see https://fs.spec.whatwg.org/#locator-path
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-path)
    */
   readonly path: FileSystemPath;
 
   /**
-   * @see https://fs.spec.whatwg.org/#locator-kind
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-kind)
    */
   readonly kind: FileSystemHandleKind;
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-root)
+   */
   readonly fileSystem: FileSystem;
 }
 
