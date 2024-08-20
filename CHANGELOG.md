@@ -1,3 +1,10 @@
+# [1.0.0-beta.6](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.5...1.0.0-beta.6) (2024-08-20)
+
+
+### Bug Fixes
+
+* fix file path when reading ([4fa160f](https://github.com/TomokiMiyauci/fs/commit/4fa160feb3f89b299da7197210832640b4d70995))
+
 # [1.0.0-beta.5](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.4...1.0.0-beta.5) (2024-08-20)
 
 
