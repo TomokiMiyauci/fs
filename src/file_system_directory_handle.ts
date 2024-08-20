@@ -192,7 +192,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     >();
 
     // 2. Let realm be this's relevant Realm.
-    const realm = this.context;
 
     // 3. Let locator be this's locator.
     const locator = this[$locator];
@@ -409,8 +408,6 @@ function next(
     & IterationContext,
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
   const locator = handle[$locator];
-  const context = handle["context"];
-  // const userAgent = handle["userAgent"];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<
