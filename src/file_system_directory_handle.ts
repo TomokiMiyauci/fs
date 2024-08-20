@@ -67,10 +67,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     super(entry);
   }
 
-  override get kind(): "directory" {
-    return "directory";
-  }
-
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getdirectoryhandle)
    */
@@ -402,7 +398,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 }
 
 export interface FileSystemDirectoryHandle
-  extends PairAsyncIterable<string, FileSystemHandle> {}
+  extends PairAsyncIterable<string, FileSystemHandle> {
+  get kind(): "directory";
+}
 
 interface IterationContext {
   /**

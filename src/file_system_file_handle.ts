@@ -34,10 +34,6 @@ export class FileSystemFileHandle extends FileSystemHandle {
     super(locator);
   }
 
-  override get kind(): "file" {
-    return "file";
-  }
-
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-getfile)
    */
@@ -246,6 +242,10 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 7. Return result.
     return result;
   }
+}
+
+export interface FileSystemFileHandle {
+  get kind(): "file";
 }
 
 function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
