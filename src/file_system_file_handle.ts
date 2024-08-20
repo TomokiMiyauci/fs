@@ -46,14 +46,14 @@ export class FileSystemFileHandle extends FileSystemHandle {
     const { reject, promise, resolve } = Promise.withResolvers<File>();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this.locator;
+    const locator = this.locator;
 
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator);
+      const entry = locateEntry(locator);
 
       // 2. Let accessResult be the result of running entry’s query access given "read".
       const accessResult = entry?.queryAccess("read");
@@ -110,7 +110,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     >();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this.locator;
+    const locator = this.locator;
 
     // 3. Let realm be this's relevant Realm.
 
@@ -120,7 +120,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
     userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator);
+      const entry = locateEntry(locator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
@@ -185,7 +185,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     >();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this.locator;
+    const locator = this.locator;
 
     // 3. Let realm be this's relevant Realm.
 
@@ -196,7 +196,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 6. Enqueue the following steps to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = locateEntry(fsLocator);
+      const entry = locateEntry(locator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
