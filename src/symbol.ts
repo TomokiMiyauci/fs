@@ -4,3 +4,5 @@ export const seekOffset = Symbol("[[seekOffset]]");
 export const buffer = Symbol("[[buffer]]");
 export const state = Symbol("[[state]]");
 export const filePositionCursor = Symbol("[[filePositionCursor]]");
+export const callback = Symbol("[[callback]]");
+export const observations = Symbol("[[observations]]");

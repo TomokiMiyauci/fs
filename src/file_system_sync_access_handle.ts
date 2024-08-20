@@ -1,19 +1,18 @@
 import { concat } from "@std/bytes/concat";
-import { releaseLock } from "./algorithm.ts";
-import type {
-  AllowSharedBufferSource,
-  FileEntry,
-  FileSystemContext,
-  FileSystemReadWriteOptions,
-} from "./type.ts";
-import type { UserAgent } from "./file_system_observer.ts";
+import { type FileEntry, releaseLock } from "./file_system_entry.ts";
+import type { AllowSharedBufferSource } from "./type.ts";
 import {
   file as $file,
   filePositionCursor as $filePositionCursor,
   state,
 } from "./symbol.ts";
+import { userAgent } from "./user_agent.ts";
 
-export interface FileSystemSyncAccessHandleContext extends FileSystemContext {
+export interface FileSystemReadWriteOptions {
+  at?: number;
+}
+
+export interface FileSystemSyncAccessHandleContext {
   entry: FileEntry;
 }
 
@@ -33,13 +32,13 @@ export class FileSystemSyncAccessHandle {
    */
   [$filePositionCursor]: number = 0;
 
-  private userAgent: UserAgent;
+  // private userAgent: UserAgent;
 
   constructor(
     context: FileSystemSyncAccessHandleContext,
   ) {
     this[$file] = context.entry;
-    this.userAgent = context.userAgent;
+    // this.userAgent = context.userAgent;
   }
 
   read(
@@ -263,7 +262,7 @@ export class FileSystemSyncAccessHandle {
     const file = this[$file];
 
     // 5. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. Release the lock on file.
       releaseLock(file);
 
@@ -294,11 +293,10 @@ function isUnsignedLongLong(value: number): boolean {
 
 export function createFileSystemSyncAccessHandle(
   entry: FileEntry,
-  userAgent: UserAgent,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle({ entry, userAgent });
+  const handle = new FileSystemSyncAccessHandle({ entry });
 
   // 3. Set handle’s [[state]] to "open".
   handle[state] = "open";

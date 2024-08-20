@@ -2,185 +2,158 @@
  * @see https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md
  */
 
-import { List, Queue, Set } from "@miyauci/infra";
+import { Map } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
-import { resolveLocator } from "./algorithm.ts";
-import { locator } from "./symbol.ts";
+import * as $ from "./symbol.ts";
+import { Msg } from "./constant.ts";
+import {
+  createObservation,
+  destroyObservation,
+  type FileSystemObservation,
+} from "./file_system.ts";
+import { type FileSystemLocator, locateEntry } from "./file_system_locator.ts";
+import type { FileSystemChangeRecord } from "./file_system_change_record.ts";
+import { userAgent } from "./user_agent.ts";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#callbackdef-filesystemobservercallback)
+ */
 export interface FileSystemObserverCallback {
   (records: FileSystemChangeRecord[], observer: FileSystemObserver): void;
 }
 
-export interface FileSystemChangeRecord {
-  readonly root: FileSystemHandle;
-
-  /** The handle affected by the file system change */
-  readonly changedHandle: FileSystemHandle;
-
-  /** The path of `changedHandle` relative to `root` */
-  readonly relativePathComponents: readonly string[];
-
-  /** The type of change */
-  readonly type: FileSystemChangeType;
-}
-
-export type FileSystemChangeType =
-  | "appeared"
-  | "disappeared"
-  | "modified"
-  | "moved"
-  /** Change types are not known */
-  | "unknown"
-  /** This observation is no longer valid */
-  | "errored";
-
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemobserverobserveoptions)
+ */
 export interface FileSystemObserverObserveOptions {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserverobserveoptions-recursive)
+   */
   recursive?: boolean;
 }
 
-export interface RegisteredObserver {
-  observer: FileSystemObserver;
-  options: FileSystemObserverObserveOptions;
-}
-
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver)
+ */
 export class FileSystemObserver {
-  protected fileSystemHandleList: List<WeakRef<FileSystemHandle>> = new List();
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver-callback)
+   */
+  [$.callback]: FileSystemObserverCallback;
 
-  protected callback: FileSystemObserverCallback;
-  protected recordQueue: Queue<FileSystemChangeRecord> = new Queue();
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver-observations)
+   */
+  [$.observations]: Map<FileSystemLocator, FileSystemObservation>;
 
-  constructor(callback: FileSystemObserverCallback) {
-    this.callback = callback;
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserver-filesystemobserver)
+   */
+  constructor(
+    callback: FileSystemObserverCallback,
+  ) {
+    // 2. Set this's callback to callback.
+    this[$.callback] = callback;
+
+    // 3. Set this's observations be the empty map.
+    this[$.observations] = new Map();
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserver-observe)
+   */
   observe(
     handle: FileSystemHandle,
     options?: FileSystemObserverObserveOptions,
   ): Promise<void> {
-    options ??= {};
+    // 1. Let result be a new promise.
+    const { promise, reject, resolve } = Promise.withResolvers<void>();
 
-    for (const registered of handle["registeredObserverList"]) {
-      if (registered.observer === this) registered.options = options;
-    }
+    // 2. Let recursive be options["recursive"].
+    const recursive = options?.recursive ?? false;
 
-    if (handle["registeredObserverList"].isEmpty) {
-      handle["registeredObserverList"].append({ observer: this, options });
-      this.fileSystemHandleList.append(new WeakRef(handle));
-    }
+    // 3. Let observationsMap be this's observations.
+    const observationMap = this[$.observations];
 
-    return Promise.resolve();
-  }
+    // 4. Let locator be handle’s locator.
+    const locator = handle[$.locator];
 
-  unobserve(handle: FileSystemHandle): void {
-    handle["registeredObserverList"].removeIf((registered) => {
-      return registered.observer === this;
+    // 5. Let global be this's relevant global object.
+
+    // 6. Enqueue the following steps to the file system queue:
+    userAgent.fileSystemQueue.enqueue(() => {
+      // 1. If observationsMap[locator] exists, abort these steps.
+      if (observationMap.exists(locator)) return resolve();
+
+      // 2. Let entry be the result of locating an entry given locator.
+      const entry = locateEntry(locator);
+
+      // 3. Let accessResult be the result of running entry’s query access given "read".
+      const accessResult = entry?.queryAccess("read");
+
+      // 4. Queue a storage task with global to run these steps:
+      userAgent.storageTask.enqueue(() => {
+        // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
+        if (accessResult && accessResult.permissionState !== "granted") {
+          return reject(new DOMException(accessResult.errorName));
+        }
+
+        // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.
+        if (!entry) {
+          return reject(new DOMException(Msg.NotFound, "NotFoundError"));
+        }
+
+        // 3. Assert: entry is a file entry.
+
+        // 4. Enqueue the following steps to the file system queue:
+        userAgent.fileSystemQueue.enqueue(() => {
+          // 1. Create an observation for this on handle with recursive.
+          createObservation(this, handle, recursive);
+        });
+
+        // 5. Resolve result with null.
+        resolve();
+      });
     });
-    this.fileSystemHandleList.removeIf((ref) => {
-      return ref.deref() === handle;
-    });
+
+    return promise;
   }
 
-  disconnect(): void {
-    for (const ref of this.fileSystemHandleList) {
-      const handle = ref.deref();
-
-      if (handle) {
-        handle["registeredObserverList"].removeIf((registered) =>
-          registered.observer === this
-        );
-      }
-    }
-
-    this.recordQueue.empty();
-  }
-}
-
-export async function queueRecord(
-  registeredList: List<RegisteredObserver>,
-  handle: FileSystemHandle,
-  type: FileSystemChangeType,
-  root: FileSystemHandle,
-  userAgent: UserAgent,
-): Promise<void> {
-  const interestedObservers = new Set<FileSystemObserver>();
-  const relativePathComponents =
-    (await resolveLocator(handle[locator], root[locator], userAgent)) ??
-      new List();
-
-  for (const registered of registeredList) {
-    // TODO: treat options.recursive
-    // const options = registered.options;
-
-    interestedObservers.append(registered.observer);
-  }
-
-  for (const observer of interestedObservers) {
-    const record = {
-      type,
-      changedHandle: handle,
-      root,
-      relativePathComponents: [...relativePathComponents],
-    } satisfies FileSystemChangeRecord;
-
-    observer["recordQueue"].enqueue(record);
-
-    userAgent.pendingFileSystemObservers.append(observer);
-  }
-
-  // queue
-  queue(userAgent);
-}
-
-export function queue(agent: WindowAgent): void {
-  if (agent.fileSystemObserverMicrotaskQueued) return;
-
-  agent.fileSystemObserverMicrotaskQueued = true;
-
-  queueMicrotask(() => notify(agent));
-}
-
-function notify(agent: WindowAgent): void {
-  agent.fileSystemObserverMicrotaskQueued = false;
-
-  const notifySet = agent.pendingFileSystemObservers.clone();
-
-  agent.pendingFileSystemObservers.empty();
-
-  for (const fso of notifySet) {
-    const records = fso["recordQueue"].clone();
-
-    fso["recordQueue"].empty();
-
-    if (!records.isEmpty) {
-      try {
-        fso["callback"]([...records], fso);
-      } catch (e) {
-        throw e;
-      }
-    }
-  }
-}
-
-/**
- * Reference @see https://dom.spec.whatwg.org/#mutation-observers
- */
-export interface WindowAgent {
   /**
-   * @default false
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserver-unobserve)
    */
-  fileSystemObserverMicrotaskQueued: boolean;
+  unobserve(handle: FileSystemHandle): void {
+    // 1. Let locator be handle’s locator.
+    const locator = handle[$.locator];
 
-  /** A [set](https://infra.spec.whatwg.org/#ordered-set) of zero or more {@link FileSystemObserver} objects.
-   * @default new Set()
+    // 2. Let observationsMap be this's observations.
+    const observationMap = this[$.observations];
+
+    // 3. Enqueue the following steps to the file system queue:
+
+    // 1. If observationsMap[locator] does not exist, abort these steps.
+    if (!observationMap.exists(locator)) return;
+
+    // 2. Destroy observation observationsMap[locator].
+    destroyObservation(observationMap.get(locator)!);
+  }
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserver-disconnect)
    */
-  pendingFileSystemObservers: Set<FileSystemObserver>;
-}
+  disconnect(): void {
+    // 1. Let observationsMap be this's observations.
+    const observationMap = this[$.observations];
 
-export interface UserAgent extends WindowAgent {
-  fileSystemQueue: ParallelQueue;
-  storageTask: ParallelQueue;
-}
+    // 2. Enqueue the following steps to the file system queue:
 
-export interface ParallelQueue {
-  enqueue(algorithm: () => void): void;
+    // 1. Let observations be the result of getting the values of observationsMap.
+    const observations = observationMap.values();
+
+    // 2. For each observation in observations:
+    for (const observation of observations) {
+      // 1. Destroy observation observation.
+      destroyObservation(observation);
+    }
+  }
 }

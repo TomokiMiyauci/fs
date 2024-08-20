@@ -1,16 +1,51 @@
 import { concat } from "@std/bytes/concat";
-import { releaseLock } from "./algorithm.ts";
-import type {
-  FileEntry,
-  FileSystemWriteChunkType,
-  WriteParams,
-} from "./type.ts";
-import type { UserAgent } from "./file_system_observer.ts";
+import { type FileEntry, releaseLock } from "./file_system_entry.ts";
 import { buffer, file as $file, seekOffset } from "./symbol.ts";
 import { Msg } from "./constant.ts";
-import { queueRecord } from "./file_system_observer.ts";
-import type { FileSystemHandle } from "./file_system_handle.ts";
+import { userAgent } from "./user_agent.ts";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#enumdef-writecommandtype)
+ */
+export type WriteCommandType = "seek" | "truncate" | "write";
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-writeparams)
+ */
+export interface WriteParams {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writeparams-data)
+   */
+  data?: BufferSource | Blob | string | null;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writeparams-position)
+   */
+  position?: number | null;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writeparams-size)
+   */
+  size?: number | null;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writeparams-type)
+   */
+  type: WriteCommandType;
+}
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#typedefdef-filesystemwritechunktype)
+ */
+export type FileSystemWriteChunkType =
+  | BufferSource
+  | Blob
+  | string
+  | WriteParams;
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream)
+ */
 export class FileSystemWritableFileStream
   extends WritableStream<FileSystemWriteChunkType> {
   /**
@@ -86,16 +121,10 @@ export class FileSystemWritableFileStream
  */
 export function createFileSystemWritableFileStream(
   file: FileEntry,
-  context: {
-    root: FileSystemHandle;
-    handle: FileSystemHandle;
-    userAgent: UserAgent;
-  },
 ): FileSystemWritableFileStream {
   // 3. Let writeAlgorithm be an algorithm which takes a chunk argument and returns the result of running the write a chunk algorithm with stream and chunk.
   const writeAlgorithm: UnderlyingSinkWriteCallback<FileSystemWriteChunkType> =
-    (chunk: FileSystemWriteChunkType) =>
-      writeChunk(stream, chunk, context.userAgent);
+    (chunk: FileSystemWriteChunkType) => writeChunk(stream, chunk);
 
   // 4. Let closeAlgorithm be these steps:
   const closeAlgorithm: UnderlyingSinkCloseCallback = () => {
@@ -105,12 +134,12 @@ export function createFileSystemWritableFileStream(
     >();
 
     // 2. Enqueue the following steps to the file system queue:
-    context.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let accessResult be the result of running file’s query access given "readwrite".
       const accessResult = file.queryAccess("readwrite");
 
       // 2. Queue a storage task with file’s relevant global object to run these steps:
-      context.userAgent.storageTask.enqueue(() => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject closeResult with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -125,21 +154,13 @@ export function createFileSystemWritableFileStream(
           return reject(e);
         }
 
-        queueRecord(
-          context.handle["registeredObserverList"],
-          context.handle,
-          "modified",
-          context.root,
-          context.userAgent,
-        );
-
         // 4. Enqueue the following steps to the file system queue:
-        context.userAgent.fileSystemQueue.enqueue(() => {
+        userAgent.fileSystemQueue.enqueue(() => {
           // 1. Release the lock on stream’s [[file]].
           releaseLock(stream[$file]);
 
           // 2. Queue a storage task with file’s relevant global object to resolve closeResult with undefined.
-          context.userAgent.storageTask.enqueue(() => {
+          userAgent.storageTask.enqueue(() => {
             resolve();
           });
         });
@@ -153,7 +174,7 @@ export function createFileSystemWritableFileStream(
   // 5. Let abortAlgorithm be these steps:
   const abortAlgorithm: UnderlyingSinkAbortCallback = () => {
     // 1. Enqueue this step to the file system queue:
-    context.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. Release the lock on stream’s [[file]].
       releaseLock(stream[$file]);
     });
@@ -193,7 +214,6 @@ export function createFileSystemWritableFileStream(
 export function writeChunk(
   stream: FileSystemWritableFileStream,
   chunk: FileSystemWriteChunkType,
-  userAgent: UserAgent,
 ): Promise<void> {
   // 1. Let input be the result of converting chunk to a FileSystemWriteChunkType. If this throws an exception, then return a promise rejected with that exception.
   const input = toWriteParams(chunk);

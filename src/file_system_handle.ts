@@ -1,26 +1,17 @@
-import { isSameLocator } from "./algorithm.ts";
-import type { RegisteredObserver } from "./file_system_observer.ts";
-import type {
-  FileSystemHandleContext,
-  FileSystemHandleKind,
-  FileSystemLocator,
-} from "./type.ts";
-import type { UserAgent } from "./file_system_observer.ts";
+import { isSameLocator } from "./file_system_entry.ts";
+import type { FileSystemHandleContext } from "./type.ts";
+import type { FileSystemLocator } from "./file_system_locator.ts";
 import { locator as $locator } from "./symbol.ts";
-import { List } from "@miyauci/infra";
+import { userAgent } from "./user_agent.ts";
 
-export interface FileSystemHandleOptions {
-  root?: FileSystemHandle;
-}
+/**
+ * @see https://fs.spec.whatwg.org/#enumdef-filesystemhandlekind
+ */
+export type FileSystemHandleKind = "directory" | "file";
 
 export class FileSystemHandle {
-  constructor(
-    context: FileSystemHandleContext,
-    options?: FileSystemHandleOptions,
-  ) {
+  constructor(context: FileSystemHandleContext) {
     this[$locator] = context.locator;
-    this.root = options?.root ?? this;
-    this.userAgent = context.userAgent;
   }
   get kind(): FileSystemHandleKind {
     // steps are to return this's locator's kind.
@@ -39,7 +30,7 @@ export class FileSystemHandle {
     const { promise, resolve } = Promise.withResolvers<boolean>();
 
     // 3. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. If this's locator is the same locator as other’s locator, resolve p with true.
       if (isSameLocator(this[$locator], other[$locator])) resolve(true);
       // 2. Otherwise resolve p with false.
@@ -54,9 +45,4 @@ export class FileSystemHandle {
    * @see https://fs.spec.whatwg.org/#filesystemhandle-locator
    */
   [$locator]: FileSystemLocator;
-
-  // Non-standard internal slot
-  protected userAgent: UserAgent;
-  protected root: FileSystemHandle;
-  protected registeredObserverList: List<RegisteredObserver> = new List();
 }

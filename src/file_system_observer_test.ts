@@ -5,11 +5,14 @@
 
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
-import { type Context, createEmptyFile, getDirectory } from "@test";
 import {
-  type FileSystemChangeRecord,
-  FileSystemObserver,
-} from "./file_system_observer.ts";
+  assertEqualRecords,
+  type Context,
+  createEmptyFile,
+  getDirectory,
+} from "@test";
+import { FileSystemObserver } from "./file_system_observer.ts";
+import type { FileSystemChangeRecord } from "./file_system_change_record.ts";
 
 describe("FileSystemObserver", () => {
   beforeEach<Context>(function () {
@@ -57,7 +60,7 @@ describe("FileSystemObserver", () => {
   it<Context>(
     `Creating a file through FileSystemDirectoryHandle.getFileHandle is reported as an "appeared" event if in scope`,
     async function () {
-      for (const recursive of [true, false]) {
+      for (const recursive of [false, true]) {
         const dir = await this.root.getDirectoryHandle("dir", { create: true });
 
         const observer = new CollectiveFileSystemObserver();
@@ -65,12 +68,14 @@ describe("FileSystemObserver", () => {
         await observer.observe(dir, { recursive });
 
         const fileHandle = await createEmptyFile(dir, "file.txt");
+        const records = await observer.takeRecords();
 
-        expect(observer.takeRecords()).toEqual([{
+        await assertEqualRecords(dir, records, [{
           type: "appeared",
-          root: this.root,
+          root: dir,
           changedHandle: fileHandle,
-          relativePathComponents: ["dir", "file.txt"],
+          relativePathComponents: ["file.txt"],
+          relativePathMovedFrom: null,
         }]);
 
         observer.disconnect();
@@ -93,11 +98,14 @@ describe("FileSystemObserver", () => {
 
         await dir.removeEntry("file.txt");
 
-        expect(observer.takeRecords()).toEqual([{
+        const records = await observer.takeRecords();
+
+        await assertEqualRecords(dir, records, [{
           type: "disappeared",
-          root: this.root,
+          root: dir,
           changedHandle: fileHandle,
-          relativePathComponents: ["dir", "file.txt"],
+          relativePathComponents: ["file.txt"],
+          relativePathMovedFrom: null,
         }]);
 
         observer.disconnect();
@@ -123,7 +131,7 @@ describe("FileSystemObserver", () => {
         await createEmptyFile(outDir, "file.txt");
         await outDir.removeEntry("file.txt");
 
-        expect(observer.takeRecords()).toEqual([]);
+        expect(await observer.takeRecords()).toEqual([]);
 
         observer.disconnect();
 
@@ -290,12 +298,17 @@ describe("FileSystemObserver", () => {
         await writable.write("contents");
         await writable.close();
 
-        expect(observer.takeRecords()).toEqual([{
-          type: "modified",
-          changedHandle: handle,
-          root: this.root,
-          relativePathComponents: ["file.txt"],
-        }]);
+        const records = await observer.takeRecords();
+
+        await assertEqualRecords(handle, records, [
+          {
+            type: "modified",
+            changedHandle: handle,
+            root: this.root,
+            relativePathComponents: [],
+            relativePathMovedFrom: null,
+          },
+        ]);
       },
     );
 
@@ -313,11 +326,11 @@ describe("FileSystemObserver", () => {
         await writable.truncate(1);
         await writable.seek(1);
 
-        expect(observer.takeRecords()).toEqual([]);
+        await assertEqualRecords(handle, await observer.takeRecords(), []);
 
         await writable.abort();
 
-        expect(observer.takeRecords()).toEqual([]);
+        await assertEqualRecords(handle, await observer.takeRecords(), []);
       },
     );
   });
@@ -331,11 +344,19 @@ class CollectiveFileSystemObserver extends FileSystemObserver {
     });
   }
 
-  takeRecords(): FileSystemChangeRecord[] {
-    const result = [...this.#result];
+  takeRecords(): Promise<FileSystemChangeRecord[]> {
+    const { promise, resolve } = Promise.withResolvers<
+      FileSystemChangeRecord[]
+    >();
 
-    this.#result.length = 0;
+    queueMicrotask(() => {
+      const result = [...this.#result];
 
-    return result;
+      this.#result.length = 0;
+
+      resolve(result);
+    });
+
+    return promise;
   }
 }

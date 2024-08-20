@@ -1,15 +1,7 @@
-import {
-  FileSystemHandle,
-  type FileSystemHandleOptions,
-} from "./file_system_handle.ts";
-import type {
-  FileEntry,
-  FileSystemCreateWritableOptions,
-  FileSystemEntry,
-  FileSystemFileOrDirectoryHandleContext,
-  FileSystemLocator,
-} from "./type.ts";
-import { takeLock } from "./algorithm.ts";
+import { FileSystemHandle } from "./file_system_handle.ts";
+import type { FileSystemFileOrDirectoryHandleContext } from "./type.ts";
+import type { FileLocator, FileSystemLocator } from "./file_system_locator.ts";
+import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { buffer, locator } from "./symbol.ts";
 import {
@@ -18,13 +10,24 @@ import {
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
+import { locateEntry } from "./file_system_locator.ts";
+import {
+  type FileEntry,
+  type FileSystemEntry,
+  takeLock,
+} from "./file_system_entry.ts";
+import { typeByEntry } from "./user_agent.ts";
+import { userAgent } from "./user_agent.ts";
+
+export interface FileSystemCreateWritableOptions {
+  keepExistingData?: boolean;
+}
 
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
     private context: FileSystemFileOrDirectoryHandleContext,
-    options?: FileSystemHandleOptions,
   ) {
-    super(context, options);
+    super(context);
   }
   override get kind(): "file" {
     return "file";
@@ -40,15 +43,15 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = this.context.locateEntry(fsLocator);
+      const entry = locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s query access given "read".
       const accessResult = entry?.queryAccess("read");
 
       // 3. Queue a storage task with global to run these steps:
-      this.userAgent.storageTask.enqueue(() => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -66,7 +69,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         // 5. Set f’s snapshot state to the current state of entry.
         // 6. Set f’s underlying byte sequence to a copy of entry’s binary data.
         // 9. Set f’s type to an implementation-defined value, based on for example entry’s name or its file extension.
-        const type = this.context.typeByEntry(entry);
+        const type = typeByEntry(entry);
 
         // `getFile` reads binaries at the time of the `getFile` call, according to the current specification.
         // @see https://github.com/whatwg/fs/issues/157
@@ -104,23 +107,23 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
     // 5. Enqueue the following steps to the file system queue:
 
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = this.context.locateEntry(fsLocator);
+      const entry = locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
 
       // 3. If accessResult’s permission state is not "granted", queue a storage task with global to reject result with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new DOMException(accessResult.errorName));
         });
       }
 
       // 4. If entry is null, queue a storage task with global to reject result with a "NotFoundError" DOMException and abort these steps.
       if (entry === null) {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new DOMException(Msg.NotFound, "NotFoundError"));
         });
       }
@@ -132,7 +135,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       const lockResult = takeLock("shared", entry);
 
       // 7. Queue a storage task with global to run these steps:
-      this.userAgent.storageTask.enqueue(() => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If lockResult is "failure", reject result with a "NoModificationAllowedError" DOMException and abort these steps.
         if (lockResult === "failure") {
           return reject(
@@ -144,11 +147,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         }
 
         // 2. Let stream be the result of creating a new FileSystemWritableFileStream for entry in realm.
-        const stream = createFileSystemWritableFileStream(entry, {
-          handle: this,
-          root: this.root,
-          userAgent: this.userAgent,
-        });
+        const stream = createFileSystemWritableFileStream(entry);
 
         // 3. If options["keepExistingData"] is true:
         if (options?.keepExistingData) {
@@ -181,16 +180,16 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 5. Let isInABucketFileSystem be true if this is in a bucket file system; otherwise false.
 
     // 6. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. Let entry be the result of locating an entry given locator.
-      const entry = this.context.locateEntry(fsLocator);
+      const entry = locateEntry(fsLocator);
 
       // 2. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
 
       // 3. If accessResult’s permission state is not "granted", queue a storage task with global to reject result with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new DOMException(accessResult.errorName));
         });
       }
@@ -199,7 +198,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
       // 5. If entry is null, queue a storage task with global to reject result with a "NotFoundError" DOMException and abort these steps.
       if (entry === null) {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new DOMException(Msg.NotFound, "NotFoundError"));
         });
       }
@@ -211,7 +210,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       const lockResult = takeLock("exclusive", entry);
 
       // 8. Queue a storage task with global to run these steps:
-      this.userAgent.storageTask.enqueue(() => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If lockResult is "failure", reject result with a "NoModificationAllowedError" DOMException and abort these steps.
         if (lockResult === "failure") {
           return reject(
@@ -223,7 +222,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         }
 
         // 2. Let handle be the result of creating a new FileSystemSyncAccessHandle for entry in realm.
-        const handle = createFileSystemSyncAccessHandle(entry, this.userAgent);
+        const handle = createFileSystemSyncAccessHandle(entry);
 
         // 3. Resolve result with handle.
         resolve(handle);
@@ -240,30 +239,48 @@ function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
 export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: Pick<
-    FileSystemFileOrDirectoryHandleContext,
-    "locateEntry" | "typeByEntry" | "userAgent"
-  >,
-  options: FileSystemHandleOptions,
 ): FileSystemFileHandle {
   // 2. Let childType be "file".
   const childType = "file";
 
-  // 3. Let childRoot be a copy of parentLocator’s root.
-  const childRoot = parentLocator.root;
+  // 3. Let childFileSystem be the parentLocator’s file system.
+  const childFileSystem = parentLocator.fileSystem;
 
   // 4. Let childPath be the result of cloning parentLocator’s path and appending name.
   const childPath = parentLocator.path.clone();
   childPath.append(name);
+
+  // 5. Set handle’s locator to a file system locator whose kind is childType, file system is childFileSystem, and path is childPath.
   const locator = {
     kind: childType,
-    root: childRoot,
+    fileSystem: childFileSystem,
     path: childPath,
   } satisfies FileSystemLocator;
-  // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
+
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new FileSystemFileHandle({ ...realm, locator }, options);
+  const handle = new FileSystemFileHandle({
+    locator,
+  });
 
   // 6. Return handle.
   return handle;
+}
+
+export function createFileSystemFileHandle(
+  fileSystem: FileSystem,
+  path: FileSystemPath,
+): FileSystemFileHandle {
+  // 1. Let handle be a new FileSystemFileHandle in realm.
+
+  // 2. Set handle’s locator to a file system locator whose kind is "file", file system is fileSystem, and path is path.
+  const locator = {
+    kind: "file",
+    fileSystem,
+    path,
+  } satisfies FileLocator;
+
+  // 3. Return handle.
+  return new FileSystemFileHandle({
+    locator,
+  });
 }

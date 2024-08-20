@@ -1,24 +1,8 @@
-import { type List, Set } from "@miyauci/infra";
-import {
-  FileSystemHandle,
-  type FileSystemHandleOptions,
-} from "./file_system_handle.ts";
-import {
-  isDirectoryEntry,
-  isFileEntry,
-  isValidFileName,
-  resolveLocator,
-} from "./algorithm.ts";
-import type {
-  DirectoryEntry,
-  FileEntry,
-  FileSystemEntry,
-  FileSystemFileOrDirectoryHandleContext,
-  FileSystemGetDirectoryOptions,
-  FileSystemGetFileOptions,
-  FileSystemLocator,
-  FileSystemRemoveOptions,
-} from "./type.ts";
+import { Set } from "@miyauci/infra";
+import { FileSystemHandle } from "./file_system_handle.ts";
+import { isDirectoryEntry, isFileEntry } from "./algorithm.ts";
+import type { FileSystemFileOrDirectoryHandleContext } from "./type.ts";
+import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import {
   createChildFileSystemFileHandle,
   type FileSystemFileHandle,
@@ -26,8 +10,52 @@ import {
 import { locator as $locator } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
-import { queueRecord } from "./file_system_observer.ts";
+import {
+  type FileSystemLocator,
+  locateEntry,
+  resolve,
+} from "./file_system_locator.ts";
+import {
+  type DirectoryEntry,
+  type FileEntry,
+  type FileSystemEntry,
+  isValidFileName,
+} from "./file_system_entry.ts";
+import { userAgent } from "./user_agent.ts";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemgetfileoptions)
+ */
+export interface FileSystemGetFileOptions {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemgetfileoptions-create)
+   */
+  create?: boolean;
+}
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemgetdirectoryoptions)
+ */
+export interface FileSystemGetDirectoryOptions {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemgetdirectoryoptions-create)
+   */
+  create?: boolean;
+}
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemremoveoptions)
+ */
+export interface FileSystemRemoveOptions {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemremoveoptions-recursive)
+   */
+  recursive?: boolean;
+}
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemdirectoryhandle)
+ */
 @asynciterator({
   init(_, iterator): void {
     // 1. Set iterator’s past results to an empty set.
@@ -38,9 +66,8 @@ import { queueRecord } from "./file_system_observer.ts";
 export class FileSystemDirectoryHandle extends FileSystemHandle {
   constructor(
     private context: FileSystemFileOrDirectoryHandleContext,
-    options?: FileSystemHandleOptions,
   ) {
-    super(context, options);
+    super(context);
   }
   override get kind(): "directory" {
     return "directory";
@@ -63,16 +90,16 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 4. Let global be this's relevant global object.
 
     // 5. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new TypeError(Msg.InvalidName));
         });
       }
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.context.locateEntry(locator);
+      const entry = locateEntry(locator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -83,7 +110,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         : entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
-      this.userAgent.storageTask.enqueue(async () => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -114,8 +141,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
               createChildFileSystemDirectoryHandle(
                 locator,
                 name,
-                this.context,
-                { root: this.root },
               ),
             );
           }
@@ -145,23 +170,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           return reject(e);
         }
 
-        const childLocator = createChildLocator(locator, child);
-
-        const handle = new FileSystemDirectoryHandle(
-          { ...this.context, locator: childLocator },
-          { root: this.root },
-        );
-
-        await queueRecord(
-          this.registeredObserverList,
-          handle,
-          "appeared",
-          this.root,
-          this.userAgent,
-        );
-
         // 11. Resolve result with the result of creating a child FileSystemDirectoryHandle with locator and child’s name in realm.
-        resolve(handle);
+        resolve(createChildFileSystemDirectoryHandle(
+          locator,
+          child.name,
+        ));
       });
     });
 
@@ -186,16 +199,16 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new TypeError(Msg.InvalidName));
         });
       }
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.context.locateEntry(locator);
+      const entry = locateEntry(locator);
 
       // 3. If options["create"] is true:
       // 1. Let accessResult be the result of running entry’s request access given "readwrite".
@@ -206,7 +219,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
         : entry?.queryAccess("read");
 
       // 5. Queue a storage task with global to run these steps:
-      this.userAgent.storageTask.enqueue(async () => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -234,9 +247,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
             // 2. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm and abort these steps.
             return resolve(
-              createChildFileSystemFileHandle(locator, child.name, realm, {
-                root: this.root,
-              }),
+              createChildFileSystemFileHandle(locator, child.name),
             );
           }
         }
@@ -269,22 +280,11 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           reject(e);
         }
 
-        const handle = createChildFileSystemFileHandle(
+        // 12. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm.
+        resolve(createChildFileSystemFileHandle(
           locator,
           child.name,
-          realm,
-          { root: this.root },
-        );
-        await queueRecord(
-          this.registeredObserverList,
-          handle,
-          "appeared",
-          this.root,
-          this.userAgent,
-        );
-
-        // 12. Resolve result with the result of creating a child FileSystemFileHandle with locator and child’s name in realm.
-        resolve(handle);
+        ));
       });
     });
 
@@ -302,22 +302,22 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 3. Let global be this's relevant global object.
 
     // 4. Enqueue the following steps to the file system queue:
-    this.userAgent.fileSystemQueue.enqueue(() => {
+    userAgent.fileSystemQueue.enqueue(() => {
       // 1. If name is not a valid file name, queue a storage task with global to reject result with a TypeError and abort these steps.
       if (!isValidFileName(name)) {
-        return this.userAgent.storageTask.enqueue(() => {
+        return userAgent.storageTask.enqueue(() => {
           reject(new TypeError(Msg.InvalidName));
         });
       }
 
       // 2. Let entry be the result of locating an entry given locator.
-      const entry = this.context.locateEntry(locator);
+      const entry = locateEntry(locator);
 
       // 3. Let accessResult be the result of running entry’s request access given "readwrite".
       const accessResult = entry?.requestAccess("readwrite");
 
       // 4. Queue a storage task with global to run these steps:
-      this.userAgent.storageTask.enqueue(async () => {
+      userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
           return reject(new DOMException(accessResult.errorName));
@@ -349,8 +349,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
               }
             }
 
-            const handle = (await findHandle(this, child))!; // This is probably guaranteed.
-
             try {
               // 2. Remove child from entry’s children.
               entry.children.remove(child);
@@ -358,14 +356,6 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
               // 3. If removing child in the underlying file system throws an exception, reject result with that exception and abort these steps.
               return reject(e);
             }
-
-            await queueRecord(
-              this.registeredObserverList,
-              handle,
-              "disappeared",
-              this.root,
-              this.userAgent,
-            );
 
             // 4. Resolve result with undefined.
             return resolve();
@@ -381,19 +371,24 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
-  async resolve(
+  resolve(
     possibleDescendant: FileSystemHandle,
   ): Promise<string[] | null> {
-    // steps are to return the result of resolving possibleDescendant’s locator relative to this's locator.
-    const result = await resolveLocator(
-      possibleDescendant[$locator],
-      this[$locator],
-      this.userAgent,
-    );
+    // 1. Let result be a new promise.
+    const promise = Promise.withResolvers<string[] | null>();
 
-    if (result) return [...result];
+    // 2. Enqueue the following steps to the file system queue:
+    userAgent.fileSystemQueue.enqueue(() => {
+      // 1. resolve result with the result of resolving possibleDescendant’s locator relative to this's locator.
+      const result = resolve(possibleDescendant[$locator], this[$locator]);
 
-    return result;
+      if (result) return promise.resolve([...result]);
+
+      return promise.resolve(result);
+    });
+
+    // 3. Return result.
+    return promise.promise;
   }
 }
 
@@ -415,8 +410,7 @@ function next(
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
   const locator = handle[$locator];
   const context = handle["context"];
-  const root = handle["root"];
-  const userAgent = handle["userAgent"];
+  // const userAgent = handle["userAgent"];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<
@@ -428,7 +422,7 @@ function next(
   // // 2. Enqueue the following steps to the file system queue:
   userAgent.fileSystemQueue.enqueue(() => {
     // // 1. Let directory be the result of locating an entry given handle’s locator.
-    const directory = context.locateEntry(locator);
+    const directory = locateEntry(locator);
 
     // // 2. Let accessResult be the result of running directory’s query access given "read".
     const accessResult = directory?.queryAccess("read");
@@ -468,17 +462,13 @@ function next(
       // 6. If child is a file entry:
       if (isFileEntry(child)) {
         // 1. Let result be the result of creating a child FileSystemFileHandle with handle’s locator and child’s name in handle’s relevant Realm.
-        result = createChildFileSystemFileHandle(locator, child.name, context, {
-          root,
-        });
+        result = createChildFileSystemFileHandle(locator, child.name);
       } // 7. Otherwise:
       else {
         // 1. Let result be the result of creating a child FileSystemDirectoryHandle with handle’s locator and child’s name in handle’s relevant Realm.
         result = createChildFileSystemDirectoryHandle(
           locator,
           child.name,
-          context,
-          { root },
         );
       }
 
@@ -495,74 +485,62 @@ function assertDirectoryEntry(
   _: FileSystemEntry,
 ): asserts _ is DirectoryEntry {}
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#creating-a-child-filesystemdirectoryhandle)
+ */
 export function createChildFileSystemDirectoryHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  realm: Pick<
-    FileSystemFileOrDirectoryHandleContext,
-    "locateEntry" | "typeByEntry" | "userAgent"
-  >,
-  options: FileSystemHandleOptions,
+  // realm: Pick<
+  //   FileSystemFileOrDirectoryHandleContext
+  // >,
 ): FileSystemDirectoryHandle {
   // 2. Let childType be "directory".
   const childType = "directory";
 
-  // 3. Let childRoot be a copy of parentLocator’s root.
-  const childRoot = parentLocator.root;
+  // 3. Let childFileSystem be the parentLocator’s file system.
+  const childFileSystem = parentLocator.fileSystem;
 
   // 4. Let childPath be the result of cloning parentLocator’s path and appending name.
   const childPath = parentLocator.path.clone();
   childPath.append(name);
 
+  // 5. Set handle’s locator to a file system locator whose kind is childType, file system is childFileSystem, and path is childPath.
   const locator = {
     kind: childType,
-    root: childRoot,
     path: childPath,
+    fileSystem: childFileSystem,
   } satisfies FileSystemLocator;
 
-  // 5. Set handle’s locator to a file system locator whose kind is childType, root is childRoot, and path is childPath.
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
   const handle = new FileSystemDirectoryHandle(
-    { ...realm, locator },
-    options,
+    { locator },
   );
 
   // 6. Return handle.
   return handle;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#creating-a-new-filesystemdirectoryhandle)
+ */
 export function createFileSystemDirectoryHandle(
-  root: string,
-  path: List<string>,
-  realm: Pick<
-    FileSystemFileOrDirectoryHandleContext,
-    "locateEntry" | "typeByEntry" | "userAgent"
-  >,
+  fileSystem: FileSystem,
+  path: FileSystemPath,
 ): FileSystemDirectoryHandle {
-  const locator = { kind: "directory", root, path } satisfies FileSystemLocator;
-  const handle = new FileSystemDirectoryHandle({ ...realm, locator });
+  // 1. Let handle be a new FileSystemDirectoryHandle in realm.
 
+  // 2. Set handle’s locator to a file system locator whose kind is "directory", file system is fileSystem, and path is path.
+  const locator = {
+    kind: "directory",
+    fileSystem,
+    path,
+  } satisfies FileSystemLocator;
+
+  const handle = new FileSystemDirectoryHandle({
+    locator,
+  });
+
+  // 3. Return handle.
   return handle;
-}
-
-function createChildLocator(
-  locator: FileSystemLocator,
-  entry: FileSystemEntry,
-): FileSystemLocator {
-  const path = locator.path.clone();
-  path.append(entry.name);
-  const root = locator.root;
-
-  const kind = isDirectoryEntry(entry) ? "directory" : "file";
-
-  return { kind, path, root };
-}
-
-async function findHandle(
-  dirHandle: FileSystemDirectoryHandle,
-  entry: FileSystemEntry,
-): Promise<FileSystemHandle | undefined> {
-  for await (const [_, handle] of dirHandle) {
-    if (handle.name === entry.name) return handle;
-  }
 }

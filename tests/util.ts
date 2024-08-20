@@ -3,20 +3,21 @@ import {
   createFileSystemDirectoryHandle,
   type FileSystemDirectoryHandle,
 } from "../src/file_system_directory_handle.ts";
+import type { FileSystemLocator } from "../src/file_system_locator.ts";
+import { type FileSystem, notifyObservations } from "../src/file_system.ts";
 import type {
   DirectoryEntry,
   FileEntry,
   FileSystemEntry,
-  FileSystemLocator,
-  FileSystemWriteChunkType,
   PartialSet,
-} from "../src/type.ts";
+} from "../src/file_system_entry.ts";
+import type { FileSystemWriteChunkType } from "../src/file_system_writable_file_stream.ts";
 import { isDirectoryEntry } from "../src/algorithm.ts";
 import { VirtualFileSystem } from "./virtual.ts";
-import { UserAgent } from "../src/helper.ts";
-import { extname } from "@std/path/extname";
-import { typeByExtension } from "@std/media-types";
-import { List } from "@miyauci/infra";
+import type { FileSystemHandle } from "../src/file_system_handle.ts";
+import { List, Set } from "@miyauci/infra";
+import { assert, assertEquals } from "@std/assert";
+import type { FileSystemChangeRecord } from "../src/file_system_change_record.ts";
 
 export interface Context {
   root: FileSystemDirectoryHandle;
@@ -40,7 +41,7 @@ export function createEmptyFile(
   handle: FileSystemDirectoryHandle,
   name: string,
 ): Promise<FileSystemFileHandle> {
-  return createFileWithContents(handle, name, "");
+  return handle.getFileHandle(name, { create: true });
 }
 
 export async function getFileContents(
@@ -69,31 +70,63 @@ export function createDirectory(
 export const pathSeparators = ["/", "\\"];
 
 export function getDirectory(): FileSystemDirectoryHandle {
-  const rootLocator = {
-    root: "",
-    path: new List([""]),
-    kind: "directory",
-  } satisfies FileSystemLocator;
-
-  const vfs = new VirtualFileSystem();
-
-  vfs.createDirectory([...rootLocator.path]);
-
-  return createFileSystemDirectoryHandle(rootLocator.root, rootLocator.path, {
-    locateEntry(locator) {
-      const source = vfs.getSource([...locator.path]);
+  const fileSystem = {
+    locateEntry(path) {
+      const source = vfs.getSource([...path]);
 
       if (!source) return null;
 
-      if (source instanceof Map) return renderDirectory(locator, vfs);
-      return createFileEntry(locator, vfs);
+      if (source instanceof Map) {
+        return renderDirectory(
+          { kind: "directory", path, fileSystem: this },
+          vfs,
+        );
+      }
+      return createFileEntry({ kind: "file", path, fileSystem: this }, vfs);
     },
+    root: "",
+    observations: new Set(),
+  } satisfies FileSystem;
 
-    typeByEntry(entry) {
-      return typeByExtension(extname(entry.name));
-    },
-    userAgent: new UserAgent(),
+  const vfs = new VirtualFileSystem();
+
+  vfs.addEventListener("disappeared", ({ detail }) => {
+    notifyObservations(
+      fileSystem,
+      new List([{
+        type: "disappeared",
+        entryType: detail.type,
+        fromPath: null,
+        modifiedPath: new List(detail.path),
+      }]),
+    );
   });
+  vfs.addEventListener("appeared", ({ detail }) => {
+    notifyObservations(
+      fileSystem,
+      new List([{
+        type: "appeared",
+        entryType: detail.type,
+        fromPath: null,
+        modifiedPath: new List(detail.path),
+      }]),
+    );
+  });
+  vfs.addEventListener("modified", ({ detail }) => {
+    notifyObservations(
+      fileSystem,
+      new List([{
+        type: "modified",
+        entryType: detail.type,
+        fromPath: null,
+        modifiedPath: new List(detail.path),
+      }]),
+    );
+  });
+
+  vfs.createDirectory([""]);
+
+  return createFileSystemDirectoryHandle(fileSystem, new List([""]));
 }
 
 function renderDirectory(
@@ -129,13 +162,13 @@ function renderDirectory(
             if (item.isFile) {
               yield createFileEntry({
                 kind: "file",
-                root: locator.root,
+                fileSystem: locator.fileSystem,
                 path,
               }, vfs);
             } else {
               yield renderDirectory({
                 kind: "directory",
-                root: locator.root,
+                fileSystem: locator.fileSystem,
                 path,
               }, vfs);
             }
@@ -182,4 +215,58 @@ function createFileEntry(
     },
     sharedLockCount: 0,
   };
+}
+
+export async function assertEqualRecords(
+  root: FileSystemHandle,
+  actual: FileSystemChangeRecord[],
+  expected: FileSystemChangeRecord[],
+): Promise<void> {
+  assertEquals(
+    actual.length,
+    expected.length,
+    "Received an unexpected number of events",
+  );
+
+  for (let i = 0; i < actual.length; i++) {
+    const actual_record = actual[i];
+    const expected_record = expected[i];
+
+    assertEquals(
+      actual_record.type,
+      expected_record.type,
+      "A record's type didn't match the expected type",
+    );
+
+    assertEquals(
+      actual_record.relativePathComponents,
+      expected_record.relativePathComponents,
+      "A record's relativePathComponents didn't match the expected relativePathComponents",
+    );
+
+    if (expected_record.relativePathMovedFrom) {
+      assertEquals(
+        actual_record.relativePathMovedFrom,
+        expected_record.relativePathMovedFrom,
+        "A record's relativePathMovedFrom didn't match the expected relativePathMovedFrom",
+      );
+    } else {
+      assertEquals(
+        actual_record.relativePathMovedFrom,
+        null,
+        "A record's relativePathMovedFrom was set when it shouldn't be",
+      );
+    }
+
+    assert(
+      await actual_record.changedHandle.isSameEntry(
+        expected_record.changedHandle,
+      ),
+      "A record's changedHandle didn't match the expected changedHandle",
+    );
+    assert(
+      await actual_record.root.isSameEntry(root),
+      "A record's root didn't match the expected root",
+    );
+  }
 }

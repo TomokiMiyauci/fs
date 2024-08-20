@@ -1,13 +1,39 @@
 type Structure = Map<string, FileInfo | Structure>;
 
-export class VirtualFileSystem {
+interface VirtualFsEventMap {
+  appeared: CustomEvent;
+  disappeared: CustomEvent<EventDetail>;
+  modified: CustomEvent<EventDetail>;
+}
+
+interface EventDetail {
+  path: Path;
+  type: "file" | "directory";
+}
+
+type Path = string[];
+
+export class VirtualFileSystem extends EventTarget {
   private map: Structure = new Map();
 
   /** Removes resource of a given path. */
   remove(keys: string[]): void {
     const [key, parent] = this.getParentDir(keys);
 
-    parent.delete(key);
+    if (parent.has(key)) {
+      const node = parent.get(key)!;
+      const deleted = parent.delete(key);
+
+      if (deleted) {
+        const type = node instanceof Map ? "directory" : "file";
+
+        this.dispatchEvent(
+          new CustomEvent<EventDetail>("disappeared", {
+            detail: { path: keys, type },
+          }),
+        );
+      }
+    }
   }
 
   private getParentDir(keys: string[]): [childKey: string, Structure] {
@@ -71,6 +97,12 @@ export class VirtualFileSystem {
     if (resource instanceof Map) throw new Error(Msg.IsDirectory);
 
     resource.data = value.slice();
+
+    this.dispatchEvent(
+      new CustomEvent<EventDetail>("modified", {
+        detail: { type: "file", path: keys },
+      }),
+    );
   }
 
   /** Gets a file contents in the specified path.
@@ -139,6 +171,12 @@ export class VirtualFileSystem {
 
     if (!resource) {
       parent.set(key, { data: new Uint8Array(), lastModified: Date.now() });
+
+      this.dispatchEvent(
+        new CustomEvent<EventDetail>("appeared", {
+          detail: { path: keys, type: "file" },
+        }),
+      );
     } else if (resource instanceof Map) throw new Error(Msg.IsDirectory);
   }
 
@@ -150,11 +188,32 @@ export class VirtualFileSystem {
     const [key, parent] = this.getParentDir(keys);
     const resource = parent.get(key);
 
-    if (!resource) parent.set(key, new Map());
-    else if (resource instanceof Map) {
+    if (!resource) {
+      parent.set(key, new Map());
+      this.dispatchEvent(
+        new CustomEvent<EventDetail>("appeared", {
+          detail: { type: "directory", path: keys },
+        }),
+      );
+    } else if (resource instanceof Map) {
       //
     } else throw new Error(Msg.IsFile);
   }
+}
+
+export interface VirtualFileSystem {
+  addEventListener<
+    K extends keyof VirtualFsEventMap,
+  >(
+    type: K,
+    listener: (this: VirtualFileSystem, ev: VirtualFsEventMap[K]) => void,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
 }
 
 function headTail<T>(input: T[]): [head: T[], tail: T] {
