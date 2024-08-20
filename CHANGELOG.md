@@ -1,3 +1,12 @@
+# [1.0.0-beta.5](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.4...1.0.0-beta.5) (2024-08-20)
+
+
+### Features
+
+* change non-standard constructor interface ([baa8f31](https://github.com/TomokiMiyauci/fs/commit/baa8f311e5844983287909fcba97ad16b7e939b8))
+* change of reference to internal slot ([874375f](https://github.com/TomokiMiyauci/fs/commit/874375f4d454a87606377f0cc9a0e8a60a163601))
+* remove non-standard constructor interface ([8d0734c](https://github.com/TomokiMiyauci/fs/commit/8d0734c4cba3bdc31489877879e8651c2251c1bb))
+
 # [1.0.0-beta.4](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.3...1.0.0-beta.4) (2024-08-20)
 
 
