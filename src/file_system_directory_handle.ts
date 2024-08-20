@@ -1,7 +1,6 @@
 import { Set } from "@miyauci/infra";
 import { FileSystemHandle } from "./file_system_handle.ts";
 import { isDirectoryEntry, isFileEntry } from "./algorithm.ts";
-import type { FileSystemFileOrDirectoryHandleContext } from "./type.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import {
   createChildFileSystemFileHandle,
@@ -11,6 +10,7 @@ import { locator as $locator } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
 import {
+  type DirectoryLocator,
   type FileSystemLocator,
   locateEntry,
   resolve,
@@ -64,8 +64,8 @@ export interface FileSystemRemoveOptions {
   next,
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
-  constructor(context: FileSystemFileOrDirectoryHandleContext) {
-    super(context);
+  constructor(entry: DirectoryLocator) {
+    super(entry);
   }
 
   override get kind(): "directory" {
@@ -521,9 +521,7 @@ export function createChildFileSystemDirectoryHandle(
   } satisfies FileSystemLocator;
 
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
-  const handle = new FileSystemDirectoryHandle(
-    { locator },
-  );
+  const handle = new FileSystemDirectoryHandle(locator);
 
   // 6. Return handle.
   return handle;
@@ -545,9 +543,7 @@ export function createFileSystemDirectoryHandle(
     path,
   } satisfies FileSystemLocator;
 
-  const handle = new FileSystemDirectoryHandle({
-    locator,
-  });
+  const handle = new FileSystemDirectoryHandle(locator);
 
   // 3. Return handle.
   return handle;

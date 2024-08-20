@@ -15,6 +15,7 @@ class ParallelQueue {
 
 export const userAgent = new UserAgent();
 
+/** Specify the content type from the entry. */
 export function typeByEntry(entry: FileEntry): string | undefined {
   return typeByExtension(extname(entry.name));
 }

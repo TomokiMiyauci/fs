@@ -1,5 +1,4 @@
 import { FileSystemHandle } from "./file_system_handle.ts";
-import type { FileSystemFileOrDirectoryHandleContext } from "./type.ts";
 import type { FileLocator, FileSystemLocator } from "./file_system_locator.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
@@ -33,10 +32,8 @@ export interface FileSystemCreateWritableOptions {
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemfilehandle)
  */
 export class FileSystemFileHandle extends FileSystemHandle {
-  constructor(
-    private context: FileSystemFileOrDirectoryHandleContext,
-  ) {
-    super(context);
+  constructor(locator: FileLocator) {
+    super(locator);
   }
 
   override get kind(): "file" {
@@ -280,9 +277,7 @@ export function createChildFileSystemFileHandle(
   } satisfies FileSystemLocator;
 
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new FileSystemFileHandle({
-    locator,
-  });
+  const handle = new FileSystemFileHandle(locator);
 
   // 6. Return handle.
   return handle;
@@ -305,7 +300,5 @@ export function createFileSystemFileHandle(
   } satisfies FileLocator;
 
   // 3. Return handle.
-  return new FileSystemFileHandle({
-    locator,
-  });
+  return new FileSystemFileHandle(locator);
 }
