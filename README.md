@@ -2,7 +2,7 @@
 
 > 🚧 WIP at [beta branch](https://github.com/TomokiMiyauci/fs/tree/beta)
 
-[File System Standard](https://fs.spec.whatwg.org), based on WHATWG spec
+[File System Standard](https://whatpr.org/fs/165.html), based on WHATWG spec
 reference implementation.
 
 ## Usage
@@ -15,8 +15,8 @@ reference implementation.
 import { StorageManager } from "@miyauci/fs";
 import { FileSystem } from "@miyauci/fs/deno";
 
-const fsAdaptor = new FileSystem("path/to/dir"); // default is "."
-const storage = new StorageManager(fsAdaptor);
+const fileSystem = new FileSystem("path/to/dir"); // default is "."
+const storage = new StorageManager(fileSystem);
 
 const handle = await storage.getDirectory();
 const fileHandle = await handle.getFileHandle("file.txt", { create: true });
@@ -29,29 +29,49 @@ API.
 
 ### FileSystemObserver
 
-> [!NOTE]
->
-> This is a draft and the exact specification does not exist at this time.
-
-[FileSystemObserver](https://github.com/whatwg/fs/blob/main/proposals/FileSystemObserver.md)
+[FileSystemObserver](https://whatpr.org/fs/165.html#api-filesystemobserver)
 monitors changes to the `FileSystemHandle`.
 
 ```ts
 import { type FileSystemHandle, FileSystemObserver } from "@miyauci/fs";
 
 declare const handle: FileSystemHandle;
-const observer = new FileSystemObserver((records) => {
-  for (const record of records) {
-    switch (record.type) {
-      case "appeared": {}
-      case "disappeared": {}
-      case "modified": {}
-    }
-  }
-});
+declare const callback: FileSystemObserverCallback;
+const observer = new FileSystemObserver(callback);
 
 await observer.observe(handle);
 ```
+
+#### With Deno File System
+
+To use `FileSystemObserver` with `FileSystem`, you must call `FileSystem#watch`.
+
+This will internally call `Deno.watchFs` to monitor the file system. It is a
+deliberate decision not to do this automatically in the constructor.
+
+```ts
+import {
+  FileSystemObserver,
+  type FileSystemObserverCallback,
+  StorageManager,
+} from "@miyauci/fs";
+import { FileSystem } from "@miyauci/fs/deno";
+
+const fileSystem = new FileSystem();
+const storage = new StorageManager(fileSystem);
+const handle = await storage.getDirectory();
+declare const callback: FileSystemObserverCallback;
+const observer = new FileSystemObserver(callback);
+
+fileSystem.watch();
+await observer.observe(handle, { recursive: true });
+
+await handle.getFileHandle("file.txt", { create: true });
+
+fileSystem.unwatch();
+```
+
+Also, `FileSystem#unwatch` will stop the monitoring.
 
 ## API
 
