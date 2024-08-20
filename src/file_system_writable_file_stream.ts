@@ -50,7 +50,7 @@ export class FileSystemWritableFileStream
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-file)
    */
-  protected file: FileEntry;
+  protected file!: FileEntry;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-seekoffset)
@@ -61,16 +61,6 @@ export class FileSystemWritableFileStream
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-buffer)
    */
   protected buffer: Uint8Array = new Uint8Array(0);
-
-  constructor(
-    entry: FileEntry,
-    underlyingSink?: UnderlyingSink<FileSystemWriteChunkType> | undefined,
-    strategy?: QueuingStrategy<FileSystemWriteChunkType> | undefined,
-  ) {
-    super(underlyingSink, strategy);
-
-    this.file = entry;
-  }
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemwritablefilestream-seek)
@@ -195,22 +185,15 @@ export function createFileSystemWritableFileStream(
   const sizeAlgorithm: QueuingStrategySize<FileSystemWriteChunkType> = () => 1;
 
   // 1. Let stream be a new FileSystemWritableFileStream in realm.
-  // 2. Set stream’s [[file]] to file.
-  const stream = new FileSystemWritableFileStream(file, {
+  // 8. Set up stream with writeAlgorithm set to writeAlgorithm, closeAlgorithm set to closeAlgorithm, abortAlgorithm set to abortAlgorithm, highWaterMark set to highWaterMark, and sizeAlgorithm set to sizeAlgorithm.
+  const stream = new FileSystemWritableFileStream({
     abort: abortAlgorithm,
     close: closeAlgorithm,
     write: writeAlgorithm,
   }, { highWaterMark, size: sizeAlgorithm });
 
-  // 8. Set up stream with writeAlgorithm set to writeAlgorithm, closeAlgorithm set to closeAlgorithm, abortAlgorithm set to abortAlgorithm, highWaterMark set to highWaterMark, and sizeAlgorithm set to sizeAlgorithm.
-  // setup(
-  //   stream,
-  //   writeAlgorithm,
-  //   closeAlgorithm,
-  //   abortAlgorithm,
-  //   highWaterMark,
-  //   sizeAlgorithm,
-  // );
+  // 2. Set stream’s [[file]] to file.
+  stream["file"] = file;
 
   // 9. Return stream.
   return stream;

@@ -9,7 +9,6 @@ import {
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
 import {
-  type DirectoryLocator,
   type FileSystemLocator,
   locateEntry,
   resolve,
@@ -63,10 +62,6 @@ export interface FileSystemRemoveOptions {
   next,
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
-  constructor(entry: DirectoryLocator) {
-    super(entry);
-  }
-
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getdirectoryhandle)
    */
@@ -496,10 +491,10 @@ function assertDirectoryEntry(
 export function createChildFileSystemDirectoryHandle(
   parentLocator: FileSystemLocator,
   name: string,
-  // realm: Pick<
-  //   FileSystemFileOrDirectoryHandleContext
-  // >,
 ): FileSystemDirectoryHandle {
+  // 1. Let handle be a new FileSystemDirectoryHandle in realm.
+  const handle = new FileSystemDirectoryHandle();
+
   // 2. Let childType be "directory".
   const childType = "directory";
 
@@ -511,14 +506,11 @@ export function createChildFileSystemDirectoryHandle(
   childPath.append(name);
 
   // 5. Set handle’s locator to a file system locator whose kind is childType, file system is childFileSystem, and path is childPath.
-  const locator = {
+  handle["locator"] = {
     kind: childType,
     path: childPath,
     fileSystem: childFileSystem,
-  } satisfies FileSystemLocator;
-
-  // 1. Let handle be a new FileSystemDirectoryHandle in realm.
-  const handle = new FileSystemDirectoryHandle(locator);
+  };
 
   // 6. Return handle.
   return handle;
@@ -532,15 +524,10 @@ export function createFileSystemDirectoryHandle(
   path: FileSystemPath,
 ): FileSystemDirectoryHandle {
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
+  const handle = new FileSystemDirectoryHandle();
 
   // 2. Set handle’s locator to a file system locator whose kind is "directory", file system is fileSystem, and path is path.
-  const locator = {
-    kind: "directory",
-    fileSystem,
-    path,
-  } satisfies FileSystemLocator;
-
-  const handle = new FileSystemDirectoryHandle(locator);
+  handle["locator"] = { kind: "directory", fileSystem, path };
 
   // 3. Return handle.
   return handle;

@@ -14,11 +14,7 @@ export class FileSystemHandle {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemhandle-locator)
    */
-  protected locator: FileSystemLocator;
-
-  constructor(locator: FileSystemLocator) {
-    this["locator"] = locator;
-  }
+  protected locator!: FileSystemLocator;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandle-kind)

@@ -1,5 +1,5 @@
 import { FileSystemHandle } from "./file_system_handle.ts";
-import type { FileLocator, FileSystemLocator } from "./file_system_locator.ts";
+import type { FileSystemLocator } from "./file_system_locator.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import {
@@ -30,10 +30,6 @@ export interface FileSystemCreateWritableOptions {
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemfilehandle)
  */
 export class FileSystemFileHandle extends FileSystemHandle {
-  constructor(locator: FileLocator) {
-    super(locator);
-  }
-
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-getfile)
    */
@@ -257,6 +253,9 @@ export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
 ): FileSystemFileHandle {
+  // 1. Let handle be a new FileSystemFileHandle in realm.
+  const handle = new FileSystemFileHandle();
+
   // 2. Let childType be "file".
   const childType = "file";
 
@@ -268,14 +267,11 @@ export function createChildFileSystemFileHandle(
   childPath.append(name);
 
   // 5. Set handle’s locator to a file system locator whose kind is childType, file system is childFileSystem, and path is childPath.
-  const locator = {
+  handle["locator"] = {
     kind: childType,
     fileSystem: childFileSystem,
     path: childPath,
-  } satisfies FileSystemLocator;
-
-  // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new FileSystemFileHandle(locator);
+  };
 
   // 6. Return handle.
   return handle;
@@ -289,14 +285,11 @@ export function createFileSystemFileHandle(
   path: FileSystemPath,
 ): FileSystemFileHandle {
   // 1. Let handle be a new FileSystemFileHandle in realm.
+  const handle = new FileSystemFileHandle();
 
   // 2. Set handle’s locator to a file system locator whose kind is "file", file system is fileSystem, and path is path.
-  const locator = {
-    kind: "file",
-    fileSystem,
-    path,
-  } satisfies FileLocator;
+  handle["locator"] = { kind: "file", fileSystem, path };
 
   // 3. Return handle.
-  return new FileSystemFileHandle(locator);
+  return handle;
 }
