@@ -18,17 +18,34 @@ import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.t
 import { userAgent } from "./user_agent.ts";
 
 /** A list of one or more strings.
- * @see https://fs.spec.whatwg.org/#file-system-path
+ *
+ * [File System Standard](https://fs.spec.whatwg.org/#file-system-path)
  */
 export type FileSystemPath = List<string>;
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#file-system)
+ */
 export abstract class FileSystem {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-root)
+   */
   abstract root: string;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-locate-an-entry)
+   */
   abstract locateEntry(path: FileSystemPath): FileSystemEntry | null;
-  // abstract fire(dispatch: (events: List<FileSystemEvent>) => void): void;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-observations)
+   */
   observations: Set<FileSystemObservation> = new Set();
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#file-system-notify-observations)
+ */
 export function notifyObservations(
   fileSystem: FileSystem,
   events: List<FileSystemEvent>,
@@ -378,6 +395,6 @@ export interface FileSystemEvent {
   fromPath: FileSystemPath | null;
 }
 
-export function assertNonNullable<T>(
+function assertNonNullable<T>(
   _: T,
 ): asserts _ is NonNullable<T> {}

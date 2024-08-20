@@ -8,7 +8,13 @@ import {
 } from "./symbol.ts";
 import { userAgent } from "./user_agent.ts";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemreadwriteoptions)
+ */
 export interface FileSystemReadWriteOptions {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemreadwriteoptions-at)
+   */
   at?: number;
 }
 
@@ -16,6 +22,9 @@ export interface FileSystemSyncAccessHandleContext {
   entry: FileEntry;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle)
+ */
 export class FileSystemSyncAccessHandle {
   /**
    * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-state
@@ -32,15 +41,15 @@ export class FileSystemSyncAccessHandle {
    */
   [$filePositionCursor]: number = 0;
 
-  // private userAgent: UserAgent;
-
   constructor(
     context: FileSystemSyncAccessHandleContext,
   ) {
     this[$file] = context.entry;
-    // this.userAgent = context.userAgent;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-read)
+   */
   read(
     buffer: AllowSharedBufferSource,
     options?: FileSystemReadWriteOptions,
@@ -111,6 +120,9 @@ export class FileSystemSyncAccessHandle {
     }
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-write)
+   */
   write(
     buffer: AllowSharedBufferSource,
     options?: FileSystemReadWriteOptions,
@@ -187,6 +199,9 @@ export class FileSystemSyncAccessHandle {
     return bufferSize;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-truncate)
+   */
   truncate(newSize: number): void {
     this.assertUnsignedLongLong(newSize);
 
@@ -233,6 +248,9 @@ export class FileSystemSyncAccessHandle {
     }
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-getsize)
+   */
   getSize(): number {
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this[state] === "close") throw new DOMException("InvalidStateError");
@@ -241,6 +259,9 @@ export class FileSystemSyncAccessHandle {
     return this[$file].binaryData.length;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-flush)
+   */
   flush(): void {
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this[state] === "close") throw new DOMException("InvalidStateError");
@@ -248,6 +269,9 @@ export class FileSystemSyncAccessHandle {
     // 2. Attempt to transfer all cached modifications of the file’s content to the file system’s underlying storage device.
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-close)
+   */
   close(): void {
     // 1. If this's [[state]] is "closed", return.
     if (this[state] === "close") return;
@@ -291,6 +315,9 @@ function isUnsignedLongLong(value: number): boolean {
   return Number.isInteger(value) && 0 <= value;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemsyncaccesshandle)
+ */
 export function createFileSystemSyncAccessHandle(
   entry: FileEntry,
 ): FileSystemSyncAccessHandle {

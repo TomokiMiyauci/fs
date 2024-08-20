@@ -4,31 +4,52 @@ import * as $ from "./symbol.ts";
 import { type FileSystemLocator, resolve } from "./file_system_locator.ts";
 import type { List } from "@miyauci/infra";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#enumdef-filesystemchangetype)
+ */
 export type FileSystemChangeType =
   | "appeared"
   | "disappeared"
+  | "errored"
   | "modified"
   | "moved"
-  /** Change types are not known */
-  | "unknown"
-  /** This observation is no longer valid */
-  | "errored";
+  | "unknown";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemchangerecord)
+ */
 export interface FileSystemChangeRecord {
+  /** The handle that was passed to `FileSystemObserver.observe()`.
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-root)
+   */
   readonly root: FileSystemHandle;
 
-  /** The handle affected by the file system change */
+  /** The path of {@link changedHandle} relative to {@link root}.
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-changedhandle)
+   */
   readonly changedHandle: FileSystemHandle;
+
+  /** The type of change.
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-type)
+   */
+  readonly type: FileSystemChangeType;
 
   /** The path of `changedHandle` relative to `root` */
   readonly relativePathComponents: readonly string[];
 
-  /** The type of change */
-  readonly type: FileSystemChangeType;
-
+  /** If {@link type} is "moved", this corresponds to the former path of {@link changedHandle} relative to {@link root}, if the former path is known; otherwise null.
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-relativepathmovedfrom)
+   */
   readonly relativePathMovedFrom: readonly string[] | null;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemchangerecord)
+ */
 export function createFileSystemChangeRecord(
   observation: FileSystemObservation,
   changedHandle: FileSystemHandle,

@@ -26,6 +26,9 @@ export function isFileEntry(
   return "binaryData" in entry;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#creating-a-new-filesystemhandle)
+ */
 export function createFileSystemHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,

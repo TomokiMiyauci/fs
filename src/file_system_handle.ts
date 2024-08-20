@@ -9,20 +9,33 @@ import { userAgent } from "./user_agent.ts";
  */
 export type FileSystemHandleKind = "directory" | "file";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemhandle)
+ */
 export class FileSystemHandle {
   constructor(context: FileSystemHandleContext) {
     this[$locator] = context.locator;
   }
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandle-kind)
+   */
   get kind(): FileSystemHandleKind {
     // steps are to return this's locator's kind.
     return this[$locator].kind;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandle-name)
+   */
   get name(): string {
     // steps are to return the last item (a string) of this's locator's path.
     return this[$locator].path[this[$locator].path.size - 1];
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandle-issameentry)
+   */
   isSameEntry(other: FileSystemHandle): Promise<boolean> {
     // 1. Let realm be this's relevant Realm.
 

@@ -19,20 +19,33 @@ import {
 import { typeByEntry } from "./user_agent.ts";
 import { userAgent } from "./user_agent.ts";
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemcreatewritableoptions)
+ */
 export interface FileSystemCreateWritableOptions {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemcreatewritableoptions-keepexistingdata)
+   */
   keepExistingData?: boolean;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemfilehandle)
+ */
 export class FileSystemFileHandle extends FileSystemHandle {
   constructor(
     private context: FileSystemFileOrDirectoryHandleContext,
   ) {
     super(context);
   }
+
   override get kind(): "file" {
     return "file";
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-getfile)
+   */
   getFile(): Promise<File> {
     // 1. Let result be a new promise.
     const { reject, promise, resolve } = Promise.withResolvers<File>();
@@ -90,6 +103,9 @@ export class FileSystemFileHandle extends FileSystemHandle {
     return promise;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createwritable)
+   */
   createWritable(
     options?: FileSystemCreateWritableOptions,
   ): Promise<FileSystemWritableFileStream> {
@@ -164,6 +180,9 @@ export class FileSystemFileHandle extends FileSystemHandle {
     return promise;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createsyncaccesshandle)
+   */
   createSyncAccessHandle(): Promise<FileSystemSyncAccessHandle> {
     // 1. Let result be a new promise.
     const { promise: result, reject, resolve } = Promise.withResolvers<
@@ -236,6 +255,9 @@ export class FileSystemFileHandle extends FileSystemHandle {
 
 function assertFileEntry(_: FileSystemEntry): asserts _ is FileEntry {}
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#creating-a-child-filesystemfilehandle)
+ */
 export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
@@ -266,6 +288,9 @@ export function createChildFileSystemFileHandle(
   return handle;
 }
 
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#creating-a-new-filesystemfilehandle)
+ */
 export function createFileSystemFileHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,

@@ -19,7 +19,16 @@ import { userAgent } from "./user_agent.ts";
  * [File System Standard](https://whatpr.org/fs/165.html#callbackdef-filesystemobservercallback)
  */
 export interface FileSystemObserverCallback {
-  (records: FileSystemChangeRecord[], observer: FileSystemObserver): void;
+  (
+    /**
+     * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobservercallback-records)
+     */
+    records: FileSystemChangeRecord[],
+    /**
+     * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobservercallback-observer)
+     */
+    observer: FileSystemObserver,
+  ): void;
 }
 
 /**

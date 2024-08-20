@@ -64,15 +64,17 @@ export interface FileSystemRemoveOptions {
   next,
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
-  constructor(
-    private context: FileSystemFileOrDirectoryHandleContext,
-  ) {
+  constructor(context: FileSystemFileOrDirectoryHandleContext) {
     super(context);
   }
+
   override get kind(): "directory" {
     return "directory";
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getdirectoryhandle)
+   */
   getDirectoryHandle(
     name: string,
     options?: FileSystemGetDirectoryOptions,
@@ -182,6 +184,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getfilehandle)
+   */
   getFileHandle(
     name: string,
     options?: FileSystemGetFileOptions,
@@ -291,6 +296,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-removeentry)
+   */
   removeEntry(name: string, options?: FileSystemRemoveOptions): Promise<void> {
     // 1. Let result be a new promise.
     const { promise, resolve, reject } = Promise.withResolvers<void>();
@@ -370,6 +378,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-resolve)
+   */
   resolve(
     possibleDescendant: FileSystemHandle,
   ): Promise<string[] | null> {

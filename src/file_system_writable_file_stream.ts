@@ -73,6 +73,9 @@ export class FileSystemWritableFileStream
     this[$file] = entry;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemwritablefilestream-seek)
+   */
   seek(position: number): Promise<void> {
     // 1. Let writer be the result of getting a writer for this.
     const writer = super.getWriter();
@@ -87,6 +90,9 @@ export class FileSystemWritableFileStream
     return result;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemwritablefilestream-truncate)
+   */
   truncate(size: number): Promise<void> {
     // 1. Let writer be the result of getting a writer for this.
     const writer = super.getWriter();
@@ -101,6 +107,9 @@ export class FileSystemWritableFileStream
     return result;
   }
 
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemwritablefilestream-write)
+   */
   write(data: FileSystemWriteChunkType): Promise<void> {
     // 1. Let writer be the result of getting a writer for this.
     const writer = super.getWriter();

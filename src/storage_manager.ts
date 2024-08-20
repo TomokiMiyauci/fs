@@ -5,6 +5,9 @@ import {
 } from "./file_system_directory_handle.ts";
 import type { FileSystem } from "./file_system.ts";
 
+/**
+ * [File System Standard](https://storage.spec.whatwg.org/#storagemanager)
+ */
 export class StorageManager {
   constructor(private fileSystem: FileSystem) {}
 
