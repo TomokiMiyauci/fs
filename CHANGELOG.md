@@ -1,3 +1,12 @@
+# [1.0.0-beta.3](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.2...1.0.0-beta.3) (2024-08-20)
+
+
+### Features
+
+* **adaptor:** add watching file system feature ([a78f39b](https://github.com/TomokiMiyauci/fs/commit/a78f39bddc42e4d0f907d265e48a1d1e28e7996f))
+* reimplement file system observer ([4bddd98](https://github.com/TomokiMiyauci/fs/commit/4bddd98421807c0d7fc9a914f89c3f4abced813a))
+* **watcher:** add file watcher based on event target ([53aaa13](https://github.com/TomokiMiyauci/fs/commit/53aaa1393f47103b0d994dd880533f6c30222e28))
+
 # [1.0.0-beta.2](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.1...1.0.0-beta.2) (2024-08-18)
 
 
