@@ -306,12 +306,13 @@ class Effector implements PartialSet<FileSystemEntry> {
 
     for (const entry of iter) {
       const name = entry.name;
+      const path = this.paths.concat(name);
 
       if (entry.isDirectory) {
-        yield new DirectoryEntry(name, this.root, this.paths.concat(name));
+        yield new DirectoryEntry(name, this.root, path);
       } else if (entry.isFile) {
-        const path = this.paths.concat(name);
-        const file = Deno.openSync(join(...path), { read: true });
+        const fullPath = join(this.root, ...path);
+        const file = Deno.openSync(fullPath, { read: true });
 
         yield new FileEntry(name, file, join(...path));
       } else {
