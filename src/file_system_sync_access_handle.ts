@@ -1,6 +1,6 @@
 import { concat } from "@std/bytes/concat";
 import { type FileEntry, releaseLock } from "./file_system_entry.ts";
-import type { AllowSharedBufferSource } from "./type.ts";
+import type { AllowSharedBufferSource } from "./webidl/type.ts";
 import {
   file as $file,
   filePositionCursor as $filePositionCursor,

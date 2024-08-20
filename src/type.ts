@@ -1,16 +1,5 @@
 import type { FileSystemLocator } from "./file_system_locator.ts";
 
-export interface UserAgent {
-  fileSystemQueue: ParallelQueue;
-  storageTask: ParallelQueue;
-}
-
-export interface ParallelQueue {
-  enqueue(algorithm: () => void): void;
-}
-
-export type AllowSharedBufferSource = ArrayBuffer | ArrayBufferView;
-
 export interface FileSystemHandleContext {
   locator: FileSystemLocator;
 }
