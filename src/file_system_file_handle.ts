@@ -2,7 +2,6 @@ import { FileSystemHandle } from "./file_system_handle.ts";
 import type { FileLocator, FileSystemLocator } from "./file_system_locator.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
-import { buffer, locator } from "./symbol.ts";
 import {
   createFileSystemSyncAccessHandle,
   type FileSystemSyncAccessHandle,
@@ -47,7 +46,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     const { reject, promise, resolve } = Promise.withResolvers<File>();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this[locator];
+    const fsLocator = this.locator;
 
     // 3. Let global be this's relevant global object.
 
@@ -111,7 +110,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     >();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this[locator];
+    const fsLocator = this.locator;
 
     // 3. Let realm be this's relevant Realm.
 
@@ -164,7 +163,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         // 3. If options["keepExistingData"] is true:
         if (options?.keepExistingData) {
           // 1. Set stream’s [[buffer]] to a copy of entry’s binary data.
-          stream[buffer] = entry.binaryData.slice(0);
+          stream["buffer"] = entry.binaryData.slice(0);
         }
 
         // 4. Resolve result with stream.
@@ -186,7 +185,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     >();
 
     // 2. Let locator be this's locator.
-    const fsLocator = this[locator];
+    const fsLocator = this.locator;
 
     // 3. Let realm be this's relevant Realm.
 

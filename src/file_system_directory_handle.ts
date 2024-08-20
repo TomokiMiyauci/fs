@@ -6,7 +6,6 @@ import {
   createChildFileSystemFileHandle,
   type FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
-import { locator as $locator } from "./symbol.ts";
 import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
 import {
@@ -87,7 +86,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 2. Let realm be this's relevant Realm.
 
     // 3. Let locator be this's locator.
-    const locator = this[$locator];
+    const locator = this.locator;
 
     // 4. Let global be this's relevant global object.
 
@@ -199,7 +198,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 2. Let realm be this's relevant Realm.
 
     // 3. Let locator be this's locator.
-    const locator = this[$locator];
+    const locator = this.locator;
 
     // 4. Let global be this's relevant global object.
     // 5. Enqueue the following steps to the file system queue:
@@ -304,7 +303,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
 
     // 2. Let locator be this's locator.
-    const locator = this[$locator];
+    const locator = this.locator;
 
     // 3. Let global be this's relevant global object.
 
@@ -390,7 +389,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     // 2. Enqueue the following steps to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
       // 1. resolve result with the result of resolving possibleDescendant’s locator relative to this's locator.
-      const result = resolve(possibleDescendant[$locator], this[$locator]);
+      const result = resolve(possibleDescendant["locator"], this.locator);
 
       if (result) return promise.resolve([...result]);
 
@@ -418,7 +417,7 @@ function next(
     & AsyncIterableIterator<[string, FileSystemHandle]>
     & IterationContext,
 ): Promise<IteratorResult<[string, FileSystemHandle]>> {
-  const locator = handle[$locator];
+  const locator = handle["locator"];
 
   // // 1. Let promise be a new promise.
   const { promise, reject, resolve } = Promise.withResolvers<

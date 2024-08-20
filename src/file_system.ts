@@ -2,7 +2,6 @@ import type {
   FileSystemHandle,
   FileSystemHandleKind,
 } from "./file_system_handle.ts";
-import * as $ from "./symbol.ts";
 import type { FileSystemObserver } from "./file_system_observer.ts";
 import type {
   FileSystemChangeRecord,
@@ -109,10 +108,10 @@ export function createObservation(
   } satisfies FileSystemObservation;
 
   // Let observationLocator be rootHandle’s locator.
-  const observationLocator = rootHandle[$.locator];
+  const observationLocator = rootHandle["locator"];
 
   // Let observationsMap be observer’s observations.
-  const observationsMap = observer[$.observations];
+  const observationsMap = observer["observations"];
 
   // Let fileSystem be the observationLocator’s file system.
   const fileSystem = observationLocator.fileSystem;
@@ -135,7 +134,7 @@ export function destroyObservation(observation: FileSystemObservation): void {
   const rootHandle = observation.rootHandle;
 
   // Let observationLocator be rootHandle’s locator.
-  const observationLocator = rootHandle[$.locator];
+  const observationLocator = rootHandle["locator"];
 
   // Let fileSystem be observationLocator’s file system.
   const fileSystem = observationLocator.fileSystem;
@@ -144,7 +143,7 @@ export function destroyObservation(observation: FileSystemObservation): void {
   fileSystem.observations.remove(observation);
 
   // Remove observationLocator from observer’s observations.
-  observer[$.observations].remove(observationLocator);
+  observer["observations"].remove(observationLocator);
 }
 
 /**
@@ -159,7 +158,7 @@ export function notify(
   const rootHandle = observation.rootHandle;
 
   // 2. Let observationLocator be rootHandle’s locator.
-  const observationLocator = rootHandle[$.locator];
+  const observationLocator = rootHandle["locator"];
 
   // 3. Assert: observationLocator’s file system is equal to fileSystem.
 
@@ -273,7 +272,7 @@ export function notify(
     // 17. If eventType is equal to "disappeared" and changedHandle’s locator is equal to observationLocator:
     if (
       eventType === "disappeared" &&
-      changedHandle[$.locator] === observationLocator
+      changedHandle["locator"] === observationLocator
     ) {
       // 1. Set errorRecord to the result of creating a new FileSystemChangeRecord for observation given changedHandle, "errored", and null.
       const errorRecord = createFileSystemChangeRecord(
@@ -313,7 +312,7 @@ export function invokeCallback(
   // 3. Queue a storage task with global to run these steps:
   userAgent.storageTask.enqueue(() => {
     // 1. Invoke observer’s callback with records as the first argument and observer as the second argument.
-    observer[$.callback]([...records], observer);
+    observer["callback"]([...records], observer);
   });
 }
 
@@ -325,13 +324,13 @@ export function isInScope(
   observation: FileSystemObservation,
 ): boolean {
   // 1. Let observationLocator be observation’s root handle's locator.
-  const observationLocator = observation.rootHandle[$.locator];
+  const observationLocator = observation.rootHandle["locator"];
 
   // 2. Let observationRecursive be observation’s recursive.
   const observationRecursive = observation.recursive;
 
   // 3. Let handleLocator be handle’s locator.
-  const handleLocator = handle[$.locator];
+  const handleLocator = handle["locator"];
 
   // 4. Let pathRelation be the result of getting the relationship between observationLocator and handleLocator.
   const pathRelation = getRelationship(observationLocator, handleLocator);

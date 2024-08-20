@@ -1,6 +1,5 @@
 import type { FileSystemObservation } from "./file_system.ts";
 import type { FileSystemHandle } from "./file_system_handle.ts";
-import * as $ from "./symbol.ts";
 import { type FileSystemLocator, resolve } from "./file_system_locator.ts";
 import type { List } from "@miyauci/infra";
 
@@ -60,10 +59,10 @@ export function createFileSystemChangeRecord(
   const root = observation.rootHandle;
 
   // 2. Let rootLocator be root’s locator.
-  const rootLocator = root[$.locator];
+  const rootLocator = root["locator"];
 
   // 3. Let changedHandleLocator be changedHandle’s locator.
-  const changedHandleLocator = changedHandle[$.locator];
+  const changedHandleLocator = changedHandle["locator"];
 
   // 4. Let relativePathComponents be the result of resolving changedHandleLocator relative to rootLocator.
   const relativePathComponents = resolve(

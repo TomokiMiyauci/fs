@@ -4,7 +4,6 @@
 
 import { Map } from "@miyauci/infra";
 import type { FileSystemHandle } from "./file_system_handle.ts";
-import * as $ from "./symbol.ts";
 import { Msg } from "./constant.ts";
 import {
   createObservation,
@@ -48,12 +47,12 @@ export class FileSystemObserver {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver-callback)
    */
-  [$.callback]: FileSystemObserverCallback;
+  protected callback: FileSystemObserverCallback;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver-observations)
    */
-  [$.observations]: Map<FileSystemLocator, FileSystemObservation>;
+  protected observations: Map<FileSystemLocator, FileSystemObservation>;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserver-filesystemobserver)
@@ -62,10 +61,10 @@ export class FileSystemObserver {
     callback: FileSystemObserverCallback,
   ) {
     // 2. Set this's callback to callback.
-    this[$.callback] = callback;
+    this["callback"] = callback;
 
     // 3. Set this's observations be the empty map.
-    this[$.observations] = new Map();
+    this.observations = new Map();
   }
 
   /**
@@ -82,10 +81,10 @@ export class FileSystemObserver {
     const recursive = options?.recursive ?? false;
 
     // 3. Let observationsMap be this's observations.
-    const observationMap = this[$.observations];
+    const observationMap = this.observations;
 
     // 4. Let locator be handle’s locator.
-    const locator = handle[$.locator];
+    const locator = handle["locator"];
 
     // 5. Let global be this's relevant global object.
 
@@ -133,10 +132,10 @@ export class FileSystemObserver {
    */
   unobserve(handle: FileSystemHandle): void {
     // 1. Let locator be handle’s locator.
-    const locator = handle[$.locator];
+    const locator = handle["locator"];
 
     // 2. Let observationsMap be this's observations.
-    const observationMap = this[$.observations];
+    const observationMap = this.observations;
 
     // 3. Enqueue the following steps to the file system queue:
 
@@ -152,7 +151,7 @@ export class FileSystemObserver {
    */
   disconnect(): void {
     // 1. Let observationsMap be this's observations.
-    const observationMap = this[$.observations];
+    const observationMap = this.observations;
 
     // 2. Enqueue the following steps to the file system queue:
 

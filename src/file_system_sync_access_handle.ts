@@ -1,11 +1,6 @@
 import { concat } from "@std/bytes/concat";
 import { type FileEntry, releaseLock } from "./file_system_entry.ts";
 import type { AllowSharedBufferSource } from "./webidl/type.ts";
-import {
-  file as $file,
-  filePositionCursor as $filePositionCursor,
-  state,
-} from "./symbol.ts";
 import { userAgent } from "./implementation_defined.ts";
 
 /**
@@ -18,10 +13,6 @@ export interface FileSystemReadWriteOptions {
   at?: number;
 }
 
-export interface FileSystemSyncAccessHandleContext {
-  entry: FileEntry;
-}
-
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle)
  */
@@ -29,22 +20,20 @@ export class FileSystemSyncAccessHandle {
   /**
    * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-state
    */
-  [state]: "open" | "close" = "open";
+  protected state: "open" | "close" = "open";
 
   /**
    * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-file
    */
-  [$file]: FileEntry;
+  protected file: FileEntry;
 
   /**
    * @see https://fs.spec.whatwg.org/#filesystemsyncaccesshandle-file-position-cursor
    */
-  [$filePositionCursor]: number = 0;
+  protected filePositionCursor: number = 0;
 
-  constructor(
-    context: FileSystemSyncAccessHandleContext,
-  ) {
-    this[$file] = context.entry;
+  constructor(entry: FileEntry) {
+    this.file = entry;
   }
 
   /**
@@ -57,14 +46,14 @@ export class FileSystemSyncAccessHandle {
     this.assertUnsignedLongLong(options?.at);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this[state] === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") throw new DOMException("InvalidStateError");
 
     // 2. Let bufferSize be buffer’s byte length.
     const bufferSize = buffer.byteLength;
 
     try {
       // 3. Let fileContents be this's [[file]]'s binary data.
-      const fileContents = this[$file].binaryData;
+      const fileContents = this.file.binaryData;
 
       // 4. Let fileSize be fileContents’s length.
       const fileSize = fileContents.length;
@@ -72,14 +61,14 @@ export class FileSystemSyncAccessHandle {
       // 5. Let readStart be options["at"] if options["at"] exists; otherwise this's file position cursor.
       const readStart = typeof options?.at === "number"
         ? options.at
-        : this[$filePositionCursor];
+        : this.filePositionCursor;
 
       // 6. If the underlying file system does not support reading from a file offset of readStart, throw a TypeError.
 
       // 7. If readStart is larger than fileSize:
       if (readStart > fileSize) {
         // 1. Set this's file position cursor to fileSize.
-        this[$filePositionCursor] = fileSize;
+        this.filePositionCursor = fileSize;
 
         // 2. Return 0.
         return 0;
@@ -105,7 +94,7 @@ export class FileSystemSyncAccessHandle {
       write(arrayBuffer, bytes);
 
       // 15. Set this's file position cursor to readStart + result.
-      this[$filePositionCursor] = readStart + result;
+      this.filePositionCursor = readStart + result;
 
       // 16. Return result.
       return result;
@@ -130,17 +119,17 @@ export class FileSystemSyncAccessHandle {
     this.assertUnsignedLongLong(options?.at);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this[state] === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") throw new DOMException("InvalidStateError");
 
     // 2. Let writePosition be options["at"] if options["at"] exists; otherwise this's file position cursor.
     const writePosition = typeof options?.at === "number"
       ? options.at
-      : this[$filePositionCursor];
+      : this.filePositionCursor;
 
     // 3. If the underlying file system does not support writing to a file offset of writePosition, throw a TypeError.
 
     // 4. Let fileContents be a copy of this's [[file]]'s binary data.
-    let fileContents = this[$file].binaryData.slice();
+    let fileContents = this.file.binaryData.slice();
 
     // 5. Let oldSize be fileContents’s length.
     const oldSize = fileContents.length;
@@ -176,7 +165,7 @@ export class FileSystemSyncAccessHandle {
 
     try {
       // 13. Set this's [[file]]'s binary data to the concatenation of head, the contents of buffer and tail.
-      this[$file].binaryData = concat([head, contentsOf(buffer), tail]);
+      this.file.binaryData = concat([head, contentsOf(buffer), tail]);
 
       // 14. If the operations modifying the this's[[file]]'s binary data in the previous steps failed:
     } catch {
@@ -193,7 +182,7 @@ export class FileSystemSyncAccessHandle {
     }
 
     // 15. Set this's file position cursor to writePosition + bufferSize.
-    this[$filePositionCursor] = writePosition + bufferSize;
+    this.filePositionCursor = writePosition + bufferSize;
 
     // 16. Return bufferSize.
     return bufferSize;
@@ -206,13 +195,13 @@ export class FileSystemSyncAccessHandle {
     this.assertUnsignedLongLong(newSize);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this[state] === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") throw new DOMException("InvalidStateError");
 
     // 2. Let fileContents be a copy of this's [[file]]'s binary data.
-    const fileContents = this[$file].binaryData.slice();
+    const fileContents = this.file.binaryData.slice();
 
     // 3. Let oldSize be the length of this's [[file]]'s binary data.
-    const oldSize = this[$file].binaryData.length;
+    const oldSize = this.file.binaryData.length;
 
     // 4. If the underlying file system does not support setting a file’s size to newSize, throw a TypeError.
 
@@ -222,7 +211,7 @@ export class FileSystemSyncAccessHandle {
 
       try {
         // 2. Set this's [[file]]'s to a byte sequence formed by concatenating fileContents with a byte sequence containing newSize − oldSize 0x00 bytes.
-        this[$file].binaryData = concat([
+        this.file.binaryData = concat([
           fileContents.slice(0, newSize),
           new Uint8Array(newSize - oldSize),
         ]);
@@ -235,7 +224,7 @@ export class FileSystemSyncAccessHandle {
     } else if (newSize < oldSize) {
       try {
         // 1. Set this's [[file]]'s to a byte sequence containing the first newSize bytes in fileContents.
-        this[$file].binaryData = fileContents.slice(0, newSize);
+        this.file.binaryData = fileContents.slice(0, newSize);
       } catch {
         // 2. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
         throw new DOMException("InvalidStateError");
@@ -243,8 +232,8 @@ export class FileSystemSyncAccessHandle {
     }
 
     // 7. If this's file position cursor is greater than newSize, then set file position cursor to newSize.
-    if (this[$filePositionCursor] > newSize) {
-      this[$filePositionCursor] = newSize;
+    if (this.filePositionCursor > newSize) {
+      this.filePositionCursor = newSize;
     }
   }
 
@@ -253,10 +242,10 @@ export class FileSystemSyncAccessHandle {
    */
   getSize(): number {
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this[state] === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") throw new DOMException("InvalidStateError");
 
     // 2. Return this's [[file]]'s binary data's length.
-    return this[$file].binaryData.length;
+    return this.file.binaryData.length;
   }
 
   /**
@@ -264,7 +253,7 @@ export class FileSystemSyncAccessHandle {
    */
   flush(): void {
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this[state] === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") throw new DOMException("InvalidStateError");
 
     // 2. Attempt to transfer all cached modifications of the file’s content to the file system’s underlying storage device.
   }
@@ -274,16 +263,16 @@ export class FileSystemSyncAccessHandle {
    */
   close(): void {
     // 1. If this's [[state]] is "closed", return.
-    if (this[state] === "close") return;
+    if (this.state === "close") return;
 
     // 2. Set this's [[state]] to "closed".
-    this[state] = "close";
+    this.state = "close";
 
     // 3. Set lockReleased to false.
     let lockReleased = false;
 
     // 4. Let file be this's [[file]].
-    const file = this[$file];
+    const file = this.file;
 
     // 5. Enqueue the following steps to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
@@ -323,10 +312,10 @@ export function createFileSystemSyncAccessHandle(
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle({ entry });
+  const handle = new FileSystemSyncAccessHandle(entry);
 
   // 3. Set handle’s [[state]] to "open".
-  handle[state] = "open";
+  handle["state"] = "open";
 
   // 4. Return handle.
   return handle;
