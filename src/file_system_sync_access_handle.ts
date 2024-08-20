@@ -6,7 +6,7 @@ import {
   filePositionCursor as $filePositionCursor,
   state,
 } from "./symbol.ts";
-import { userAgent } from "./user_agent.ts";
+import { userAgent } from "./implementation_defined.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemreadwriteoptions)

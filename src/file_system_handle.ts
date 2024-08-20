@@ -1,7 +1,7 @@
 import { isSameLocator } from "./file_system_entry.ts";
 import type { FileSystemLocator } from "./file_system_locator.ts";
 import { locator as $locator } from "./symbol.ts";
-import { userAgent } from "./user_agent.ts";
+import { userAgent } from "./implementation_defined.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#enumdef-filesystemhandlekind)

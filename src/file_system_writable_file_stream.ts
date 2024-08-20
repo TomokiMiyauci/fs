@@ -2,7 +2,7 @@ import { concat } from "@std/bytes/concat";
 import { type FileEntry, releaseLock } from "./file_system_entry.ts";
 import { buffer, file as $file, seekOffset } from "./symbol.ts";
 import { Msg } from "./constant.ts";
-import { userAgent } from "./user_agent.ts";
+import { userAgent } from "./implementation_defined.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#enumdef-writecommandtype)

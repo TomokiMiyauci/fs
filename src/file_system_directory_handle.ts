@@ -21,7 +21,7 @@ import {
   type FileSystemEntry,
   isValidFileName,
 } from "./file_system_entry.ts";
-import { userAgent } from "./user_agent.ts";
+import { userAgent } from "./implementation_defined.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemgetfileoptions)

@@ -15,7 +15,7 @@ import { createFileSystemHandle } from "./algorithm.ts";
 import { getRelationship } from "./file_system_locator.ts";
 import type { FileSystemFileHandle } from "./file_system_file_handle.ts";
 import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { userAgent } from "./user_agent.ts";
+import { userAgent } from "./implementation_defined.ts";
 
 /** A list of one or more strings.
  *

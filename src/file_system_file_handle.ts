@@ -15,8 +15,7 @@ import {
   type FileSystemEntry,
   takeLock,
 } from "./file_system_entry.ts";
-import { typeByEntry } from "./user_agent.ts";
-import { userAgent } from "./user_agent.ts";
+import { typeByEntry, userAgent } from "./implementation_defined.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemcreatewritableoptions)

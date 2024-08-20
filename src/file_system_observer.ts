@@ -13,7 +13,7 @@ import {
 } from "./file_system.ts";
 import { type FileSystemLocator, locateEntry } from "./file_system_locator.ts";
 import type { FileSystemChangeRecord } from "./file_system_change_record.ts";
-import { userAgent } from "./user_agent.ts";
+import { userAgent } from "./implementation_defined.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#callbackdef-filesystemobservercallback)
