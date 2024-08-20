@@ -1,29 +1,104 @@
 import { List } from "@miyauci/infra";
 import { join } from "@std/path/join";
 import { resolve } from "@std/path/resolve";
+import {
+  FileSystem as _FileSystem,
+  type FileSystemEvent,
+  type FileSystemPath,
+  notifyObservations,
+} from "../file_system.ts";
 import type {
   AccessMode,
   DirectoryEntry as _DirectoryEntry,
   FileEntry as _FileEntry,
   FileSystemAccessResult,
   FileSystemEntry,
-  FileSystemLocator,
   PartialSet,
-  StorageManagerContext,
-} from "../type.ts";
+} from "../file_system_entry.ts";
 import { isDirectoryEntry } from "../algorithm.ts";
+import type { FileSystemChangeType } from "../file_system_change_record.ts";
+import { Watcher } from "./watcher.ts";
+import { safeStatSync } from "./io.ts";
 
-export class FileSystem implements StorageManagerContext {
+function events(ev: Deno.FsEvent, root: string): FileSystemEvent[] {
+  return ev.paths.map((path) => {
+    const info = safeStatSync(path);
+
+    const entryType = info ? typeEntry(info) : null;
+
+    const relativePath = path.replace(root, "");
+    const segments = relativePath.split("/");
+
+    const modifiedPath = new List(segments);
+    const type = kind(ev.kind);
+
+    return { modifiedPath, type, fromPath: null, entryType };
+  });
+}
+
+function typeEntry(info: Deno.FileInfo) {
+  if (info.isDirectory) return "directory";
+  if (info.isFile) return "file";
+
+  return null;
+}
+
+function kind(kind: Deno.FsEvent["kind"]): FileSystemChangeType {
+  switch (kind) {
+    case "any":
+    case "access":
+    case "other":
+      return "unknown";
+
+    case "create":
+      return "appeared";
+    case "modify":
+      return "modified";
+    case "remove":
+      return "disappeared";
+  }
+}
+
+interface FsCallback {
+  (event: CustomEvent<Deno.FsEvent>): void;
+}
+
+export class FileSystem extends _FileSystem {
+  #listener: FsCallback;
+  #watcher: Watcher;
+
   constructor(root: string = "") {
-    const fullPath = resolve(root);
+    super();
 
-    this.root = fullPath;
+    const rootPath = resolve(root);
+
+    this.root = rootPath;
+
+    this.#listener = (ev: CustomEvent<Deno.FsEvent>): void => {
+      const e = events(ev.detail, rootPath);
+
+      notifyObservations(this, new List(e));
+    };
+
+    this.#watcher = new Watcher(rootPath, { recursive: true });
   }
 
   root: string;
 
-  locateEntry(locator: FileSystemLocator): FileSystemEntry | null {
-    return locate(locator);
+  locateEntry(path: FileSystemPath): FileSystemEntry | null {
+    return locate(this.root, [...path]);
+  }
+
+  watch(): void {
+    this.#watcher.addEventListener("*", this.#listener);
+
+    this.#watcher.watch();
+  }
+
+  unwatch(): void {
+    this.#watcher.removeEventListener("*", this.#listener);
+
+    this.#watcher.unwatch();
   }
 }
 
@@ -124,37 +199,38 @@ class BaseEntry {
 }
 
 class DirectoryEntry extends BaseEntry implements _DirectoryEntry {
-  constructor(
-    public name: string,
-    private locator: FileSystemLocator,
-    path: string,
-  ) {
-    super(name, path);
+  constructor(name: string, private root: string, path: string[]) {
+    const fullPath = join(root, ...path);
+
+    super(name, fullPath);
+
+    this.paths = path;
   }
 
+  private paths: string[];
+
   get children() {
-    return new Effector(this.locator);
+    return new Effector(this.root, this.paths);
   }
 }
 
-function locate(locator: FileSystemLocator): FileSystemEntry | null {
-  const path = join(locator.root, ...locator.path);
-  const name = locator.path[locator.path.size - 1];
-
-  if (locator.kind === "file") {
-    try {
-      const file = Deno.openSync(path, { read: true });
-
-      return new FileEntry(name, file, path);
-    } catch {
-      return null;
-    }
-  }
+function locate(root: string, path: string[]): FileSystemEntry | null {
+  const name = path[path.length - 1];
+  const fullPath = join(root, ...path);
 
   try {
-    Deno.openSync(path);
+    const file = Deno.openSync(fullPath);
+    const stat = file.statSync();
 
-    return new DirectoryEntry(name, locator, path);
+    if (stat.isFile) {
+      return new FileEntry(name, file, fullPath);
+    }
+
+    if (stat.isDirectory) {
+      return new DirectoryEntry(name, root, path);
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -195,10 +271,10 @@ class FileEntry extends BaseEntry implements _FileEntry {
 }
 
 class Effector implements PartialSet<FileSystemEntry> {
-  constructor(private locator: FileSystemLocator) {}
+  constructor(private root: string, private paths: string[]) {}
 
   append(item: FileSystemEntry): void {
-    const fullPath = join(...this.path, item.name);
+    const fullPath = join(this.root, ...this.paths, item.name);
 
     if (isDirectoryEntry(item)) {
       Deno.mkdirSync(fullPath);
@@ -210,35 +286,31 @@ class Effector implements PartialSet<FileSystemEntry> {
   }
 
   remove(item: FileSystemEntry): void {
-    const fullPath = join(...this.path, item.name);
+    const fullPath = join(this.root, ...this.paths, item.name);
 
     Deno.removeSync(fullPath, { recursive: true });
   }
 
   get isEmpty(): boolean {
-    const iter = Deno.readDirSync(join(...this.path));
+    const fullPath = join(this.root, ...this.paths);
+
+    const iter = Deno.readDirSync(fullPath);
 
     return isEmpty(iter);
   }
 
-  get path(): string[] {
-    return [this.locator.root, ...this.locator.path];
-  }
-
   *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-    const iter = Deno.readDirSync(join(...this.path));
+    const fullPath = join(this.root, ...this.paths);
+
+    const iter = Deno.readDirSync(fullPath);
 
     for (const entry of iter) {
       const name = entry.name;
-      const path = new List([...this.path, name]);
 
       if (entry.isDirectory) {
-        yield new DirectoryEntry(name, {
-          kind: "directory",
-          root: this.locator.root,
-          path,
-        }, join(...path));
+        yield new DirectoryEntry(name, this.root, this.paths.concat(name));
       } else if (entry.isFile) {
+        const path = this.paths.concat(name);
         const file = Deno.openSync(join(...path), { read: true });
 
         yield new FileEntry(name, file, join(...path));

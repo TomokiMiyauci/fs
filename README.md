@@ -33,7 +33,11 @@ API.
 monitors changes to the `FileSystemHandle`.
 
 ```ts
-import { type FileSystemHandle, FileSystemObserver } from "@miyauci/fs";
+import {
+  type FileSystemHandle,
+  FileSystemObserver,
+  type FileSystemObserverCallback,
+} from "@miyauci/fs";
 
 declare const handle: FileSystemHandle;
 declare const callback: FileSystemObserverCallback;
