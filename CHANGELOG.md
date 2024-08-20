@@ -1,3 +1,10 @@
+# [1.0.0-beta.4](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.3...1.0.0-beta.4) (2024-08-20)
+
+
+### Features
+
+* **mod:** export all modules defined in specification ([e9aa6cd](https://github.com/TomokiMiyauci/fs/commit/e9aa6cd467e51f8515d647d4ddce2833d590250b))
+
 # [1.0.0-beta.3](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.2...1.0.0-beta.3) (2024-08-20)
 
 
