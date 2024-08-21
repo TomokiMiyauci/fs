@@ -5,14 +5,15 @@ import { beforeEach, describe, it } from "@std/testing/bdd";
 import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
 import type { FileSystemWriteChunkType } from "./file_system_writable_file_stream.ts";
 import { FileSystemFileHandle } from "./file_system_file_handle.ts";
+import { StorageManager } from "./storage_manager.ts";
 import {
   createDirectory,
   createEmptyFile,
   createFileWithContents,
-  getDirectory,
   getFileContents,
   getFileSize,
   pathSeparators,
+  VirtualFileSystem,
 } from "@test";
 
 interface Context {
@@ -20,8 +21,9 @@ interface Context {
 }
 
 describe("FileSystemDirectoryHandle", () => {
-  beforeEach<Context>(function () {
-    this.root = getDirectory();
+  beforeEach<Context>(async function () {
+    const storage = new StorageManager(new VirtualFileSystem());
+    this.root = await storage.getDirectory();
   });
 
   describe("isSameEntry", () => {

@@ -1,15 +1,17 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
-import { createDirectory, createEmptyFile, getDirectory } from "@test";
+import { createDirectory, createEmptyFile, VirtualFileSystem } from "@test";
+import { StorageManager } from "./storage_manager.ts";
 
 interface Context {
   root: FileSystemDirectoryHandle;
 }
 
 describe("FileSystemFileHandle", () => {
-  beforeEach<Context>(function () {
-    this.root = getDirectory();
+  beforeEach<Context>(async function () {
+    const storage = new StorageManager(new VirtualFileSystem());
+    this.root = await storage.getDirectory();
   });
 
   describe("isSameEntry", () => {

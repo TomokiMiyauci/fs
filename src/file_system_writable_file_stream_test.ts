@@ -10,18 +10,20 @@ import {
   createDirectory,
   createEmptyFile,
   createFileWithContents,
-  getDirectory,
   getFileSize,
+  VirtualFileSystem,
 } from "@test";
 import { getFileContents } from "@test";
+import { StorageManager } from "./storage_manager.ts";
 
 interface Context {
   root: FileSystemDirectoryHandle;
 }
 
 describe("FileSystemWritableFileStream", () => {
-  beforeEach<Context>(function () {
-    this.root = getDirectory();
+  beforeEach<Context>(async function () {
+    const storage = new StorageManager(new VirtualFileSystem());
+    this.root = await storage.getDirectory();
   });
 
   describe("integration", () => {

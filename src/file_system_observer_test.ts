@@ -9,14 +9,19 @@ import {
   assertEqualRecords,
   type Context,
   createEmptyFile,
-  getDirectory,
+  VirtualFileSystem,
 } from "@test";
 import { FileSystemObserver } from "./file_system_observer.ts";
 import type { FileSystemChangeRecord } from "./file_system_change_record.ts";
+import { StorageManager } from "./storage_manager.ts";
 
 describe("FileSystemObserver", () => {
-  beforeEach<Context>(function () {
-    this.root = getDirectory();
+  beforeEach<Context>(async function () {
+    const vfs = new VirtualFileSystem();
+    const storage = new StorageManager(vfs);
+
+    vfs.watch();
+    this.root = await storage.getDirectory();
   });
 
   it<Context>(

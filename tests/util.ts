@@ -1,10 +1,14 @@
 import type { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
-import {
-  createFileSystemDirectoryHandle,
-  type FileSystemDirectoryHandle,
+import type {
+  FileSystemDirectoryHandle,
 } from "../src/file_system_directory_handle.ts";
 import type { FileSystemLocator } from "../src/file_system_locator.ts";
-import { type FileSystem, notifyObservations } from "../src/file_system.ts";
+import {
+  type FileSystem,
+  type FileSystemObservation,
+  type FileSystemPath,
+  notifyObservations,
+} from "../src/file_system.ts";
 import type {
   DirectoryEntry,
   FileEntry,
@@ -13,7 +17,10 @@ import type {
 } from "../src/file_system_entry.ts";
 import type { FileSystemWriteChunkType } from "../src/file_system_writable_file_stream.ts";
 import { isDirectoryEntry } from "../src/algorithm.ts";
-import { type LockStatus, VirtualFileSystem } from "./virtual.ts";
+import {
+  type LockStatus,
+  VirtualFileSystem as _VirtualFileSystem,
+} from "./virtual.ts";
 import type { FileSystemHandle } from "../src/file_system_handle.ts";
 import { List, Set } from "@miyauci/infra";
 import { assert, assertEquals } from "@std/assert";
@@ -69,69 +76,74 @@ export function createDirectory(
 
 export const pathSeparators = ["/", "\\"];
 
-export function getDirectory(): FileSystemDirectoryHandle {
-  const fileSystem = {
-    locateEntry(path) {
-      const source = vfs.getSource([...path]);
+export class VirtualFileSystem implements FileSystem {
+  private vfs: _VirtualFileSystem;
 
-      if (!source) return null;
+  constructor() {
+    const vfs = new _VirtualFileSystem();
+    vfs.createDirectory([""]);
 
-      if (source instanceof Map) {
-        return renderDirectory(
-          { kind: "directory", path, fileSystem: this },
-          vfs,
-        );
-      }
-      return createFileEntry({ kind: "file", path, fileSystem: this }, vfs);
-    },
-    root: "",
-    observations: new Set(),
-  } satisfies FileSystem;
+    this.vfs = vfs;
+  }
 
-  const vfs = new VirtualFileSystem();
+  locateEntry(path: FileSystemPath): FileSystemEntry | null {
+    const source = this.vfs.getSource([...path]);
 
-  vfs.addEventListener("disappeared", ({ detail }) => {
-    notifyObservations(
-      fileSystem,
-      new List([{
-        type: "disappeared",
-        entryType: detail.type,
-        fromPath: null,
-        modifiedPath: new List(detail.path),
-      }]),
-    );
-  });
-  vfs.addEventListener("appeared", ({ detail }) => {
-    notifyObservations(
-      fileSystem,
-      new List([{
-        type: "appeared",
-        entryType: detail.type,
-        fromPath: null,
-        modifiedPath: new List(detail.path),
-      }]),
-    );
-  });
-  vfs.addEventListener("modified", ({ detail }) => {
-    notifyObservations(
-      fileSystem,
-      new List([{
-        type: "modified",
-        entryType: detail.type,
-        fromPath: null,
-        modifiedPath: new List(detail.path),
-      }]),
-    );
-  });
+    if (!source) return null;
 
-  vfs.createDirectory([""]);
+    if (source instanceof Map) {
+      return renderDirectory(
+        { kind: "directory", path, fileSystem: this },
+        this.vfs,
+      );
+    }
 
-  return createFileSystemDirectoryHandle(fileSystem, new List([""]));
+    return createFileEntry({ kind: "file", path, fileSystem: this }, this.vfs);
+  }
+
+  root: string = "";
+  observations: Set<FileSystemObservation> = new Set();
+
+  watch(): void {
+    this.vfs.addEventListener("disappeared", ({ detail }) => {
+      notifyObservations(
+        this,
+        new List([{
+          type: "disappeared",
+          entryType: detail.type,
+          fromPath: null,
+          modifiedPath: new List(detail.path),
+        }]),
+      );
+    });
+    this.vfs.addEventListener("appeared", ({ detail }) => {
+      notifyObservations(
+        this,
+        new List([{
+          type: "appeared",
+          entryType: detail.type,
+          fromPath: null,
+          modifiedPath: new List(detail.path),
+        }]),
+      );
+    });
+    this.vfs.addEventListener("modified", ({ detail }) => {
+      notifyObservations(
+        this,
+        new List([{
+          type: "modified",
+          entryType: detail.type,
+          fromPath: null,
+          modifiedPath: new List(detail.path),
+        }]),
+      );
+    });
+  }
 }
 
 function renderDirectory(
   locator: FileSystemLocator,
-  vfs: VirtualFileSystem,
+  vfs: _VirtualFileSystem,
 ): DirectoryEntry {
   return {
     get children(): PartialSet<FileSystemEntry> {
@@ -188,7 +200,7 @@ function renderDirectory(
 
 function createFileEntry(
   locator: FileSystemLocator,
-  vfs: VirtualFileSystem,
+  vfs: _VirtualFileSystem,
 ): FileEntry {
   const paths = [...locator.path];
 

@@ -6,7 +6,8 @@
 import { expect } from "@std/expect";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import type { FileSystemSyncAccessHandle } from "./file_system_sync_access_handle.ts";
-import { getDirectory } from "@test";
+import { VirtualFileSystem } from "@test";
+import { StorageManager } from "./storage_manager.ts";
 
 interface Context {
   handle: FileSystemSyncAccessHandle;
@@ -14,7 +15,8 @@ interface Context {
 
 describe("FileSystemSyncAccessHandle", () => {
   beforeEach<Context>(async function () {
-    const root = getDirectory();
+    const storage = new StorageManager(new VirtualFileSystem());
+    const root = await storage.getDirectory();
 
     const handle = await root.getFileHandle("file.txt", { create: true });
 
