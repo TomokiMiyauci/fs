@@ -10,6 +10,8 @@ import {
   createEmptyFile,
   createFileWithContents,
   getDirectory,
+  getFileContents,
+  getFileSize,
   pathSeparators,
 } from "@test";
 
@@ -926,18 +928,6 @@ async function getSortedDirectoryEntries(
 
   result.sort();
   return result;
-}
-
-async function getFileSize(handle: FileSystemFileHandle): Promise<number> {
-  const file = await handle.getFile();
-
-  return file.size;
-}
-
-async function getFileContents(handle: FileSystemFileHandle): Promise<string> {
-  const file = await handle.getFile();
-
-  return file.text();
 }
 
 async function write(

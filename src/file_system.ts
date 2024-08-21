@@ -36,6 +36,11 @@ export abstract class FileSystem {
    */
   abstract locateEntry(path: FileSystemPath): FileSystemEntry | null;
 
+  // /**
+  //  * [File System Standard](https://whatpr.org/fs/165.html#file-system-get-the-path)
+  //  */
+  // abstract getPath(entry: FileSystemEntry): FileSystemPath;
+
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-observations)
    */
