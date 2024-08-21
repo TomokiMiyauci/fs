@@ -3,12 +3,16 @@ import { typeByExtension } from "@std/media-types";
 import { extname } from "@std/path/extname";
 
 class UserAgent {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-queue)
+   */
   fileSystemQueue: ParallelQueue = new ParallelQueue();
+
   storageTask: ParallelQueue = new ParallelQueue();
 }
 
 class ParallelQueue {
-  enqueue(fn: VoidFunction) {
+  enqueue(fn: VoidFunction): void {
     queueMicrotask(fn);
   }
 }
