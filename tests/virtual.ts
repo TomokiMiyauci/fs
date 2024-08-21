@@ -170,7 +170,12 @@ export class VirtualFileSystem extends EventTarget {
     const resource = parent.get(key);
 
     if (!resource) {
-      parent.set(key, { data: new Uint8Array(), lastModified: Date.now() });
+      parent.set(key, {
+        data: new Uint8Array(),
+        lastModified: Date.now(),
+        lock: "open",
+        sharedLock: 0,
+      });
 
       this.dispatchEvent(
         new CustomEvent<EventDetail>("appeared", {
@@ -198,6 +203,16 @@ export class VirtualFileSystem extends EventTarget {
     } else if (resource instanceof Map) {
       //
     } else throw new Error(Msg.IsFile);
+  }
+
+  getFile(keys: string[]): FileInfo {
+    const [key, parent] = this.getParentDir(keys);
+    const resource = parent.get(key);
+
+    if (!resource) throw new Error(Msg.NotFound);
+    if (resource instanceof Map) throw new Error(Msg.IsDirectory);
+
+    return resource;
   }
 }
 
@@ -228,7 +243,14 @@ export interface FileHeader {
   readonly lastModified: number;
 }
 
-export interface FileInfo extends FileHeader {
+export type LockStatus = "open" | "shared" | "exclusive";
+
+export interface FileFooter {
+  lock: LockStatus;
+  sharedLock: number;
+}
+
+export interface FileInfo extends FileHeader, FileFooter {
   data: Uint8Array;
 }
 

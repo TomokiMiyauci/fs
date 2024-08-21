@@ -34,18 +34,21 @@ export interface FileEntry extends BaseEntry {
    *
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-modification-timestamp)
    */
-  modificationTimestamp: number;
+
+  readonly modificationTimestamp: number;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock)
    */
-  lock: "open" | "taken-exclusive" | "taken-shared";
+  get lock(): "open" | "taken-exclusive" | "taken-shared";
+  set lock(value: "open" | "taken-exclusive" | "taken-shared");
 
   /** A number representing the number shared locks that are taken at a given point in time
    *
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-shared-lock-count)
    */
-  sharedLockCount: number;
+  get sharedLockCount(): number;
+  set sharedLockCount(value: number);
 }
 
 /**

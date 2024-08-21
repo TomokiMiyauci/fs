@@ -13,7 +13,7 @@ import type {
 } from "../src/file_system_entry.ts";
 import type { FileSystemWriteChunkType } from "../src/file_system_writable_file_stream.ts";
 import { isDirectoryEntry } from "../src/algorithm.ts";
-import { VirtualFileSystem } from "./virtual.ts";
+import { type LockStatus, VirtualFileSystem } from "./virtual.ts";
 import type { FileSystemHandle } from "../src/file_system_handle.ts";
 import { List, Set } from "@miyauci/infra";
 import { assert, assertEquals } from "@std/assert";
@@ -198,23 +198,67 @@ function createFileEntry(
     },
 
     name: locator.path[locator.path.size - 1],
+
     get binaryData() {
       return vfs.readFile(paths);
     },
-
     set binaryData(value: Uint8Array) {
       vfs.writeFile(paths, value);
     },
 
-    lock: "open",
+    get lock(): Lock {
+      const file = vfs.getFile(paths);
+      const status = file.lock;
+
+      return LockConverter.to(status);
+    },
+    set lock(value: Lock) {
+      const status = LockConverter.from(value);
+
+      const file = vfs.getFile(paths);
+      file.lock = status;
+    },
+
+    get sharedLockCount(): number {
+      return vfs.getFile(paths).sharedLock;
+    },
+    set sharedLockCount(value: number) {
+      vfs.getFile(paths).sharedLock = value;
+    },
+
     queryAccess() {
       return { permissionState: "granted", errorName: "" };
     },
     requestAccess() {
       return { permissionState: "granted", errorName: "" };
     },
-    sharedLockCount: 0,
   };
+}
+
+type Lock = "open" | "taken-exclusive" | "taken-shared";
+
+class LockConverter {
+  static from(lock: Lock): LockStatus {
+    switch (lock) {
+      case "open":
+        return "open";
+      case "taken-exclusive":
+        return "exclusive";
+      case "taken-shared":
+        return "shared";
+    }
+  }
+
+  static to(status: LockStatus): Lock {
+    switch (status) {
+      case "open":
+        return "open";
+      case "shared":
+        return "taken-shared";
+      case "exclusive":
+        return "taken-exclusive";
+    }
+  }
 }
 
 export async function assertEqualRecords(
