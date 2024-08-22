@@ -1,7 +1,5 @@
 # fs
 
-> 🚧 WIP at [beta branch](https://github.com/TomokiMiyauci/fs/tree/beta)
-
 [File System Standard](https://whatpr.org/fs/165.html), based on WHATWG spec
 reference implementation.
 
@@ -12,8 +10,8 @@ reference implementation.
 (Origin Private File System aka Bucket File System).
 
 ```ts
-import { StorageManager } from "@miyauci/fs";
-import { FileSystem } from "@miyauci/fs/deno";
+import { StorageManager } from "@miyauci/fs@$VERSION";
+import { FileSystem } from "@miyauci/fs@$VERSION/deno";
 
 const fileSystem = new FileSystem("path/to/dir"); // default is "."
 const storage = new StorageManager(fileSystem);
@@ -37,7 +35,7 @@ import {
   type FileSystemHandle,
   FileSystemObserver,
   type FileSystemObserverCallback,
-} from "@miyauci/fs";
+} from "@miyauci/fs@$VERSION";
 
 declare const handle: FileSystemHandle;
 declare const callback: FileSystemObserverCallback;
@@ -58,8 +56,8 @@ import {
   FileSystemObserver,
   type FileSystemObserverCallback,
   StorageManager,
-} from "@miyauci/fs";
-import { FileSystem } from "@miyauci/fs/deno";
+} from "@miyauci/fs@$VERSION";
+import { FileSystem } from "@miyauci/fs@$VERSION/deno";
 
 const fileSystem = new FileSystem();
 const storage = new StorageManager(fileSystem);
