@@ -48,3 +48,23 @@ runFileSystemDirectoryHandleTest(async () => {
     },
   };
 });
+
+// TODO: Investigate how the file watcher sometimes dispatch 'created' or 'modified' events when a file is removed.
+// runFileSystemObserverTest(async () => {
+//   const rootPath = await Deno.makeTempDir();
+//   const realPath = await Deno.realPath(rootPath);
+//   const fileSystem = new FileSystem(realPath);
+//   const storage = new StorageManager(fileSystem);
+
+//   fileSystem.watch();
+
+//   const root = await storage.getDirectory();
+
+//   return {
+//     root,
+//     onAfterEach() {
+//       fileSystem.unwatch();
+//       return Deno.remove(realPath, { recursive: true });
+//     },
+//   };
+// });
