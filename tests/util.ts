@@ -26,6 +26,15 @@ import { List, Set } from "@miyauci/infra";
 import { assert, assertEquals } from "@std/assert";
 import type { FileSystemChangeRecord } from "../src/file_system_change_record.ts";
 
+export interface ProvideContext {
+  root: FileSystemDirectoryHandle;
+  onAfterEach?(): void;
+}
+
+export interface Provider {
+  (): ProvideContext | Promise<ProvideContext>;
+}
+
 export interface Context {
   root: FileSystemDirectoryHandle;
   onAfterEach?: VoidFunction;

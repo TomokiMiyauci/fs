@@ -4,17 +4,8 @@ import {
   type Context,
   createEmptyFile,
   createFileWithContents,
+  type Provider,
 } from "@test/util.ts";
-import type { FileSystemDirectoryHandle } from "../src/file_system_directory_handle.ts";
-
-interface ProvideContext {
-  root: FileSystemDirectoryHandle;
-  onAfterEach?(): void;
-}
-
-interface Provider {
-  (): ProvideContext | Promise<ProvideContext>;
-}
 
 export function runFileSystemHandleTest(provider: Provider): void {
   describe("FileSystemHandle", () => {
