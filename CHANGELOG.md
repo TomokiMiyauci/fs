@@ -1,3 +1,16 @@
+# [1.0.0-beta.7](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.6...1.0.0-beta.7) (2024-08-22)
+
+
+### Bug Fixes
+
+* **adaptor:** quit using FsFile all over the place ([087567e](https://github.com/TomokiMiyauci/fs/commit/087567e7e5fcb301aade23ac10aaa5b52a615df3))
+
+
+### Features
+
+* **file_system_entry:** change FileEntry interface to add accessor ([6f8fa9b](https://github.com/TomokiMiyauci/fs/commit/6f8fa9b0ce97f0b218e98389318d97c4cb35aa4a))
+* **file_system:** map renaming event to "moved" ([15fce0b](https://github.com/TomokiMiyauci/fs/commit/15fce0b27c5614f48b43cdd5dc6807332650096c))
+
 # [1.0.0-beta.6](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.5...1.0.0-beta.6) (2024-08-20)
 
 
