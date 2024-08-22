@@ -4,46 +4,48 @@ export interface WatcherOptions {
   /**
    * @default false
    */
-  recursive: boolean;
+  recursive?: boolean;
 
   /**
    * @default 200
    */
-  wait: number;
+  wait?: number;
 }
 
 export class Watcher extends EventTarget {
   #path: string | string[];
-  #options: WatcherOptions;
   #unwatch: VoidFunction | undefined;
+  #wait: number;
+  #recursive: boolean;
 
-  constructor(path: string | string[], options?: Partial<WatcherOptions>) {
+  constructor(path: string | string[], options?: WatcherOptions) {
     super();
 
     const { recursive = false, wait = 200 } = options ?? {};
 
     this.#path = path;
-    this.#options = { recursive, wait };
+    this.#wait = wait;
+    this.#recursive = recursive;
   }
 
   watch(): void {
     if (this.#unwatch) return;
 
-    const fsWatcher = Deno.watchFs(this.#path, this.#options);
+    const watcher = Deno.watchFs(this.#path, { recursive: this.#recursive });
 
     const dispatchEvent = debounce((event: Deno.FsEvent) => {
       this.dispatchEvent(
         new CustomEvent<Deno.FsEvent>("*", { detail: event }),
       );
-    }, this.#options.wait);
+    }, this.#wait);
 
     const process = async () => {
-      for await (const event of fsWatcher) dispatchEvent(event);
+      for await (const event of watcher) dispatchEvent(event);
     };
 
     process();
 
-    this.#unwatch = fsWatcher.close.bind(fsWatcher);
+    this.#unwatch = watcher.close.bind(watcher);
   }
 
   unwatch(): void {
