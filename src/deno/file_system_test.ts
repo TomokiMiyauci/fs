@@ -1,5 +1,5 @@
 import { runFileSystemHandleTest } from "@test/file_system_handle.ts";
-import { FileSystem } from "./adaptor.ts";
+import { FileSystem } from "./file_system.ts";
 import { StorageManager } from "../storage_manager.ts";
 
 runFileSystemHandleTest(async () => {

@@ -1,1 +1,1 @@
-export { FileSystem } from "./adaptor.ts";
+export { FileSystem } from "./file_system.ts";
