@@ -1,5 +1,11 @@
 # fs
 
+[![JSR](https://jsr.io/badges/@miyauci/fs)](https://jsr.io/@miyauci/fs)
+[![codecov](https://codecov.io/gh/TomokiMiyauci/fs/graph/badge.svg?token=KJNNOLNBOD)](https://codecov.io/gh/TomokiMiyauci/fs)
+[![GitHub](https://img.shields.io/github/license/TomokiMiyauci/fs)](https://github.com/TomokiMiyauci/fs/blob/main/LICENSE)
+[![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
+
 [File System Standard](https://whatpr.org/fs/165.html), based on WHATWG spec
 reference implementation.
 
