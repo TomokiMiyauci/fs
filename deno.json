@@ -1,7 +1,7 @@
 {
   "name": "@miyauci/fs",
   "tasks": {
-    "test": "deno test --doc"
+    "test": "deno test --allow-write=\"$TMPDIR\" --allow-read=\"$TMPDIR\" --doc"
   },
   "exclude": ["CHANGELOG.md"],
   "imports": {
@@ -15,7 +15,8 @@
     "@std/media-types": "jsr:@std/media-types@^1.0.2",
     "@std/path": "jsr:@std/path@^1.0.2",
     "@std/testing": "jsr:@std/testing@^0.225.3",
-    "@test": "./tests/util.ts"
+    "@test": "./tests/util.ts",
+    "@test/": "./tests/"
   },
   "exports": {
     ".": "./src/mod.ts",

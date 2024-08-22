@@ -28,6 +28,7 @@ import type { FileSystemChangeRecord } from "../src/file_system_change_record.ts
 
 export interface Context {
   root: FileSystemDirectoryHandle;
+  onAfterEach?: VoidFunction;
 }
 
 export async function createFileWithContents(
