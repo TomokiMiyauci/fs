@@ -1,44 +1,34 @@
-import { debounce } from "@std/async/debounce";
-
 export interface WatcherOptions {
   /**
    * @default false
    */
   recursive?: boolean;
-
-  /**
-   * @default 200
-   */
-  wait?: number;
 }
 
 export class Watcher extends EventTarget {
   #path: string | string[];
-  #unwatch: VoidFunction | undefined;
-  #wait: number;
   #recursive: boolean;
+  #watcher: Deno.FsWatcher | undefined;
 
   constructor(path: string | string[], options?: WatcherOptions) {
     super();
 
-    const { recursive = false, wait = 200 } = options ?? {};
+    const { recursive = false } = options ?? {};
 
     this.#path = path;
-    this.#wait = wait;
     this.#recursive = recursive;
   }
 
   watch(): void {
-    if (this.#unwatch) return;
+    if (this.#watcher) return;
 
     const watcher = Deno.watchFs(this.#path, { recursive: this.#recursive });
 
-    const callback = (event: Deno.FsEvent): void => {
+    const dispatchEvent = (event: Deno.FsEvent): void => {
       this.dispatchEvent(
-        new CustomEvent<Deno.FsEvent>("*", { detail: event }),
+        new CustomEvent<Deno.FsEvent>(event.kind, { detail: event }),
       );
     };
-    const dispatchEvent = debounce(callback, this.#wait);
 
     const process = async () => {
       for await (const event of watcher) dispatchEvent(event);
@@ -46,12 +36,17 @@ export class Watcher extends EventTarget {
 
     process();
 
-    this.#unwatch = watcher.close.bind(watcher);
+    this.#watcher = watcher;
   }
 
+  /** Stops watching the file system and closes the watcher resource. */
   unwatch(): void {
-    this.#unwatch?.();
-    this.#unwatch = undefined;
+    this[Symbol.dispose]();
+  }
+
+  [Symbol.dispose](): void {
+    this.#watcher?.close();
+    this.#watcher = undefined;
   }
 }
 
@@ -79,5 +74,10 @@ export interface Watcher {
 }
 
 export interface FsEventMap {
-  "*": CustomEvent<Deno.FsEvent>;
+  any: CustomEvent<Deno.FsEvent>;
+  access: CustomEvent<Deno.FsEvent>;
+  create: CustomEvent<Deno.FsEvent>;
+  modify: CustomEvent<Deno.FsEvent>;
+  remove: CustomEvent<Deno.FsEvent>;
+  other: CustomEvent<Deno.FsEvent>;
 }
