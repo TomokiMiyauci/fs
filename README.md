@@ -3,6 +3,16 @@
 [File System Standard](https://whatpr.org/fs/165.html), based on WHATWG spec
 reference implementation.
 
+## Table of Contents <!-- omit in toc -->
+
+- [Install](#install)
+- [Usage](#usage)
+  - [FileSystemObserver](#filesystemobserver)
+    - [With Deno File System](#with-deno-file-system)
+- [API](#api)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Install
 
 deno:
