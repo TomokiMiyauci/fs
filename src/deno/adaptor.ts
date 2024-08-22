@@ -219,11 +219,10 @@ function locate(root: string, path: string[]): FileSystemEntry | null {
   const fullPath = join(root, ...path);
 
   try {
-    const file = Deno.openSync(fullPath);
-    const stat = file.statSync();
+    const stat = Deno.statSync(fullPath);
 
     if (stat.isFile) {
-      return new FileEntry(name, file, fullPath);
+      return new FileEntry(name, fullPath);
     }
 
     if (stat.isDirectory) {
@@ -237,29 +236,17 @@ function locate(root: string, path: string[]): FileSystemEntry | null {
 }
 
 class FileEntry extends BaseEntry implements _FileEntry {
-  constructor(
-    public name: string,
-    private fs: Deno.FsFile,
-    path: string,
-  ) {
+  constructor(name: string, path: string) {
     super(name, path);
   }
   get modificationTimestamp(): number {
-    const { mtime } = this.fs.statSync();
+    const { mtime } = Deno.statSync(this.path);
 
     return mtime?.getTime() ?? Date.now();
   }
-  set modificationTimestamp(value: number) {
-    this.fs.utimeSync(value, value);
-  }
 
   get binaryData(): Uint8Array {
-    const { size } = this.fs.statSync();
-
-    const u8 = new Uint8Array(size);
-    this.fs.readSync(u8);
-
-    return u8;
+    return Deno.readFileSync(this.path);
   }
 
   set binaryData(value: Uint8Array) {
@@ -311,10 +298,7 @@ class Effector implements PartialSet<FileSystemEntry> {
       if (entry.isDirectory) {
         yield new DirectoryEntry(name, this.root, path);
       } else if (entry.isFile) {
-        const fullPath = join(this.root, ...path);
-        const file = Deno.openSync(fullPath, { read: true });
-
-        yield new FileEntry(name, file, join(...path));
+        yield new FileEntry(name, join(...path));
       } else {
         throw new Error("symlink is not supported");
       }
