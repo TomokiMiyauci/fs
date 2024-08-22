@@ -33,11 +33,12 @@ export class Watcher extends EventTarget {
 
     const watcher = Deno.watchFs(this.#path, { recursive: this.#recursive });
 
-    const dispatchEvent = debounce((event: Deno.FsEvent) => {
+    const callback = (event: Deno.FsEvent): void => {
       this.dispatchEvent(
         new CustomEvent<Deno.FsEvent>("*", { detail: event }),
       );
-    }, this.#wait);
+    };
+    const dispatchEvent = debounce(callback, this.#wait);
 
     const process = async () => {
       for await (const event of watcher) dispatchEvent(event);
