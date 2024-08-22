@@ -3,6 +3,20 @@
 [File System Standard](https://whatpr.org/fs/165.html), based on WHATWG spec
 reference implementation.
 
+## Install
+
+deno:
+
+```bash
+deno add @miyauci/fs@$VERSION
+```
+
+node:
+
+```bash
+npx jsr add @miyauci/fs@$VERSION
+```
+
 ## Usage
 
 `FileSystemHandle` can be referenced as
