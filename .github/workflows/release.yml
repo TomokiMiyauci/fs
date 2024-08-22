@@ -36,6 +36,9 @@ jobs:
         os: [ubuntu-latest]
         deno: [v1.x]
 
+    env:
+      TMPDIR: /tmp #for testing
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
