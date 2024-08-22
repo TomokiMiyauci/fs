@@ -56,6 +56,8 @@ function kind(kind: Deno.FsEvent["kind"]): FileSystemChangeType {
       return "modified";
     case "remove":
       return "disappeared";
+    case "rename":
+      return "moved";
   }
 }
 
