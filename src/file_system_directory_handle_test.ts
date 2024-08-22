@@ -7,6 +7,7 @@ import type { FileSystemWriteChunkType } from "./file_system_writable_file_strea
 import { FileSystemFileHandle } from "./file_system_file_handle.ts";
 import { StorageManager } from "./storage_manager.ts";
 import {
+  type Context,
   createDirectory,
   createEmptyFile,
   createFileWithContents,
@@ -15,10 +16,6 @@ import {
   pathSeparators,
   VirtualFileSystem,
 } from "@test";
-
-interface Context {
-  root: FileSystemDirectoryHandle;
-}
 
 describe("FileSystemDirectoryHandle", () => {
   beforeEach<Context>(async function () {
