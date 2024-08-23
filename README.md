@@ -16,6 +16,7 @@ reference implementation.
   - [Supported Runtime](#supported-runtime)
   - [FileSystemObserver](#filesystemobserver)
     - [FileSystemObserver with File System](#filesystemobserver-with-file-system)
+- [Documents](#documents)
 - [API](#api)
 - [Contributing](#contributing)
 - [License](#license)
@@ -60,10 +61,13 @@ API.
 
 The following run-times are supported:
 
-| Runtime | Import Specifier   |
-| ------- | ------------------ |
-| Deno    | `@miyauci/fs/deno` |
-| Node.js | `@miyauci/fs/node` |
+| Runtime           | Import Specifier   |
+| ----------------- | ------------------ |
+| Deno              | `@miyauci/fs/deno` |
+| Node.js, Deno[^1] | `@miyauci/fs/node` |
+
+[^1]: Available on Deno Deploy. See
+[To use on Deno Deploy](./docs/faq.md#to-use-on-deno-deploy)
 
 Each endpoint is only guaranteed to run at the corresponding runtime.
 
@@ -111,6 +115,10 @@ await handle.getFileHandle("file.txt", { create: true });
 ```
 
 `FileSystem#unwatch` will stop the monitoring.
+
+## Documents
+
+- [FAQ](./docs/faq.md)
 
 ## API
 
