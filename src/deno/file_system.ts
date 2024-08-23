@@ -92,15 +92,29 @@ export class FileSystem extends _FileSystem {
   }
 
   watch(): void {
-    this.#watcher.addEventListener("*", this.#listener);
+    this.#watcher.addEventListener("access", this.#listener);
+    this.#watcher.addEventListener("any", this.#listener);
+    this.#watcher.addEventListener("create", this.#listener);
+    this.#watcher.addEventListener("modify", this.#listener);
+    this.#watcher.addEventListener("other", this.#listener);
+    this.#watcher.addEventListener("remove", this.#listener);
 
     this.#watcher.watch();
   }
 
   unwatch(): void {
-    this.#watcher.removeEventListener("*", this.#listener);
+    this.#watcher.removeEventListener("access", this.#listener);
+    this.#watcher.removeEventListener("any", this.#listener);
+    this.#watcher.removeEventListener("create", this.#listener);
+    this.#watcher.removeEventListener("modify", this.#listener);
+    this.#watcher.removeEventListener("other", this.#listener);
+    this.#watcher.removeEventListener("remove", this.#listener);
 
     this.#watcher.unwatch();
+  }
+
+  [Symbol.dispose](): void {
+    this.unwatch();
   }
 }
 

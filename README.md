@@ -14,7 +14,7 @@ reference implementation.
 - [Install](#install)
 - [Usage](#usage)
   - [FileSystemObserver](#filesystemobserver)
-    - [With Deno File System](#with-deno-file-system)
+    - [File System with Deno](#file-system-with-deno)
 - [API](#api)
 - [Contributing](#contributing)
 - [License](#license)
@@ -43,7 +43,7 @@ npx jsr add @miyauci/fs@$VERSION
 import { StorageManager } from "@miyauci/fs@$VERSION";
 import { FileSystem } from "@miyauci/fs@$VERSION/deno";
 
-const fileSystem = new FileSystem("path/to/dir"); // default is "."
+using fileSystem = new FileSystem("path/to/dir");// default is "."
 const storage = new StorageManager(fileSystem);
 
 const handle = await storage.getDirectory();
@@ -74,12 +74,11 @@ const observer = new FileSystemObserver(callback);
 await observer.observe(handle);
 ```
 
-#### With Deno File System
+#### File System with Deno
 
 To use `FileSystemObserver` with `FileSystem`, you must call `FileSystem#watch`.
 
-This will internally call `Deno.watchFs` to monitor the file system. It is a
-deliberate decision not to do this automatically in the constructor.
+This will internally call `Deno.watchFs` to monitor the file system.
 
 ```ts
 import {
@@ -89,7 +88,7 @@ import {
 } from "@miyauci/fs@$VERSION";
 import { FileSystem } from "@miyauci/fs@$VERSION/deno";
 
-const fileSystem = new FileSystem();
+using fileSystem = new FileSystem();
 const storage = new StorageManager(fileSystem);
 const handle = await storage.getDirectory();
 declare const callback: FileSystemObserverCallback;
@@ -99,8 +98,6 @@ fileSystem.watch();
 await observer.observe(handle, { recursive: true });
 
 await handle.getFileHandle("file.txt", { create: true });
-
-fileSystem.unwatch();
 ```
 
 Also, `FileSystem#unwatch` will stop the monitoring.

@@ -24,14 +24,12 @@ export class Watcher extends EventTarget {
 
     const watcher = Deno.watchFs(this.#path, { recursive: this.#recursive });
 
-    const dispatchEvent = (event: Deno.FsEvent): void => {
-      this.dispatchEvent(
-        new CustomEvent<Deno.FsEvent>(event.kind, { detail: event }),
-      );
-    };
-
     const process = async () => {
-      for await (const event of watcher) dispatchEvent(event);
+      for await (const event of watcher) {
+        this.dispatchEvent(
+          new CustomEvent<Deno.FsEvent>(event.kind, { detail: event }),
+        );
+      }
     };
 
     process();
