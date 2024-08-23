@@ -13,6 +13,7 @@ reference implementation.
 
 - [Install](#install)
 - [Usage](#usage)
+  - [Supported Runtime](#supported-runtime)
   - [FileSystemObserver](#filesystemobserver)
     - [File System with Deno](#file-system-with-deno)
 - [API](#api)
@@ -41,7 +42,7 @@ npx jsr add @miyauci/fs@$VERSION
 
 ```ts
 import { StorageManager } from "@miyauci/fs@$VERSION";
-import { FileSystem } from "@miyauci/fs@$VERSION/deno";
+import { FileSystem } from "@miyauci/fs@$VERSION/$RUNTIME";
 
 using fileSystem = new FileSystem("path/to/dir");// default is "."
 const storage = new StorageManager(fileSystem);
@@ -54,6 +55,17 @@ const contents = await file.text();
 
 This allows operations to be performed on the File System using the File System
 API.
+
+### Supported Runtime
+
+The following run-times are supported:
+
+| Runtime | Import Specifier |
+| ------- | ---------------- |
+| Deno    | @miyauci/fs/deno |
+| Node.js | @miyauci/fs/node |
+
+Each endpoint is only guaranteed to run at the corresponding runtime.
 
 ### FileSystemObserver
 
