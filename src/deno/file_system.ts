@@ -103,23 +103,17 @@ export class FileSystem extends _FileSystem {
   }
 
   watch(): void {
-    this.#watcher.addEventListener("access", this.#listener);
-    this.#watcher.addEventListener("any", this.#listener);
-    this.#watcher.addEventListener("create", this.#listener);
-    this.#watcher.addEventListener("modify", this.#listener);
-    this.#watcher.addEventListener("other", this.#listener);
-    this.#watcher.addEventListener("remove", this.#listener);
+    for (const eventType of allEvents) {
+      this.#watcher.addEventListener(eventType, this.#listener);
+    }
 
     this.#watcher.watch();
   }
 
   unwatch(): void {
-    this.#watcher.removeEventListener("access", this.#listener);
-    this.#watcher.removeEventListener("any", this.#listener);
-    this.#watcher.removeEventListener("create", this.#listener);
-    this.#watcher.removeEventListener("modify", this.#listener);
-    this.#watcher.removeEventListener("other", this.#listener);
-    this.#watcher.removeEventListener("remove", this.#listener);
+    for (const eventType of allEvents) {
+      this.#watcher.removeEventListener(eventType, this.#listener);
+    }
 
     this.#watcher.unwatch();
   }
@@ -128,6 +122,15 @@ export class FileSystem extends _FileSystem {
     this.unwatch();
   }
 }
+
+const allEvents = [
+  "access",
+  "any",
+  "create",
+  "modify",
+  "other",
+  "remove",
+] satisfies Deno.FsEvent["kind"][];
 
 class BaseEntry {
   constructor(protected root: string, protected path: string[]) {
