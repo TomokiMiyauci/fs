@@ -1,3 +1,12 @@
+# [1.0.0-beta.10](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.9...1.0.0-beta.10) (2024-08-23)
+
+
+### Features
+
+* **deno:** improve permission error message ([17afe90](https://github.com/TomokiMiyauci/fs/commit/17afe90a14302b5fafb1bd567b13f24712c7b41c))
+* **file_system:** add watching file system feature to node file system ([d409abf](https://github.com/TomokiMiyauci/fs/commit/d409abfd4dfef9b817edd916b25231196dfc1ee1))
+* **file_system:** change file system constructor argument to optional ([611b214](https://github.com/TomokiMiyauci/fs/commit/611b214ef7764d25a4dcf9cd59fbac6fe0275e69))
+
 # [1.0.0-beta.9](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.8...1.0.0-beta.9) (2024-08-23)
 
 
