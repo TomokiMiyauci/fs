@@ -1,3 +1,10 @@
+# [1.0.0-beta.8](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.7...1.0.0-beta.8) (2024-08-23)
+
+
+### Features
+
+* **file_system:** file system to be disposable ([5cd8001](https://github.com/TomokiMiyauci/fs/commit/5cd800146ebe42bc493563d29eb66a8ac3912125))
+
 # [1.0.0-beta.7](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.6...1.0.0-beta.7) (2024-08-22)
 
 
