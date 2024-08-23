@@ -25,7 +25,7 @@ import type {
 import { isDirectoryEntry } from "../algorithm.ts";
 
 export class FileSystem extends _FileSystem {
-  constructor(root: string) {
+  constructor(root: string = "") {
     super();
 
     this.root = resolve(root);
