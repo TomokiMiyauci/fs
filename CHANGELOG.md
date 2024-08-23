@@ -1,3 +1,10 @@
+# [1.0.0-beta.9](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.8...1.0.0-beta.9) (2024-08-23)
+
+
+### Features
+
+* **node:** add file system class for node.js, add node endpoint ([f9ce721](https://github.com/TomokiMiyauci/fs/commit/f9ce7218bd16043053a4ad808e5eea707bea0545))
+
 # [1.0.0-beta.8](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.7...1.0.0-beta.8) (2024-08-23)
 
 
