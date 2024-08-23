@@ -114,6 +114,11 @@ await handle.getFileHandle("file.txt", { create: true });
 
 ## API
 
+The API is published according to the following criteria:
+
+- WebIDL
+- Defined as an algorithm in the specification
+
 See [jsr doc](https://jsr.io/@miyauci/fs) for all APIs.
 
 ## Contributing
