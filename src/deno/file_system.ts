@@ -88,7 +88,18 @@ export class FileSystem extends _FileSystem {
   root: string;
 
   locateEntry(path: FileSystemPath): FileSystemEntry | null {
-    return locate(this.root, [...path]);
+    const fullPath = join(this.root, ...path);
+
+    try {
+      const stat = Deno.statSync(fullPath);
+
+      if (stat.isFile) return new FileEntry(this.root, [...path]);
+      if (stat.isDirectory) return new DirectoryEntry(this.root, [...path]);
+
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   watch(): void {
@@ -119,14 +130,22 @@ export class FileSystem extends _FileSystem {
 }
 
 class BaseEntry {
-  constructor(public name: string, protected path: string) {}
+  constructor(protected root: string, protected path: string[]) {
+    this.name = path[path.length - 1];
+  }
+
+  protected get fullPath(): string {
+    return join(this.root, ...this.path);
+  }
+
+  readonly name: string;
 
   queryAccess(mode: AccessMode): FileSystemAccessResult {
     switch (mode) {
       case "read": {
         const result = Deno.permissions.requestSync({
           name: "read",
-          path: this.path,
+          path: this.fullPath,
         });
 
         return {
@@ -137,7 +156,7 @@ class BaseEntry {
       case "readwrite": {
         const readResult = Deno.permissions.requestSync({
           name: "read",
-          path: this.path,
+          path: this.fullPath,
         });
 
         if (readResult.state !== "granted") {
@@ -149,7 +168,7 @@ class BaseEntry {
 
         const writeResult = Deno.permissions.requestSync({
           name: "write",
-          path: this.path,
+          path: this.fullPath,
         });
 
         if (writeResult.state !== "granted") {
@@ -172,7 +191,7 @@ class BaseEntry {
       case "read": {
         const result = Deno.permissions.requestSync({
           name: "read",
-          path: this.path,
+          path: this.fullPath,
         });
 
         return {
@@ -183,7 +202,7 @@ class BaseEntry {
       case "readwrite": {
         const readResult = Deno.permissions.requestSync({
           name: "read",
-          path: this.path,
+          path: this.fullPath,
         });
 
         if (readResult.state !== "granted") {
@@ -195,7 +214,7 @@ class BaseEntry {
 
         const writeResult = Deno.permissions.requestSync({
           name: "write",
-          path: this.path,
+          path: this.fullPath,
         });
 
         if (writeResult.state !== "granted") {
@@ -215,58 +234,32 @@ class BaseEntry {
 }
 
 class DirectoryEntry extends BaseEntry implements _DirectoryEntry {
-  constructor(name: string, private root: string, path: string[]) {
-    const fullPath = join(root, ...path);
-
-    super(name, fullPath);
-
-    this.paths = path;
+  constructor(root: string, path: string[]) {
+    super(root, path);
   }
-
-  private paths: string[];
 
   get children() {
-    return new Effector(this.root, this.paths);
-  }
-}
-
-function locate(root: string, path: string[]): FileSystemEntry | null {
-  const name = path[path.length - 1];
-  const fullPath = join(root, ...path);
-
-  try {
-    const stat = Deno.statSync(fullPath);
-
-    if (stat.isFile) {
-      return new FileEntry(name, fullPath);
-    }
-
-    if (stat.isDirectory) {
-      return new DirectoryEntry(name, root, path);
-    }
-
-    return null;
-  } catch {
-    return null;
+    return new Effector(this.root, this.path);
   }
 }
 
 class FileEntry extends BaseEntry implements _FileEntry {
-  constructor(name: string, path: string) {
-    super(name, path);
+  constructor(root: string, path: string[]) {
+    super(root, path);
   }
+
   get modificationTimestamp(): number {
-    const { mtime } = Deno.statSync(this.path);
+    const { mtime } = Deno.statSync(this.fullPath);
 
     return mtime?.getTime() ?? Date.now();
   }
 
   get binaryData(): Uint8Array {
-    return Deno.readFileSync(this.path);
+    return Deno.readFileSync(this.fullPath);
   }
 
   set binaryData(value: Uint8Array) {
-    Deno.writeFileSync(this.path, value, { create: false });
+    Deno.writeFileSync(this.fullPath, value, { create: false });
   }
 
   sharedLockCount: number = 0;
@@ -274,47 +267,43 @@ class FileEntry extends BaseEntry implements _FileEntry {
 }
 
 class Effector implements PartialSet<FileSystemEntry> {
-  constructor(private root: string, private paths: string[]) {}
+  constructor(private root: string, private path: string[]) {}
 
   append(item: FileSystemEntry): void {
-    const fullPath = join(this.root, ...this.paths, item.name);
+    const fullPath = join(this.root, ...this.path, item.name);
 
     if (isDirectoryEntry(item)) {
       Deno.mkdirSync(fullPath);
     } else {
-      using file = Deno.openSync(fullPath, { create: true, write: true });
+      using file = Deno.createSync(fullPath);
       file.writeSync(item.binaryData);
       file.utimeSync(item.modificationTimestamp, item.modificationTimestamp);
     }
   }
 
   remove(item: FileSystemEntry): void {
-    const fullPath = join(this.root, ...this.paths, item.name);
+    const fullPath = join(this.root, ...this.path, item.name);
 
     Deno.removeSync(fullPath, { recursive: true });
   }
 
   get isEmpty(): boolean {
-    const fullPath = join(this.root, ...this.paths);
-
-    const iter = Deno.readDirSync(fullPath);
-
-    return isEmpty(iter);
+    return isEmpty(this[Symbol.iterator]());
   }
 
   *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-    const fullPath = join(this.root, ...this.paths);
+    const fullPath = join(this.root, ...this.path);
 
     const iter = Deno.readDirSync(fullPath);
 
     for (const entry of iter) {
       const name = entry.name;
-      const path = this.paths.concat(name);
+      const path = this.path.concat(name);
 
       if (entry.isDirectory) {
-        yield new DirectoryEntry(name, this.root, path);
+        yield new DirectoryEntry(this.root, path);
       } else if (entry.isFile) {
-        yield new FileEntry(name, join(...path));
+        yield new FileEntry(this.root, path);
       } else {
         throw new Error("symlink is not supported");
       }
