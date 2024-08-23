@@ -127,7 +127,7 @@ class FileEntry implements _FileEntry {
   }
 
   get modificationTimestamp(): number {
-    return statSync(this.#path).mtime.getTime();
+    return statSync(this.#path).mtime?.getTime() ?? Date.now(); // mtime may not be defined for some OS.
   }
 
   readonly name: string;
