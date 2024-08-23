@@ -1,7 +1,7 @@
 {
   "name": "@miyauci/fs",
   "tasks": {
-    "test": "deno test --allow-write=$TMPDIR --allow-read=$TMPDIR --doc"
+    "test": "deno test --allow-write=$TMPDIR,$(realpath \"$TMPDIR\") --allow-read=$TMPDIR,$(realpath \"$TMPDIR\") --doc"
   },
   "exclude": ["CHANGELOG.md"],
   "imports": {
