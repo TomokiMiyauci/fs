@@ -1,3 +1,4 @@
+import { List } from "@miyauci/infra";
 import {
   closeSync,
   futimesSync,
@@ -11,9 +12,12 @@ import {
   writeSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
+import { type FSWatcher, watch } from "chokidar";
 import {
   FileSystem as _FileSystem,
+  type FileSystemEvent,
   type FileSystemPath,
+  notifyObservations,
 } from "../file_system.ts";
 import type {
   DirectoryEntry as _DirectoryEntry,
@@ -48,6 +52,61 @@ export class FileSystem extends _FileSystem {
     } catch {
       return null;
     }
+  }
+
+  watch(): void {
+    if (this.#watcher) return;
+
+    const watcher = watch(this.root, { persistent: true, ignoreInitial: true });
+
+    watcher.on("all", (eventName, path) => {
+      const event = createEvent(eventName, path, this.root);
+
+      notifyObservations(this, new List([event]));
+    });
+
+    this.#watcher = watcher;
+  }
+
+  #watcher: FSWatcher | undefined;
+
+  async unwatch(): Promise<void> {
+    if (this.#watcher) {
+      await this.#watcher.close();
+      this.#watcher = undefined;
+    }
+  }
+
+  [Symbol.asyncDispose](): Promise<void> {
+    return this.unwatch();
+  }
+}
+
+function createEvent(
+  eventName: "add" | "addDir" | "change" | "unlink" | "unlinkDir",
+  path: string,
+  root: string,
+): FileSystemEvent {
+  const relativePath = path.replace(root, "");
+  const segments = relativePath.split("/");
+  const modifiedPath = new List(segments);
+  const baseEvent = { fromPath: null, modifiedPath };
+
+  switch (eventName) {
+    case "add":
+      return { ...baseEvent, entryType: "file", type: "appeared" };
+
+    case "addDir":
+      return { ...baseEvent, entryType: "directory", type: "appeared" };
+
+    case "change":
+      return { ...baseEvent, entryType: "file", type: "modified" };
+
+    case "unlink":
+      return { ...baseEvent, entryType: "file", type: "disappeared" };
+
+    case "unlinkDir":
+      return { ...baseEvent, entryType: "directory", type: "disappeared" };
   }
 }
 

@@ -15,7 +15,7 @@ reference implementation.
 - [Usage](#usage)
   - [Supported Runtime](#supported-runtime)
   - [FileSystemObserver](#filesystemobserver)
-    - [File System with Deno](#file-system-with-deno)
+    - [FileSystemObserver with File System](#filesystemobserver-with-file-system)
 - [API](#api)
 - [Contributing](#contributing)
 - [License](#license)
@@ -44,7 +44,7 @@ npx jsr add @miyauci/fs@$VERSION
 import { StorageManager } from "@miyauci/fs@$VERSION";
 import { FileSystem } from "@miyauci/fs@$VERSION/$RUNTIME";
 
-using fileSystem = new FileSystem("path/to/dir");// default is "."
+const fileSystem = new FileSystem("path/to/dir"); // default is "."
 const storage = new StorageManager(fileSystem);
 
 const handle = await storage.getDirectory();
@@ -60,10 +60,10 @@ API.
 
 The following run-times are supported:
 
-| Runtime | Import Specifier |
-| ------- | ---------------- |
-| Deno    | @miyauci/fs/deno |
-| Node.js | @miyauci/fs/node |
+| Runtime | Import Specifier   |
+| ------- | ------------------ |
+| Deno    | `@miyauci/fs/deno` |
+| Node.js | `@miyauci/fs/node` |
 
 Each endpoint is only guaranteed to run at the corresponding runtime.
 
@@ -86,11 +86,9 @@ const observer = new FileSystemObserver(callback);
 await observer.observe(handle);
 ```
 
-#### File System with Deno
+#### FileSystemObserver with File System
 
 To use `FileSystemObserver` with `FileSystem`, you must call `FileSystem#watch`.
-
-This will internally call `Deno.watchFs` to monitor the file system.
 
 ```ts
 import {
@@ -98,9 +96,9 @@ import {
   type FileSystemObserverCallback,
   StorageManager,
 } from "@miyauci/fs@$VERSION";
-import { FileSystem } from "@miyauci/fs@$VERSION/deno";
+import { FileSystem } from "@miyauci/fs@$VERSION/$RUNTIME";
 
-using fileSystem = new FileSystem();
+const fileSystem = new FileSystem();
 const storage = new StorageManager(fileSystem);
 const handle = await storage.getDirectory();
 declare const callback: FileSystemObserverCallback;
@@ -112,7 +110,7 @@ await observer.observe(handle, { recursive: true });
 await handle.getFileHandle("file.txt", { create: true });
 ```
 
-Also, `FileSystem#unwatch` will stop the monitoring.
+`FileSystem#unwatch` will stop the monitoring.
 
 ## API
 
