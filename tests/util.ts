@@ -114,6 +114,10 @@ export class VirtualFileSystem implements FileSystem {
   root: string = "";
   observations: Set<FileSystemObservation> = new Set();
 
+  exists(): boolean {
+    return true;
+  }
+
   watch(): void {
     this.vfs.addEventListener("disappeared", ({ detail }) => {
       notifyObservations(

@@ -15,7 +15,7 @@ reference implementation.
 - [Usage](#usage)
   - [Supported Runtime](#supported-runtime)
   - [FileSystemObserver](#filesystemobserver)
-    - [FileSystemObserver with File System](#filesystemobserver-with-file-system)
+    - [FileSystemObserver with Bucket File System](#filesystemobserver-with-bucket-file-system)
 - [Documents](#documents)
 - [API](#api)
 - [Contributing](#contributing)
@@ -43,9 +43,9 @@ npx jsr add @miyauci/fs
 
 ```ts
 import { StorageManager } from "@miyauci/fs";
-import { FileSystem } from "@miyauci/fs/$RUNTIME";
+import { BucketFileSystem } from "@miyauci/fs/$RUNTIME";
 
-const fileSystem = new FileSystem("path/to/dir"); // default is "."
+const fileSystem = new BucketFileSystem("path/to/dir"); // default is "."
 const storage = new StorageManager(fileSystem);
 
 const handle = await storage.getDirectory();
@@ -54,8 +54,8 @@ const file = await fileHandle.getFile();
 const contents = await file.text();
 ```
 
-This allows operations to be performed on the File System using the File System
-API.
+This allows operations to be performed on the local file system using the File
+System API.
 
 ### Supported Runtime
 
@@ -90,9 +90,10 @@ const observer = new FileSystemObserver(callback);
 await observer.observe(handle);
 ```
 
-#### FileSystemObserver with File System
+#### FileSystemObserver with Bucket File System
 
-To use `FileSystemObserver` with `FileSystem`, you must call `FileSystem#watch`.
+To use `FileSystemObserver` with `BucketFileSystem`, you must call
+`BucketFileSystem#watch`.
 
 ```ts
 import {
@@ -100,9 +101,9 @@ import {
   type FileSystemObserverCallback,
   StorageManager,
 } from "@miyauci/fs";
-import { FileSystem } from "@miyauci/fs/$RUNTIME";
+import { BucketFileSystem } from "@miyauci/fs/$RUNTIME";
 
-const fileSystem = new FileSystem();
+const fileSystem = new BucketFileSystem();
 const storage = new StorageManager(fileSystem);
 const handle = await storage.getDirectory();
 declare const callback: FileSystemObserverCallback;
@@ -114,7 +115,7 @@ await observer.observe(handle, { recursive: true });
 await handle.getFileHandle("file.txt", { create: true });
 ```
 
-`FileSystem#unwatch` will stop the monitoring.
+`BucketFileSystem#unwatch` will stop the monitoring.
 
 ## Documents
 

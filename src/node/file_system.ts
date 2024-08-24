@@ -28,9 +28,9 @@ import type {
   PartialSet,
 } from "../file_system_entry.ts";
 import { isDirectoryEntry } from "../algorithm.ts";
-import type { BucketFileSystem } from "../storage_manager.ts";
+import type { BucketFileSystem as _BucketFileSystem } from "../storage_manager.ts";
 
-export class FileSystem implements BucketFileSystem {
+export class BucketFileSystem implements _BucketFileSystem {
   constructor(root: string = "") {
     this.root = resolve(root);
   }

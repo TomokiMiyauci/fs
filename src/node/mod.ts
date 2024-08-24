@@ -1,1 +1,1 @@
-export { FileSystem } from "./file_system.ts";
+export { BucketFileSystem } from "./file_system.ts";

@@ -19,9 +19,9 @@ import { Watcher } from "./watcher.ts";
 import { safeStatSync } from "./io.ts";
 import { FileEntry } from "./file_entry.ts";
 import { DirectoryEntry } from "./directory_entry.ts";
-import type { BucketFileSystem } from "../storage_manager.ts";
+import type { BucketFileSystem as _BucketFileSystem } from "../storage_manager.ts";
 
-export class FileSystem implements BucketFileSystem {
+export class BucketFileSystem implements _BucketFileSystem {
   #listener: FsCallback;
   #watcher: Watcher;
 
