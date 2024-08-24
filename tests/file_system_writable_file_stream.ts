@@ -10,10 +10,10 @@ import {
   createDirectory,
   createEmptyFile,
   createFileWithContents,
+  getFileContents,
   getFileSize,
   type Provider,
-} from "@test";
-import { getFileContents } from "@test";
+} from "@test/util.ts";
 
 export function runFileSystemWritableFileStreamTest(provider: Provider): void {
   describe("FileSystemWritableFileStream", () => {

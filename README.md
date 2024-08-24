@@ -26,13 +26,13 @@ reference implementation.
 deno:
 
 ```bash
-deno add @miyauci/fs@$VERSION
+deno add @miyauci/fs
 ```
 
 node:
 
 ```bash
-npx jsr add @miyauci/fs@$VERSION
+npx jsr add @miyauci/fs
 ```
 
 ## Usage
@@ -42,8 +42,8 @@ npx jsr add @miyauci/fs@$VERSION
 (Origin Private File System aka Bucket File System).
 
 ```ts
-import { StorageManager } from "@miyauci/fs@$VERSION";
-import { FileSystem } from "@miyauci/fs@$VERSION/$RUNTIME";
+import { StorageManager } from "@miyauci/fs";
+import { FileSystem } from "@miyauci/fs/$RUNTIME";
 
 const fileSystem = new FileSystem("path/to/dir"); // default is "."
 const storage = new StorageManager(fileSystem);
@@ -81,7 +81,7 @@ import {
   type FileSystemHandle,
   FileSystemObserver,
   type FileSystemObserverCallback,
-} from "@miyauci/fs@$VERSION";
+} from "@miyauci/fs";
 
 declare const handle: FileSystemHandle;
 declare const callback: FileSystemObserverCallback;
@@ -99,8 +99,8 @@ import {
   FileSystemObserver,
   type FileSystemObserverCallback,
   StorageManager,
-} from "@miyauci/fs@$VERSION";
-import { FileSystem } from "@miyauci/fs@$VERSION/$RUNTIME";
+} from "@miyauci/fs";
+import { FileSystem } from "@miyauci/fs/$RUNTIME";
 
 const fileSystem = new FileSystem();
 const storage = new StorageManager(fileSystem);
