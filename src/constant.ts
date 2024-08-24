@@ -15,4 +15,6 @@ export const enum Msg {
   InvalidWriteParams = "Invalid params passed. write requires a data argument",
   InvalidTruncateParams =
     "Invalid params passed. truncate requires a size argument",
+
+  Insecure = "File system operation is insecure",
 }

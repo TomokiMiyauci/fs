@@ -1,6 +1,7 @@
 import { List, Set } from "@miyauci/infra";
 import { join } from "@std/path/join";
 import { resolve } from "@std/path/resolve";
+import { existsSync } from "@std/fs/exists";
 import {
   type FileSystem as _FileSystem,
   type FileSystemEvent,
@@ -56,6 +57,10 @@ export class FileSystem implements BucketFileSystem {
   }
 
   observations: Set<FileSystemObservation> = new Set();
+
+  exists(): boolean {
+    return existsSync(this.root, { isDirectory: true });
+  }
 
   watch(): void {
     for (const eventType of allEvents) {

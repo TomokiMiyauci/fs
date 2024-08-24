@@ -1,6 +1,7 @@
 import { List, Set } from "@miyauci/infra";
 import {
   closeSync,
+  existsSync,
   futimesSync,
   mkdirSync,
   openSync,
@@ -54,6 +55,10 @@ export class FileSystem implements BucketFileSystem {
   }
 
   observations: Set<FileSystemObservation> = new Set();
+
+  exists(): boolean {
+    return existsSync(this.root);
+  }
 
   watch(): void {
     if (this.#watcher) return;

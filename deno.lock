@@ -207,6 +207,7 @@
       "jsr:@std/async@^1.0.3",
       "jsr:@std/bytes@^1.0.2",
       "jsr:@std/expect@^1.0.0",
+      "jsr:@std/fs@^1.0.1",
       "jsr:@std/media-types@^1.0.2",
       "jsr:@std/path@^1.0.2",
       "jsr:@std/testing@^1.0.0",

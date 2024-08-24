@@ -4,18 +4,30 @@ import {
   type FileSystemDirectoryHandle,
 } from "./file_system_directory_handle.ts";
 import type { FileSystem } from "./file_system.ts";
+import { Msg } from "./constant.ts";
+
+export interface BucketFileSystem extends FileSystem {
+  /** Whether underlying file system exists or not. */
+  exists(): boolean;
+}
 
 /**
  * [File System Standard](https://storage.spec.whatwg.org/#storagemanager)
  */
 export class StorageManager {
-  constructor(private fileSystem: FileSystem) {}
+  constructor(private fileSystem: BucketFileSystem) {}
 
   /** Returns the root directory of the bucket file system.
    *
    * [File System Standard](https://fs.spec.whatwg.org/#dom-storagemanager-getdirectory)
    */
   getDirectory(): Promise<FileSystemDirectoryHandle> {
+    const exists = this.fileSystem.exists();
+
+    if (!exists) {
+      return Promise.reject(new DOMException(Msg.Insecure, "SecurityError"));
+    }
+
     // 4. Let fileSystem be bucket file system's root.
     const root = this.fileSystem;
 
