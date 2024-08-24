@@ -30,7 +30,8 @@ export interface FileSystemCreateWritableOptions {
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemfilehandle)
  */
 export class FileSystemFileHandle extends FileSystemHandle {
-  /**
+  /** Returns a {@link File} representing the state on disk of the file entry locatable by handle’s locator. If the file on disk changes or is removed after this method is called, the returned {@link File} object will likely be no longer readable.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-getfile)
    */
   getFile(): Promise<File> {
@@ -90,7 +91,14 @@ export class FileSystemFileHandle extends FileSystemHandle {
     return promise;
   }
 
-  /**
+  /** Returns a {@link FileSystemWritableFileStream} that can be used to write to the file. Any changes made through stream won’t be reflected in the file entry locatable by fileHandle’s locator until the stream has been closed. User agents try to ensure that no partial writes happen, i.e. the file will either contain its old contents or it will contain whatever data was written through stream up until the stream has been closed.
+   *
+   * This is typically implemented by writing data to a temporary file, and only replacing the file entry locatable by fileHandle’s locator with the temporary file when the writable filestream is closed.
+   *
+   * If {@link keepExistingData} is false or not specified, the temporary file starts out empty, otherwise the existing file is first copied to this temporary file.
+   *
+   * Creating a {@link FileSystemWritableFileStream} takes a shared lock on the file entry locatable with fileHandle’s locator. This prevents the creation of {@link FileSystemSyncAccessHandles} for the entry, until the stream is closed.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createwritable)
    */
   createWritable(
@@ -167,7 +175,14 @@ export class FileSystemFileHandle extends FileSystemHandle {
     return promise;
   }
 
-  /**
+  /** Returns a {@link FileSystemSyncAccessHandle} that can be used to read from/write to the file. Changes made through handle might be immediately reflected in the file entry locatable by fileHandle’s locator. To ensure the changes are reflected in this file, the handle can be flushed.
+   *
+   * Creating a {@link FileSystemSyncAccessHandle} takes an exclusive lock on the file entry locatable with fileHandle’s locator. This prevents the creation of further {@link FileSystemSyncAccessHandles} or {@link FileSystemWritableFileStreams} for the entry, until the access handle is closed.
+   *
+   * The returned {@link FileSystemSyncAccessHandle} offers synchronous methods. This allows for higher performance on contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
+   *
+   * For the time being, this method will only succeed when the fileHandle is in a bucket file system.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createsyncaccesshandle)
    */
   createSyncAccessHandle(): Promise<FileSystemSyncAccessHandle> {

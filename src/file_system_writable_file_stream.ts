@@ -42,7 +42,8 @@ export type FileSystemWriteChunkType =
   | string
   | WriteParams;
 
-/**
+/** WritableStream object with additional convenience methods, which operates on a single file on disk.
+ *
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream)
  */
 export class FileSystemWritableFileStream
@@ -62,7 +63,8 @@ export class FileSystemWritableFileStream
    */
   protected buffer: Uint8Array = new Uint8Array(0);
 
-  /**
+  /** Updates the current file cursor offset the {@link position} bytes from the top of the file.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemwritablefilestream-seek)
    */
   seek(position: number): Promise<void> {
@@ -79,7 +81,12 @@ export class FileSystemWritableFileStream
     return result;
   }
 
-  /**
+  /** Resizes the file associated with stream to be {@link size} bytes long. If {@link size} is larger than the current file size this pads the file with null bytes, otherwise it truncates the file.
+   *
+   * The file cursor is updated when {@link truncate} is called. If the cursor is smaller than {@link size}, it remains unchanged. If the cursor is larger than {@link size}, it is set to {@link size} to ensure that subsequent writes do not error.
+   *
+   * No changes are written to the actual file until on disk until the stream has been closed. Changes are typically written to a temporary file instead.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemwritablefilestream-truncate)
    */
   truncate(size: number): Promise<void> {

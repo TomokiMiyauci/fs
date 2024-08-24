@@ -62,7 +62,8 @@ export interface FileSystemRemoveOptions {
   next,
 })
 export class FileSystemDirectoryHandle extends FileSystemHandle {
-  /**
+  /** Returns a handle for a file named name in the directory entry locatable by directoryHandle’s locator.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getdirectoryhandle)
    */
   getDirectoryHandle(
@@ -174,7 +175,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
-  /**
+  /** Returns a handle for a directory named name in the directory entry locatable by directoryHandle’s locator.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getfilehandle)
    */
   getFileHandle(
@@ -286,7 +288,8 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
-  /**
+  /** Removes the file system entry named {@link name} in the directory entry locatable by directoryHandle’s locator.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-removeentry)
    */
   removeEntry(name: string, options?: FileSystemRemoveOptions): Promise<void> {
@@ -368,7 +371,14 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
     return promise;
   }
 
-  /**
+  /** If {@link possibleDescendant} is equal to directory, path will be an empty array.
+   *
+   * If {@link possibleDescendant} is a direct child of directory, path will be an array containing {@link possibleDescendant}’s name.
+   *
+   * If {@link possibleDescendant} is a descendant of directory, path will be an array containing the names of all the intermediate directories and {@link possibleDescendant}’s name as last element. For example if directory represents `/home/user/project` and {@link possibleDescendant} represents `/home/user/project/foo/bar`, this will return `['foo', 'bar']`.
+   *
+   * Otherwise (directory and {@link possibleDescendant} are not related), path will be null.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-resolve)
    */
   resolve(

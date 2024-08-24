@@ -16,7 +16,10 @@ export class FileSystemHandle {
    */
   protected locator!: FileSystemLocator;
 
-  /**
+  /** Returns "file" if handle is a {@link FileSystemFileHandle}, or "directory" if handle is a {@link FileSystemDirectoryHandle}.
+   *
+   * This can be used to distinguish files from directories when iterating over the contents of a directory.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandle-kind)
    */
   get kind(): FileSystemHandleKind {
@@ -32,7 +35,8 @@ export class FileSystemHandle {
     return this.locator.path[this.locator.path.size - 1];
   }
 
-  /**
+  /** Returns true if this handle and {@link other} represent the same file or directory.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandle-issameentry)
    */
   isSameEntry(other: FileSystemHandle): Promise<boolean> {

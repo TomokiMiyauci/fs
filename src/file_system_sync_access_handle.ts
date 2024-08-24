@@ -13,7 +13,8 @@ export interface FileSystemReadWriteOptions {
   at?: number;
 }
 
-/**
+/** Object that is capable of reading from/writing to, as well as obtaining and changing the size of, a single file.
+ *
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle)
  */
 export class FileSystemSyncAccessHandle {
@@ -36,7 +37,9 @@ export class FileSystemSyncAccessHandle {
     this.file = entry;
   }
 
-  /**
+  /** Reads the contents of the file associated with handle into buffer, optionally at a given offset.
+   * The file cursor is updated when {@link read} is called to point to the byte after the last byte read.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-read)
    */
   read(
@@ -109,7 +112,9 @@ export class FileSystemSyncAccessHandle {
     }
   }
 
-  /**
+  /** Writes the content of buffer into the file associated with handle, optionally at a given offset, and returns the number of written bytes. Checking the returned number of written bytes allows callers to detect and handle errors and partial writes.
+   * The file cursor is updated when {@link write} is called to point to the byte after the last byte written.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-write)
    */
   write(
@@ -188,7 +193,9 @@ export class FileSystemSyncAccessHandle {
     return bufferSize;
   }
 
-  /**
+  /** Resizes the file associated with handle to be {@link newSize} bytes long. If {@link newSize} is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
+   * The file cursor is updated when {@link truncate} is called. If the cursor is smaller than {@link newSize}, it remains unchanged. If the cursor is larger than {@link newSize}, it is set to {@link newSize}.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-truncate)
    */
   truncate(newSize: number): void {
@@ -237,7 +244,8 @@ export class FileSystemSyncAccessHandle {
     }
   }
 
-  /**
+  /** Returns the size of the file associated with handle in bytes.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-getsize)
    */
   getSize(): number {
@@ -248,7 +256,8 @@ export class FileSystemSyncAccessHandle {
     return this.file.binaryData.length;
   }
 
-  /**
+  /** Ensures that the contents of the file associated with handle contain all the modifications done through {@link write}.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-flush)
    */
   flush(): void {
@@ -258,7 +267,8 @@ export class FileSystemSyncAccessHandle {
     // 2. Attempt to transfer all cached modifications of the file’s content to the file system’s underlying storage device.
   }
 
-  /**
+  /** Closes the access handle or no-ops if the access handle is already closed.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-close)
    */
   close(): void {
