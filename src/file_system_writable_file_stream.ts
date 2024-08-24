@@ -42,7 +42,7 @@ export type FileSystemWriteChunkType =
   | string
   | WriteParams;
 
-/** WritableStream object with additional convenience methods, which operates on a single file on disk.
+/** {@link WritableStream} object with additional convenience methods, which operates on a single file on disk.
  *
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream)
  */
