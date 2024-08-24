@@ -1,9 +1,10 @@
-import { List } from "@miyauci/infra";
+import { List, Set } from "@miyauci/infra";
 import { join } from "@std/path/join";
 import { resolve } from "@std/path/resolve";
 import {
-  FileSystem as _FileSystem,
+  type FileSystem as _FileSystem,
   type FileSystemEvent,
+  type FileSystemObservation,
   type FileSystemPath,
   notifyObservations,
 } from "../file_system.ts";
@@ -17,14 +18,13 @@ import { Watcher } from "./watcher.ts";
 import { safeStatSync } from "./io.ts";
 import { FileEntry } from "./file_entry.ts";
 import { DirectoryEntry } from "./directory_entry.ts";
+import type { BucketFileSystem } from "../storage_manager.ts";
 
-export class FileSystem extends _FileSystem {
+export class FileSystem implements BucketFileSystem {
   #listener: FsCallback;
   #watcher: Watcher;
 
   constructor(root: string = "") {
-    super();
-
     const rootPath = resolve(root);
 
     this.root = rootPath;
@@ -54,6 +54,8 @@ export class FileSystem extends _FileSystem {
       return null;
     }
   }
+
+  observations: Set<FileSystemObservation> = new Set();
 
   watch(): void {
     for (const eventType of allEvents) {

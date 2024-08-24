@@ -1,4 +1,4 @@
-import { List } from "@miyauci/infra";
+import { List, Set } from "@miyauci/infra";
 import {
   closeSync,
   futimesSync,
@@ -14,8 +14,8 @@ import {
 import { join, resolve } from "node:path";
 import { type FSWatcher, watch } from "chokidar";
 import {
-  FileSystem as _FileSystem,
   type FileSystemEvent,
+  type FileSystemObservation,
   type FileSystemPath,
   notifyObservations,
 } from "../file_system.ts";
@@ -27,11 +27,10 @@ import type {
   PartialSet,
 } from "../file_system_entry.ts";
 import { isDirectoryEntry } from "../algorithm.ts";
+import type { BucketFileSystem } from "../storage_manager.ts";
 
-export class FileSystem extends _FileSystem {
+export class FileSystem implements BucketFileSystem {
   constructor(root: string = "") {
-    super();
-
     this.root = resolve(root);
   }
   root: string;
@@ -53,6 +52,8 @@ export class FileSystem extends _FileSystem {
       return null;
     }
   }
+
+  observations: Set<FileSystemObservation> = new Set();
 
   watch(): void {
     if (this.#watcher) return;

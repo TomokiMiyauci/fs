@@ -8,7 +8,7 @@ import type {
   FileSystemChangeType,
 } from "./file_system_change_record.ts";
 import type { FileSystemEntry } from "./file_system_entry.ts";
-import { List, Set } from "@miyauci/infra";
+import { List, type Set } from "@miyauci/infra";
 import { createFileSystemChangeRecord } from "./file_system_change_record.ts";
 import { createFileSystemHandle } from "./algorithm.ts";
 import { getRelationship } from "./file_system_locator.ts";
@@ -25,16 +25,16 @@ export type FileSystemPath = List<string>;
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file-system)
  */
-export abstract class FileSystem {
+export interface FileSystem {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-root)
    */
-  abstract root: string;
+  root: string;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-locate-an-entry)
    */
-  abstract locateEntry(path: FileSystemPath): FileSystemEntry | null;
+  locateEntry(path: FileSystemPath): FileSystemEntry | null;
 
   // /**
   //  * [File System Standard](https://whatpr.org/fs/165.html#file-system-get-the-path)
@@ -44,7 +44,7 @@ export abstract class FileSystem {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-observations)
    */
-  observations: Set<FileSystemObservation> = new Set();
+  observations: Set<FileSystemObservation>;
 }
 
 /**
