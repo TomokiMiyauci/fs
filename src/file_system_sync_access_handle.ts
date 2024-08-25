@@ -1,5 +1,5 @@
 import { concat } from "@std/bytes/concat";
-import { type FileEntry, releaseLock } from "./file_system_entry.ts";
+import { type FileEntry, release } from "./file_system_entry.ts";
 import type { AllowSharedBufferSource } from "./webidl/type.ts";
 import { userAgent } from "./implementation_defined.ts";
 
@@ -287,7 +287,7 @@ export class FileSystemSyncAccessHandle {
     // 5. Enqueue the following steps to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
       // 1. Release the lock on file.
-      releaseLock(file);
+      release(file);
 
       // 2. Set lockReleased to true.
       lockReleased = true;
@@ -317,7 +317,7 @@ function isUnsignedLongLong(value: number): boolean {
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemsyncaccesshandle)
  */
-export function createFileSystemSyncAccessHandle(
+export function createNewFileSystemSyncAccessHandle(
   entry: FileEntry,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.

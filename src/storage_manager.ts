@@ -1,6 +1,6 @@
 import { List } from "@miyauci/infra";
 import {
-  createFileSystemDirectoryHandle,
+  createNewFileSystemDirectoryHandle,
   type FileSystemDirectoryHandle,
 } from "./file_system_directory_handle.ts";
 import type { FileSystem } from "./file_system.ts";
@@ -35,7 +35,7 @@ export class StorageManager {
     const path = new List<string>([""]);
 
     // 6. Let handle be the result of creating a new FileSystemDirectoryHandle. given root and path in the current realm.
-    const handle = createFileSystemDirectoryHandle(root, path);
+    const handle = createNewFileSystemDirectoryHandle(root, path);
 
     return Promise.resolve(handle);
   }

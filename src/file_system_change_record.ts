@@ -49,7 +49,7 @@ export interface FileSystemChangeRecord {
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemchangerecord)
  */
-export function createFileSystemChangeRecord(
+export function createNewFileSystemChangeRecord(
   observation: FileSystemObservation,
   changedHandle: FileSystemHandle,
   type: FileSystemChangeType,

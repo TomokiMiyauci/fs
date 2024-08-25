@@ -529,7 +529,7 @@ export function createChildFileSystemDirectoryHandle(
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#creating-a-new-filesystemdirectoryhandle)
  */
-export function createFileSystemDirectoryHandle(
+export function createNewFileSystemDirectoryHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,
 ): FileSystemDirectoryHandle {

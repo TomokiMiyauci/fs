@@ -1,9 +1,9 @@
 import { FileSystemHandle } from "./file_system_handle.ts";
 import type { FileSystemLocator } from "./file_system_locator.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
-import { createFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
+import { createNewFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import {
-  createFileSystemSyncAccessHandle,
+  createNewFileSystemSyncAccessHandle,
   type FileSystemSyncAccessHandle,
 } from "./file_system_sync_access_handle.ts";
 import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
@@ -12,7 +12,7 @@ import { locateEntry } from "./file_system_locator.ts";
 import {
   type FileEntry,
   type FileSystemEntry,
-  takeLock,
+  take,
 } from "./file_system_entry.ts";
 import { typeByEntry, userAgent } from "./implementation_defined.ts";
 
@@ -143,7 +143,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       assertFileEntry(entry);
 
       // 6. Let lockResult be the result of taking a lock with "shared" on entry.
-      const lockResult = takeLock("shared", entry);
+      const lockResult = take("shared", entry);
 
       // 7. Queue a storage task with global to run these steps:
       userAgent.storageTask.enqueue(() => {
@@ -158,7 +158,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         }
 
         // 2. Let stream be the result of creating a new FileSystemWritableFileStream for entry in realm.
-        const stream = createFileSystemWritableFileStream(entry);
+        const stream = createNewFileSystemWritableFileStream(entry);
 
         // 3. If options["keepExistingData"] is true:
         if (options?.keepExistingData) {
@@ -228,7 +228,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
       assertFileEntry(entry);
 
       // 7. Let lockResult be the result of taking a lock with "exclusive" on entry.
-      const lockResult = takeLock("exclusive", entry);
+      const lockResult = take("exclusive", entry);
 
       // 8. Queue a storage task with global to run these steps:
       userAgent.storageTask.enqueue(() => {
@@ -243,7 +243,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
         }
 
         // 2. Let handle be the result of creating a new FileSystemSyncAccessHandle for entry in realm.
-        const handle = createFileSystemSyncAccessHandle(entry);
+        const handle = createNewFileSystemSyncAccessHandle(entry);
 
         // 3. Resolve result with handle.
         resolve(handle);
@@ -295,7 +295,7 @@ export function createChildFileSystemFileHandle(
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#creating-a-new-filesystemfilehandle)
  */
-export function createFileSystemFileHandle(
+export function createNewFileSystemFileHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,
 ): FileSystemFileHandle {

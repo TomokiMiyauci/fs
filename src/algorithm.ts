@@ -1,11 +1,11 @@
 import type { FileSystemHandleKind } from "./file_system_handle.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import {
-  createFileSystemFileHandle,
+  createNewFileSystemFileHandle,
   type FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
 import {
-  createFileSystemDirectoryHandle,
+  createNewFileSystemDirectoryHandle,
   type FileSystemDirectoryHandle,
 } from "./file_system_directory_handle.ts";
 import type {
@@ -37,11 +37,11 @@ export function createFileSystemHandle(
   // 1. If kind is "file":
   if (kind === "file") {
     // 2. Set changedHandle to the result of creating a new FileSystemFileHandle given fileSystem and path in realm.
-    return createFileSystemFileHandle(fileSystem, path);
+    return createNewFileSystemFileHandle(fileSystem, path);
 
     // 2. Otherwise:
   } else {
     // 1. Set changedHandle to the result of creating a new FileSystemDirectoryHandle given fileSystem and path in realm.
-    return createFileSystemDirectoryHandle(fileSystem, path);
+    return createNewFileSystemDirectoryHandle(fileSystem, path);
   }
 }

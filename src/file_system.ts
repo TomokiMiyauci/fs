@@ -9,7 +9,7 @@ import type {
 } from "./file_system_change_record.ts";
 import type { FileSystemEntry } from "./file_system_entry.ts";
 import { List, type Set } from "@miyauci/infra";
-import { createFileSystemChangeRecord } from "./file_system_change_record.ts";
+import { createNewFileSystemChangeRecord } from "./file_system_change_record.ts";
 import { createFileSystemHandle } from "./algorithm.ts";
 import { getRelationship } from "./file_system_locator.ts";
 import type { FileSystemFileHandle } from "./file_system_file_handle.ts";
@@ -84,7 +84,7 @@ export function sendError(
       const changedHandle = observation.rootHandle;
 
       // 3. Let record be the result of creating a new FileSystemChangeRecord for observation given changedHandle, "errored", and null.
-      const record = createFileSystemChangeRecord(
+      const record = createNewFileSystemChangeRecord(
         observation,
         changedHandle,
         "errored",
@@ -264,7 +264,7 @@ export function notify(
 
     // 15. Let record be the result of creating a new FileSystemChangeRecord for observation given changedHandle, eventType, and fromPath.
     // TODO: fromPath is maybe wrong
-    const record = createFileSystemChangeRecord(
+    const record = createNewFileSystemChangeRecord(
       observation,
       changedHandle,
       eventType,
@@ -280,7 +280,7 @@ export function notify(
       changedHandle["locator"] === observationLocator
     ) {
       // 1. Set errorRecord to the result of creating a new FileSystemChangeRecord for observation given changedHandle, "errored", and null.
-      const errorRecord = createFileSystemChangeRecord(
+      const errorRecord = createNewFileSystemChangeRecord(
         observation,
         changedHandle,
         "errored",

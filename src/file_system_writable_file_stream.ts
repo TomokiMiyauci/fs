@@ -1,5 +1,5 @@
 import { concat } from "@std/bytes/concat";
-import { type FileEntry, releaseLock } from "./file_system_entry.ts";
+import { type FileEntry, release } from "./file_system_entry.ts";
 import { Msg } from "./constant.ts";
 import { userAgent } from "./implementation_defined.ts";
 
@@ -124,7 +124,7 @@ export class FileSystemWritableFileStream
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemwritablefilestream)
  */
-export function createFileSystemWritableFileStream(
+export function createNewFileSystemWritableFileStream(
   file: FileEntry,
 ): FileSystemWritableFileStream {
   // 3. Let writeAlgorithm be an algorithm which takes a chunk argument and returns the result of running the write a chunk algorithm with stream and chunk.
@@ -162,7 +162,7 @@ export function createFileSystemWritableFileStream(
         // 4. Enqueue the following steps to the file system queue:
         userAgent.fileSystemQueue.enqueue(() => {
           // 1. Release the lock on stream’s [[file]].
-          releaseLock(stream["file"]);
+          release(stream["file"]);
 
           // 2. Queue a storage task with file’s relevant global object to resolve closeResult with undefined.
           userAgent.storageTask.enqueue(() => {
@@ -181,7 +181,7 @@ export function createFileSystemWritableFileStream(
     // 1. Enqueue this step to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
       // 1. Release the lock on stream’s [[file]].
-      releaseLock(stream["file"]);
+      release(stream["file"]);
     });
   };
 

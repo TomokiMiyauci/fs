@@ -111,7 +111,7 @@ export function isValidFileName(fileName: string): boolean {
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock-take)
  */
-export function takeLock(
+export function take(
   value: "exclusive" | "shared",
   file: FileEntry,
 ): "success" | "failure" {
@@ -162,7 +162,7 @@ export function takeLock(
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock-release)
  */
-export function releaseLock(file: FileEntry): void {
+export function release(file: FileEntry): void {
   // 1. Let lock be the file’s associated lock.
   // 2. Let count be the file’s shared lock count.
 
