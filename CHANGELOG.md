@@ -1,3 +1,18 @@
+# [1.0.0-beta.12](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.11...1.0.0-beta.12) (2024-08-25)
+
+
+### Bug Fixes
+
+* **file_sysmte_observer:** fix to use file system queue ([6eea142](https://github.com/TomokiMiyauci/fs/commit/6eea1428de67def059a14454a638eeaf9123ef2b))
+
+
+### Features
+
+* **file_system:** change abstract class to interface ([4a6d43f](https://github.com/TomokiMiyauci/fs/commit/4a6d43facb18db00ee16835916103698e422d3e0))
+* rename FileSystem to BucketFileSystem ([82323d9](https://github.com/TomokiMiyauci/fs/commit/82323d96fd68de5434ffe43b212f3fb795b98718))
+* **storage_manager:** add BucketFileSystem interface, add checking existance of file system ([09894f0](https://github.com/TomokiMiyauci/fs/commit/09894f05b796cd70456c55e52907341cc418a6f9))
+* update deps ([5c98524](https://github.com/TomokiMiyauci/fs/commit/5c9852403ffa1de4629566d9dd6d189df82b92fe))
+
 # [1.0.0-beta.11](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.10...1.0.0-beta.11) (2024-08-23)
 
 
