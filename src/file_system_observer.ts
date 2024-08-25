@@ -138,12 +138,13 @@ export class FileSystemObserver {
     const observationMap = this.observations;
 
     // 3. Enqueue the following steps to the file system queue:
+    userAgent.fileSystemQueue.enqueue(() => {
+      // 1. If observationsMap[locator] does not exist, abort these steps.
+      if (!observationMap.exists(locator)) return;
 
-    // 1. If observationsMap[locator] does not exist, abort these steps.
-    if (!observationMap.exists(locator)) return;
-
-    // 2. Destroy observation observationsMap[locator].
-    destroyObservation(observationMap.get(locator)!);
+      // 2. Destroy observation observationsMap[locator].
+      destroyObservation(observationMap.get(locator)!);
+    });
   }
 
   /**
@@ -154,14 +155,15 @@ export class FileSystemObserver {
     const observationMap = this.observations;
 
     // 2. Enqueue the following steps to the file system queue:
+    userAgent.fileSystemQueue.enqueue(() => {
+      // 1. Let observations be the result of getting the values of observationsMap.
+      const observations = observationMap.values();
 
-    // 1. Let observations be the result of getting the values of observationsMap.
-    const observations = observationMap.values();
-
-    // 2. For each observation in observations:
-    for (const observation of observations) {
-      // 1. Destroy observation observation.
-      destroyObservation(observation);
-    }
+      // 2. For each observation in observations:
+      for (const observation of observations) {
+        // 1. Destroy observation observation.
+        destroyObservation(observation);
+      }
+    });
   }
 }
