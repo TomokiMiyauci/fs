@@ -1,3 +1,11 @@
+# [1.0.0-beta.13](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.12...1.0.0-beta.13) (2024-08-25)
+
+
+### Features
+
+* rename `createFileSystemHandle` to `createNewFileSystemHandle` ([d7c177a](https://github.com/TomokiMiyauci/fs/commit/d7c177a024959450c240dd1cd90f62af618fefe4))
+* rename public API ([04085de](https://github.com/TomokiMiyauci/fs/commit/04085dec74e1463facdc67eaeb5a5093ac677a01))
+
 # [1.0.0-beta.12](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.11...1.0.0-beta.12) (2024-08-25)
 
 
