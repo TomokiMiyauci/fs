@@ -29,7 +29,7 @@ export function isFileEntry(
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#creating-a-new-filesystemhandle)
  */
-export function createFileSystemHandle(
+export function createNewFileSystemHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,
   kind: FileSystemHandleKind,

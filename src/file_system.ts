@@ -10,7 +10,7 @@ import type {
 import type { FileSystemEntry } from "./file_system_entry.ts";
 import { List, type Set } from "@miyauci/infra";
 import { createNewFileSystemChangeRecord } from "./file_system_change_record.ts";
-import { createFileSystemHandle } from "./algorithm.ts";
+import { createNewFileSystemHandle } from "./algorithm.ts";
 import { getRelationship } from "./file_system_locator.ts";
 import type { FileSystemFileHandle } from "./file_system_file_handle.ts";
 import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
@@ -201,7 +201,7 @@ export function notify(
     let fromPath = event.fromPath;
 
     // 8. Let changedHandle be the result of creating a new FileSystemHandle given fileSystem, modifiedPath, and eventEntryType in realm.
-    let changedHandle = createFileSystemHandle(
+    let changedHandle = createNewFileSystemHandle(
       fileSystem,
       modifiedPath,
       eventEntryType,
@@ -225,7 +225,7 @@ export function notify(
       assertNonNullable(fromPath);
 
       // 2. Set movedFromHandle to the result of creating a new FileSystemHandle given fileSystem, fromPath, and eventEntryType in realm.
-      movedFromHandle = createFileSystemHandle(
+      movedFromHandle = createNewFileSystemHandle(
         fileSystem,
         fromPath,
         eventEntryType,
