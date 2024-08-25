@@ -1,3 +1,10 @@
+# [1.0.0-beta.11](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.10...1.0.0-beta.11) (2024-08-23)
+
+
+### Bug Fixes
+
+* **file_system:** add `mtime` fallback value ([4c8ca79](https://github.com/TomokiMiyauci/fs/commit/4c8ca79e8d785a1de2fa0f2202aeecd3194bc8b5))
+
 # [1.0.0-beta.10](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.9...1.0.0-beta.10) (2024-08-23)
 
 
