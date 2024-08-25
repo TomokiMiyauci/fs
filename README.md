@@ -15,7 +15,7 @@ reference implementation.
 - [Usage](#usage)
   - [Supported Runtime](#supported-runtime)
   - [FileSystemObserver](#filesystemobserver)
-    - [FileSystemObserver with Bucket File System](#filesystemobserver-with-bucket-file-system)
+    - [`FileSystemObserver` with `BucketFileSystem`](#filesystemobserver-with-bucketfilesystem)
 - [Documents](#documents)
 - [API](#api)
 - [Contributing](#contributing)
@@ -90,7 +90,7 @@ const observer = new FileSystemObserver(callback);
 await observer.observe(handle);
 ```
 
-#### FileSystemObserver with Bucket File System
+#### `FileSystemObserver` with `BucketFileSystem`
 
 To use `FileSystemObserver` with `BucketFileSystem`, you must call
 `BucketFileSystem#watch`.
