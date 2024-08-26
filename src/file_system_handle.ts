@@ -57,3 +57,10 @@ export class FileSystemHandle {
     return promise;
   }
 }
+
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#filesystemhandle-is-in-a-bucket-file-system)
+ */
+export function isInBucketFileSystem(handle: FileSystemHandle): boolean {
+  return handle["locator"].path[0] === "";
+}
