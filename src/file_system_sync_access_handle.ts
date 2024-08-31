@@ -96,7 +96,7 @@ export class FileSystemSyncAccessHandle {
       const result = bytes.length;
 
       // 13. Let arrayBuffer be buffer’s underlying buffer.
-      const arrayBuffer = undelyingBuffer(buffer);
+      const arrayBuffer = underlyingBuffer(buffer);
 
       // 14. Write bytes into arrayBuffer.
       write(arrayBuffer, bytes);
@@ -371,7 +371,7 @@ function write(buffer: Uint8Array, bytes: Uint8Array): void {
   buffer.set(bytes);
 }
 
-function undelyingBuffer(buffer: AllowSharedBufferSource): Uint8Array {
+function underlyingBuffer(buffer: AllowSharedBufferSource): Uint8Array {
   return buffer instanceof ArrayBuffer
     ? new Uint8Array(buffer)
     : new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
