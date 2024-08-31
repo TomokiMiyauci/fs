@@ -1,3 +1,10 @@
+# [1.0.0-beta.14](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.13...1.0.0-beta.14) (2024-08-31)
+
+
+### Features
+
+* **file_system_handle:** export `isInBucketFileSystem` algorithm ([0d0827d](https://github.com/TomokiMiyauci/fs/commit/0d0827d4cd2d1805d5a0a02ed123361361ffffab))
+
 # [1.0.0-beta.13](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.12...1.0.0-beta.13) (2024-08-25)
 
 
