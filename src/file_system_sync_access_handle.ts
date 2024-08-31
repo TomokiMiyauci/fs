@@ -41,6 +41,8 @@ export class FileSystemSyncAccessHandle {
   /** Reads the contents of the file associated with handle into buffer, optionally at a given offset.
    * The file cursor is updated when {@link read} is called to point to the byte after the last byte read.
    *
+   * @throws {DOMException} If this's [`[[state]]`](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state) is closed.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-read)
    */
   read(
@@ -117,6 +119,10 @@ export class FileSystemSyncAccessHandle {
 
   /** Writes the content of buffer into the file associated with handle, optionally at a given offset, and returns the number of written bytes. Checking the returned number of written bytes allows callers to detect and handle errors and partial writes.
    * The file cursor is updated when {@link write} is called to point to the byte after the last byte written.
+   *
+   * @throws {DOMException}
+   * - If this's [`[[state]]`](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state) is closed.
+   * - If fail to modify underlying file system.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-write)
    */
@@ -201,6 +207,10 @@ export class FileSystemSyncAccessHandle {
   /** Resizes the file associated with handle to be {@link newSize} bytes long. If {@link newSize} is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
    * The file cursor is updated when {@link truncate} is called. If the cursor is smaller than {@link newSize}, it remains unchanged. If the cursor is larger than {@link newSize}, it is set to {@link newSize}.
    *
+   * @throws {DOMException}
+   * - If this's [`[[state]]`](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state) is closed.
+   * - If fail to modify underlying file system.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-truncate)
    */
   truncate(newSize: number): void {
@@ -253,6 +263,8 @@ export class FileSystemSyncAccessHandle {
 
   /** Returns the size of the file associated with handle in bytes.
    *
+   * @throws {DOMException} If this's [`[[state]]`](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state) is closed.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-getsize)
    */
   getSize(): number {
@@ -266,6 +278,8 @@ export class FileSystemSyncAccessHandle {
   }
 
   /** Ensures that the contents of the file associated with handle contain all the modifications done through {@link write}.
+   *
+   * @throws {DOMException} If this's [`[[state]]`](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state) is closed.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-flush)
    */
