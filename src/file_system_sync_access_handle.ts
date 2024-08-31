@@ -2,6 +2,7 @@ import { concat } from "@std/bytes/concat";
 import { type FileEntry, release } from "./file_system_entry.ts";
 import type { AllowSharedBufferSource } from "./webidl/type.ts";
 import { userAgent } from "./implementation_defined.ts";
+import { Msg } from "./constant.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#dictdef-filesystemreadwriteoptions)
@@ -49,7 +50,9 @@ export class FileSystemSyncAccessHandle {
     this.assertUnsignedLongLong(options?.at);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this.state === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") {
+      throw new DOMException(Msg.AlreadyClosed, "InvalidStateError");
+    }
 
     // 2. Let bufferSize be buffer’s byte length.
     const bufferSize = buffer.byteLength;
@@ -124,7 +127,9 @@ export class FileSystemSyncAccessHandle {
     this.assertUnsignedLongLong(options?.at);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this.state === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") {
+      throw new DOMException(Msg.AlreadyClosed, "InvalidStateError");
+    }
 
     // 2. Let writePosition be options["at"] if options["at"] exists; otherwise this's file position cursor.
     const writePosition = typeof options?.at === "number"
@@ -183,7 +188,7 @@ export class FileSystemSyncAccessHandle {
       // 3. Return bytesWritten.
 
       // 2. Otherwise throw an "InvalidStateError" DOMException.
-      throw new DOMException("InvalidStateError");
+      throw new DOMException(Msg.InvalidOperation, "InvalidStateError");
     }
 
     // 15. Set this's file position cursor to writePosition + bufferSize.
@@ -202,7 +207,9 @@ export class FileSystemSyncAccessHandle {
     this.assertUnsignedLongLong(newSize);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this.state === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") {
+      throw new DOMException(Msg.AlreadyClosed, "InvalidStateError");
+    }
 
     // 2. Let fileContents be a copy of this's [[file]]'s binary data.
     const fileContents = this.file.binaryData.slice();
@@ -224,7 +231,7 @@ export class FileSystemSyncAccessHandle {
         ]);
       } catch {
         // 3. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
-        throw new DOMException("InvalidStateError");
+        throw new DOMException(Msg.InvalidOperation, "InvalidStateError");
       }
 
       // 6. Otherwise, if newSize is smaller than oldSize:
@@ -234,7 +241,7 @@ export class FileSystemSyncAccessHandle {
         this.file.binaryData = fileContents.slice(0, newSize);
       } catch {
         // 2. If the operations modifying the this's [[file]]'s binary data in the previous steps failed, throw an "InvalidStateError" DOMException.
-        throw new DOMException("InvalidStateError");
+        throw new DOMException(Msg.InvalidOperation, "InvalidStateError");
       }
     }
 
@@ -250,7 +257,9 @@ export class FileSystemSyncAccessHandle {
    */
   getSize(): number {
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this.state === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") {
+      throw new DOMException(Msg.AlreadyClosed, "InvalidStateError");
+    }
 
     // 2. Return this's [[file]]'s binary data's length.
     return this.file.binaryData.length;
@@ -262,7 +271,9 @@ export class FileSystemSyncAccessHandle {
    */
   flush(): void {
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
-    if (this.state === "close") throw new DOMException("InvalidStateError");
+    if (this.state === "close") {
+      throw new DOMException(Msg.AlreadyClosed, "InvalidStateError");
+    }
 
     // 2. Attempt to transfer all cached modifications of the file’s content to the file system’s underlying storage device.
   }

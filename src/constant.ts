@@ -17,4 +17,6 @@ export const enum Msg {
     "Invalid params passed. truncate requires a size argument",
 
   Insecure = "File system operation is insecure",
+  AlreadyClosed = "Cannot write to a CLOSED writable stream",
+  InvalidOperation = "Fail to modify underlying file system",
 }
