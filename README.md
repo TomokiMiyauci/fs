@@ -67,7 +67,7 @@ The following run-times are supported:
 | Node.js, Deno[^1] | `@miyauci/fs/node` |
 
 [^1]: Available on Deno Deploy. See
-[To use on Deno Deploy](./docs/faq.md#to-use-on-deno-deploy)
+    [To use on Deno Deploy](./docs/faq.md#to-use-on-deno-deploy)
 
 Each endpoint is only guaranteed to run at the corresponding runtime.
 
