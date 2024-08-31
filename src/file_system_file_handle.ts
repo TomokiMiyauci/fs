@@ -32,6 +32,10 @@ export interface FileSystemCreateWritableOptions {
 export class FileSystemFileHandle extends FileSystemHandle {
   /** Returns a {@link File} representing the state on disk of the file entry locatable by handle’s locator. If the file on disk changes or is removed after this method is called, the returned {@link File} object will likely be no longer readable.
    *
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-getfile)
    */
   getFile(): Promise<File> {
@@ -98,6 +102,11 @@ export class FileSystemFileHandle extends FileSystemHandle {
    * If {@link keepExistingData} is false or not specified, the temporary file starts out empty, otherwise the existing file is first copied to this temporary file.
    *
    * Creating a {@link FileSystemWritableFileStream} takes a shared lock on the file entry locatable with fileHandle’s locator. This prevents the creation of {@link FileSystemSyncAccessHandles} for the entry, until the stream is closed.
+   *
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   * - If the {@link name} entry has locked.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createwritable)
    */
@@ -182,6 +191,11 @@ export class FileSystemFileHandle extends FileSystemHandle {
    * The returned {@link FileSystemSyncAccessHandle} offers synchronous methods. This allows for higher performance on contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
    *
    * For the time being, this method will only succeed when the fileHandle is in a bucket file system.
+   *
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   * - If the {@link name} entry has locked.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createsyncaccesshandle)
    */

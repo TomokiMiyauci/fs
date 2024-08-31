@@ -68,6 +68,10 @@ export class FileSystemObserver {
   }
 
   /**
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemobserver-observe)
    */
   observe(

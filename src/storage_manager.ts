@@ -19,6 +19,9 @@ export class StorageManager {
 
   /** Returns the root directory of the bucket file system.
    *
+   * @throws {DOMException}
+   * - If file system root does not exist.
+   *
    * [File System Standard](https://fs.spec.whatwg.org/#dom-storagemanager-getdirectory)
    */
   getDirectory(): Promise<FileSystemDirectoryHandle> {

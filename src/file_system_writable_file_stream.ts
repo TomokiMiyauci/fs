@@ -207,6 +207,12 @@ export function createNewFileSystemWritableFileStream(
 }
 
 /**
+ * @throws {TypeError}
+ * - If input `type` is `write` and input `data` is nil.
+ * - If input `type` is `seek` and input `position` is nil.
+ * - If input `type` is `truncate` and input `size` is nil.
+ * @throws {DOMException} If permission is not 'granted'.
+ *
  * [File System Standard](https://whatpr.org/fs/165.html#write-a-chunk)
  */
 export function writeChunk(
@@ -237,7 +243,7 @@ export function writeChunk(
       // 3. If command is "write":
       if (command === "write") {
         // 1. If input is undefined or input is a dictionary and input["data"] does not exist, reject p with a TypeError and abort these steps.
-        if (!input || input.data === null || input.data === undefined) {
+        if (input.data === null || input.data === undefined) {
           return reject(new TypeError(Msg.InvalidWriteParams));
         }
 

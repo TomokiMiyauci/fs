@@ -64,6 +64,13 @@ export interface FileSystemRemoveOptions {
 export class FileSystemDirectoryHandle extends FileSystemHandle {
   /** Returns a handle for a file named name in the directory entry locatable by directoryHandle’s locator.
    *
+   * @throws {TypeError} If {@link name} is not [valid file name](https://whatpr.org/fs/165.html#valid-file-name).
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   * - If the {@link name} entry already exists, but it is file.
+   * - If the {@link name} entry does not exist and the option's `create` is `false`.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getdirectoryhandle)
    */
   getDirectoryHandle(
@@ -177,6 +184,13 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
 
   /** Returns a handle for a directory named name in the directory entry locatable by directoryHandle’s locator.
    *
+   * @throws {TypeError} If {@link name} is not [valid file name](https://whatpr.org/fs/165.html#valid-file-name).
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   * - If the {@link name} entry already exists, but it is directory.
+   * - If the {@link name} entry does not exist and the option's `create` is `false`.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-getfilehandle)
    */
   getFileHandle(
@@ -289,6 +303,14 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
   }
 
   /** Removes the file system entry named {@link name} in the directory entry locatable by directoryHandle’s locator.
+   *
+   * @throws {TypeError} If {@link name} is not [valid file name](https://whatpr.org/fs/165.html#valid-file-name).
+   * @throws {DOMException}
+   * - If permission is not 'granted'.
+   * - If located entry is `null`.
+   * - If {@link name} entry's children is not empty but option's `recursive` is `false`.
+   * - If removing {@link name} entry's children in the underlying file system is fail.
+   * - If the {@link name} entry does not exist.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemdirectoryhandle-removeentry)
    */
