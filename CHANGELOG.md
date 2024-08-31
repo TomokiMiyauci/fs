@@ -1,3 +1,11 @@
+# [1.0.0-beta.15](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.14...1.0.0-beta.15) (2024-08-31)
+
+
+### Features
+
+* **file_system_file_handle:** add checking in bucket file system ([7e07272](https://github.com/TomokiMiyauci/fs/commit/7e072728277652db4f2a6aefa6bc9e24ca7274d8))
+* **file_system_sync_access_handle:** improve error message ([a10720e](https://github.com/TomokiMiyauci/fs/commit/a10720e96d8ee39c26600507aa475210db498ddb))
+
 # [1.0.0-beta.14](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.13...1.0.0-beta.14) (2024-08-31)
 
 
