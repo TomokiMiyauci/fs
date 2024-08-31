@@ -19,4 +19,6 @@ export const enum Msg {
   Insecure = "File system operation is insecure",
   AlreadyClosed = "Cannot write to a CLOSED writable stream",
   InvalidOperation = "Fail to modify underlying file system",
+  NotInBucketFileSystemOperation =
+    "Access Handles may only be created on temporary file systems",
 }

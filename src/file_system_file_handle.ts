@@ -1,4 +1,7 @@
-import { FileSystemHandle } from "./file_system_handle.ts";
+import {
+  FileSystemHandle,
+  isInBucketFileSystem,
+} from "./file_system_handle.ts";
 import type { FileSystemLocator } from "./file_system_locator.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import { createNewFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
@@ -196,6 +199,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
    * - If permission is not 'granted'.
    * - If located entry is `null`.
    * - If the {@link name} entry has locked.
+   * - If this is not [in a bucket file system](https://whatpr.org/fs/165.html#filesystemhandle-is-in-a-bucket-file-system).
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemfilehandle-createsyncaccesshandle)
    */
@@ -213,6 +217,7 @@ export class FileSystemFileHandle extends FileSystemHandle {
     // 4. Let global be this's relevant global object.
 
     // 5. Let isInABucketFileSystem be true if this is in a bucket file system; otherwise false.
+    const isInABucketFileSystem = isInBucketFileSystem(this);
 
     // 6. Enqueue the following steps to the file system queue:
     userAgent.fileSystemQueue.enqueue(() => {
@@ -230,6 +235,16 @@ export class FileSystemFileHandle extends FileSystemHandle {
       }
 
       // 4. If isInABucketFileSystem is false, queue a storage task with global to reject result with an "InvalidStateError" DOMException and abort these steps.
+      if (!isInABucketFileSystem) {
+        return userAgent.storageTask.enqueue(() => {
+          reject(
+            new DOMException(
+              Msg.NotInBucketFileSystemOperation,
+              "InvalidStateError",
+            ),
+          );
+        });
+      }
 
       // 5. If entry is null, queue a storage task with global to reject result with a "NotFoundError" DOMException and abort these steps.
       if (entry === null) {
