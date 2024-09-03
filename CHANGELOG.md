@@ -1,3 +1,11 @@
+# [1.0.0-beta.16](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.15...1.0.0-beta.16) (2024-09-03)
+
+
+### Features
+
+* **file_entry:** add `parent` field to file system entry interface ([cdb0e67](https://github.com/TomokiMiyauci/fs/commit/cdb0e67c289a7535006d484eef1305a0f5504ad3))
+* **mod:** stop exporting non-standard API ([c7121b4](https://github.com/TomokiMiyauci/fs/commit/c7121b479323fa32b2fd22066bb66e70ce6687e0))
+
 # [1.0.0-beta.15](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.14...1.0.0-beta.15) (2024-08-31)
 
 
