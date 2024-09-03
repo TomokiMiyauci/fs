@@ -7,11 +7,29 @@ import type { List } from "@miyauci/infra";
  * [File System Standard](https://whatpr.org/fs/165.html#enumdef-filesystemchangetype)
  */
 export type FileSystemChangeType =
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangetype-appeared)
+   */
   | "appeared"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangetype-disappeared)
+   */
   | "disappeared"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangetype-errored)
+   */
   | "errored"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangetype-modified)
+   */
   | "modified"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangetype-moved)
+   */
   | "moved"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangetype-unknown)
+   */
   | "unknown";
 
 /**

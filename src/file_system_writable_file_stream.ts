@@ -6,7 +6,19 @@ import { userAgent } from "./implementation_defined.ts";
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#enumdef-writecommandtype)
  */
-export type WriteCommandType = "seek" | "truncate" | "write";
+export type WriteCommandType =
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writecommandtype-write)
+   */
+  | "write"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writecommandtype-seek)
+   */
+  | "seek"
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#dom-writecommandtype-truncate)
+   */
+  | "truncate";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#dictdef-writeparams)
