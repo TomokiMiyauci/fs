@@ -2,7 +2,6 @@ import { join } from "@std/path/join";
 import { format } from "@miyauci/format";
 import type { FileSystem as _FileSystem } from "../file_system.ts";
 import type {
-  AccessMode,
   DirectoryEntry,
   FileSystemAccessResult,
 } from "../file_system_entry.ts";
@@ -25,7 +24,7 @@ export abstract class BaseEntry {
 
   abstract get parent(): DirectoryEntry | null;
 
-  queryAccess(mode: AccessMode): FileSystemAccessResult {
+  queryAccess(mode: "read" | "readwrite"): FileSystemAccessResult {
     switch (mode) {
       case "read": {
         const result = Deno.permissions.requestSync({
@@ -75,7 +74,7 @@ export abstract class BaseEntry {
     }
   }
 
-  requestAccess(mode: AccessMode): FileSystemAccessResult {
+  requestAccess(mode: "read" | "readwrite"): FileSystemAccessResult {
     switch (mode) {
       case "read": {
         const result = Deno.permissions.requestSync({

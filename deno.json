@@ -11,6 +11,7 @@
     "@miyauci/fs/deno": "./src/deno/mod.ts",
     "@miyauci/fs/node": "./src/node/mod.ts",
     "@miyauci/infra": "jsr:@miyauci/infra@^1.0.0",
+    "@miyauci/permissions": "./src/permissions/mod.ts",
     "@std/assert": "jsr:@std/assert@^1.0.2",
     "@std/async": "jsr:@std/async@^1.0.3",
     "@std/bytes": "jsr:@std/bytes@^1.0.2",

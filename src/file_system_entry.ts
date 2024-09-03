@@ -1,5 +1,6 @@
-import type { FileSystemLocator } from "./file_system_locator.ts";
+import type { PermissionState } from "@miyauci/permissions";
 import type { List, Set } from "@miyauci/infra";
+import type { FileSystemLocator } from "./file_system_locator.ts";
 
 interface BaseEntry {
   /**
@@ -15,15 +16,13 @@ interface BaseEntry {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-query-access)
    */
-  queryAccess(mode: AccessMode): FileSystemAccessResult;
+  queryAccess(mode: "read" | "readwrite"): FileSystemAccessResult;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-request-access)
    */
-  requestAccess(mode: AccessMode): FileSystemAccessResult;
+  requestAccess(mode: "read" | "readwrite"): FileSystemAccessResult;
 }
-
-export type AccessMode = "read" | "readwrite";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file)
@@ -93,11 +92,6 @@ export interface FileSystemAccessResult {
    */
   readonly errorName: string;
 }
-
-/**
- * [Permissions](https://w3c.github.io/permissions/#dom-permissionstate)
- */
-export type PermissionState = "denied" | "granted" | "prompt";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#valid-file-name)

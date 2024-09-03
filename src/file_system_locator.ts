@@ -80,20 +80,18 @@ export function resolve(
   return relativePath;
 }
 
-export type Relationship =
-  | "self"
-  | "other"
-  | "ancestor"
-  | "direct child"
-  | "descendant";
-
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file-system-locator-get-the-relationship)
  */
 export function getRelationship(
   self: FileSystemLocator,
   related: FileSystemLocator,
-): Relationship {
+):
+  | "self"
+  | "other"
+  | "ancestor"
+  | "direct child"
+  | "descendant" {
   // 1. If self’s file system is not related’s file system, return "other".
   if (self.fileSystem !== related.fileSystem) return "other";
 
