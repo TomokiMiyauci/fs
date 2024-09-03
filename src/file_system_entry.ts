@@ -38,7 +38,6 @@ export interface FileEntry extends BaseEntry {
    *
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-modification-timestamp)
    */
-
   readonly modificationTimestamp: number;
 
   /**
