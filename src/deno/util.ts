@@ -3,8 +3,7 @@ import { format } from "@miyauci/format";
 import type { FileSystem as _FileSystem } from "../file_system.ts";
 import type {
   AccessMode,
-  DirectoryEntry as _DirectoryEntry,
-  FileEntry as _FileEntry,
+  DirectoryEntry,
   FileSystemAccessResult,
 } from "../file_system_entry.ts";
 import {
@@ -13,7 +12,7 @@ import {
   PERMISSION_ERROR_MESSAGE_TEMPLATE,
 } from "./constant.ts";
 
-export class BaseEntry {
+export abstract class BaseEntry {
   constructor(protected root: string, protected path: string[]) {
     this.name = path[path.length - 1];
   }
@@ -23,6 +22,8 @@ export class BaseEntry {
   }
 
   readonly name: string;
+
+  abstract get parent(): DirectoryEntry | null;
 
   queryAccess(mode: AccessMode): FileSystemAccessResult {
     switch (mode) {

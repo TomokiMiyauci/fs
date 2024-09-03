@@ -2,7 +2,11 @@ import type { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
 import type {
   FileSystemDirectoryHandle,
 } from "../src/file_system_directory_handle.ts";
-import type { FileSystemLocator } from "../src/file_system_locator.ts";
+import type {
+  DirectoryLocator,
+  FileLocator,
+  FileSystemLocator,
+} from "../src/file_system_locator.ts";
 import {
   type FileSystem,
   type FileSystemObservation,
@@ -10,8 +14,9 @@ import {
   notifyObservations,
 } from "../src/file_system.ts";
 import type {
-  DirectoryEntry,
-  FileEntry,
+  DirectoryEntry as _DirectoryEntry,
+  FileEntry as _FileEntry,
+  FileSystemAccessResult,
   FileSystemEntry,
   PartialSet,
 } from "../src/file_system_entry.ts";
@@ -102,13 +107,13 @@ export class VirtualFileSystem implements FileSystem {
     if (!source) return null;
 
     if (source instanceof Map) {
-      return renderDirectory(
+      return new DirectoryEntry(
         { kind: "directory", path, fileSystem: this },
         this.vfs,
       );
     }
 
-    return createFileEntry({ kind: "file", path, fileSystem: this }, this.vfs);
+    return new FileEntry({ kind: "file", path, fileSystem: this }, this.vfs);
   }
 
   root: string = "";
@@ -155,110 +160,154 @@ export class VirtualFileSystem implements FileSystem {
   }
 }
 
-function renderDirectory(
-  locator: FileSystemLocator,
-  vfs: _VirtualFileSystem,
-): DirectoryEntry {
-  return {
-    get children(): PartialSet<FileSystemEntry> {
-      return {
-        append(item) {
-          const paths = [...locator.path].concat(item.name);
+class DirectoryEntry implements _DirectoryEntry {
+  protected vfs: _VirtualFileSystem;
+  protected locator: DirectoryLocator;
+  constructor(locator: DirectoryLocator, vfs: _VirtualFileSystem) {
+    this.vfs = vfs;
+    this.locator = locator;
+  }
+  get children(): PartialSet<FileSystemEntry> {
+    return new Effector(this.locator, this.vfs);
+  }
 
-          if (isDirectoryEntry(item)) vfs.createDirectory(paths);
-          else vfs.createFile(paths);
-        },
-        remove(item) {
-          const paths = [...locator.path].concat(item.name);
+  get name(): string {
+    return this.locator.path[this.locator.path.size - 1];
+  }
 
-          vfs.remove(paths);
-        },
+  get parent(): DirectoryEntry | null {
+    const head = [...this.locator.path].slice(0, -1);
 
-        get isEmpty(): boolean {
-          for (const _ of this[Symbol.iterator]()) return false;
+    return head.length
+      ? new DirectoryEntry({
+        kind: "directory",
+        path: new List(head),
+        fileSystem: this.locator.fileSystem,
+      }, this.vfs)
+      : null;
+  }
 
-          return true;
-        },
-
-        *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-          for (const item of vfs.readDirectory([...locator.path])) {
-            const path = locator.path.clone();
-            path.append(item.name);
-
-            if (item.isFile) {
-              yield createFileEntry({
-                kind: "file",
-                fileSystem: locator.fileSystem,
-                path,
-              }, vfs);
-            } else {
-              yield renderDirectory({
-                kind: "directory",
-                fileSystem: locator.fileSystem,
-                path,
-              }, vfs);
-            }
-          }
-        },
-      };
-    },
-    name: locator.path[locator.path.size - 1],
-    queryAccess() {
-      return { permissionState: "granted", errorName: "" };
-    },
-    requestAccess() {
-      return { permissionState: "granted", errorName: "" };
-    },
-  };
+  queryAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+  requestAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
 }
 
-function createFileEntry(
-  locator: FileSystemLocator,
-  vfs: _VirtualFileSystem,
-): FileEntry {
-  const paths = [...locator.path];
+class Effector implements PartialSet<FileSystemEntry> {
+  protected vfs: _VirtualFileSystem;
+  protected locator: FileSystemLocator;
 
-  return {
-    get modificationTimestamp() {
-      return vfs.stat(paths).lastModified;
-    },
+  constructor(locator: FileSystemLocator, vfs: _VirtualFileSystem) {
+    this.vfs = vfs;
+    this.locator = locator;
+  }
 
-    name: locator.path[locator.path.size - 1],
+  append(item: FileSystemEntry) {
+    const paths = [...this.locator.path].concat(item.name);
 
-    get binaryData() {
-      return vfs.readFile(paths);
-    },
-    set binaryData(value: Uint8Array) {
-      vfs.writeFile(paths, value);
-    },
+    if (isDirectoryEntry(item)) this.vfs.createDirectory(paths);
+    else this.vfs.createFile(paths);
+  }
 
-    get lock(): Lock {
-      const file = vfs.getFile(paths);
-      const status = file.lock;
+  remove(item: FileSystemEntry) {
+    const paths = [...this.locator.path].concat(item.name);
 
-      return LockConverter.to(status);
-    },
-    set lock(value: Lock) {
-      const status = LockConverter.from(value);
+    this.vfs.remove(paths);
+  }
 
-      const file = vfs.getFile(paths);
-      file.lock = status;
-    },
+  get isEmpty(): boolean {
+    for (const _ of this[Symbol.iterator]()) return false;
 
-    get sharedLockCount(): number {
-      return vfs.getFile(paths).sharedLock;
-    },
-    set sharedLockCount(value: number) {
-      vfs.getFile(paths).sharedLock = value;
-    },
+    return true;
+  }
 
-    queryAccess() {
-      return { permissionState: "granted", errorName: "" };
-    },
-    requestAccess() {
-      return { permissionState: "granted", errorName: "" };
-    },
-  };
+  *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+    for (const item of this.vfs.readDirectory([...this.locator.path])) {
+      const path = this.locator.path.clone();
+      path.append(item.name);
+
+      if (item.isFile) {
+        yield new FileEntry({
+          kind: "file",
+          fileSystem: this.locator.fileSystem,
+          path,
+        }, this.vfs);
+      } else {
+        yield new DirectoryEntry({
+          kind: "directory",
+          fileSystem: this.locator.fileSystem,
+          path,
+        }, this.vfs);
+      }
+    }
+  }
+}
+
+class FileEntry implements _FileEntry {
+  constructor(
+    protected locator: FileLocator,
+    protected vfs: _VirtualFileSystem,
+  ) {}
+
+  get paths(): string[] {
+    return [...this.locator.path];
+  }
+
+  get modificationTimestamp() {
+    return this.vfs.stat(this.paths).lastModified;
+  }
+
+  get name(): string {
+    return this.locator.path[this.locator.path.size - 1];
+  }
+
+  get parent(): DirectoryEntry | null {
+    const head = this.paths.slice(0, -1);
+
+    return head.length
+      ? new DirectoryEntry({
+        kind: "directory",
+        path: new List(head),
+        fileSystem: this.locator.fileSystem,
+      }, this.vfs)
+      : null;
+  }
+
+  get binaryData() {
+    return this.vfs.readFile(this.paths);
+  }
+  set binaryData(value: Uint8Array) {
+    this.vfs.writeFile(this.paths, value);
+  }
+
+  get lock(): Lock {
+    const file = this.vfs.getFile(this.paths);
+    const status = file.lock;
+
+    return LockConverter.to(status);
+  }
+  set lock(value: Lock) {
+    const status = LockConverter.from(value);
+
+    const file = this.vfs.getFile(this.paths);
+    file.lock = status;
+  }
+
+  get sharedLockCount(): number {
+    return this.vfs.getFile(this.paths).sharedLock;
+  }
+  set sharedLockCount(value: number) {
+    this.vfs.getFile(this.paths).sharedLock = value;
+  }
+
+  queryAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+  requestAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
 }
 
 type Lock = "open" | "taken-exclusive" | "taken-shared";

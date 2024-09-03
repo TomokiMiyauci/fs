@@ -8,6 +8,11 @@ interface BaseEntry {
   readonly name: string;
 
   /**
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-parent)
+   */
+  readonly parent: DirectoryEntry | null;
+
+  /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-query-access)
    */
   queryAccess(mode: AccessMode): FileSystemAccessResult;

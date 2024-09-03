@@ -160,6 +160,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           requestAccess: entry.requestAccess.bind(entry),
           // 8. Set child’s children to an empty set.
           children: new Set(),
+          parent: entry,
         } satisfies DirectoryEntry;
 
         try {
@@ -280,6 +281,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           modificationTimestamp: Date.now(),
           sharedLockCount: 0,
           lock: "open",
+          parent: entry,
         } satisfies FileEntry;
 
         try {

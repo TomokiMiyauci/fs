@@ -116,9 +116,31 @@ function createEvent(
   }
 }
 
-class FileEntry implements _FileEntry {
-  constructor(private root: string, private path: string[]) {
-    this.name = path[path.length - 1];
+class BaseEntry {
+  constructor(protected root: string, protected path: string[]) {}
+
+  get name(): string {
+    return this.path[this.path.length - 1];
+  }
+
+  get parent(): DirectoryEntry | null {
+    const head = this.path.slice(0, -1);
+
+    return head.length ? new DirectoryEntry(this.root, head) : null;
+  }
+
+  requestAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+
+  queryAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+}
+
+class FileEntry extends BaseEntry implements _FileEntry {
+  constructor(root: string, path: string[]) {
+    super(root, path);
   }
 
   get #path(): string {
@@ -136,38 +158,18 @@ class FileEntry implements _FileEntry {
     return statSync(this.#path).mtime?.getTime() ?? Date.now(); // mtime may not be defined for some OS.
   }
 
-  readonly name: string;
-
   lock: "open" = "open";
 
   sharedLockCount: number = 0;
-
-  requestAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-
-  queryAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
 }
 
-class DirectoryEntry implements _DirectoryEntry {
-  constructor(private root: string, private path: string[]) {
-    this.name = path[path.length - 1];
+class DirectoryEntry extends BaseEntry implements _DirectoryEntry {
+  constructor(root: string, path: string[]) {
+    super(root, path);
   }
-
-  readonly name: string;
 
   get children(): PartialSet<FileSystemEntry> {
     return new Effector(this.root, this.path);
-  }
-
-  requestAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-
-  queryAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
   }
 }
 

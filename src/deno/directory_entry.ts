@@ -13,6 +13,12 @@ export class DirectoryEntry extends BaseEntry implements _DirectoryEntry {
     super(root, path);
   }
 
+  get parent(): DirectoryEntry | null {
+    const head = this.path.slice(0, -1);
+
+    return head.length ? new DirectoryEntry(this.root, head) : null;
+  }
+
   get children(): PartialSet<FileSystemEntry> {
     return new Effector(this.root, this.path);
   }
