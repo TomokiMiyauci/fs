@@ -1,3 +1,12 @@
+# [1.0.0-beta.17](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.16...1.0.0-beta.17) (2024-09-04)
+
+
+### Features
+
+* **deno:** export local file system and file system impl ([7cad79c](https://github.com/TomokiMiyauci/fs/commit/7cad79c51685856e6f9bc770268c047d94b2269b))
+* **node:** export local file system and file system impl ([be97592](https://github.com/TomokiMiyauci/fs/commit/be975927cdf768f572d9232c054cecc121d60f14))
+* stop exporting a partial class for StorageManager and make it interface ([8123b76](https://github.com/TomokiMiyauci/fs/commit/8123b76c45db3080452680d30a490035d6e405fb))
+
 # [1.0.0-beta.16](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.15...1.0.0-beta.16) (2024-09-03)
 
 
