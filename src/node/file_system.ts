@@ -1,7 +1,6 @@
 import { List, Set } from "@miyauci/infra";
 import {
   closeSync,
-  existsSync,
   futimesSync,
   mkdirSync,
   openSync,
@@ -15,25 +14,26 @@ import {
 import { join, resolve } from "node:path";
 import { type FSWatcher, watch } from "chokidar";
 import {
+  createNewFileSystemDirectoryHandle,
+  type DirectoryEntry as _DirectoryEntry,
+  type FileEntry as _FileEntry,
+  type FileSystem as IFileSystem,
+  type FileSystemAccessResult,
+  type FileSystemDirectoryHandle,
+  type FileSystemEntry,
   type FileSystemEvent,
   type FileSystemObservation,
   type FileSystemPath,
   notifyObservations,
-} from "../file_system.ts";
-import type {
-  DirectoryEntry as _DirectoryEntry,
-  FileEntry as _FileEntry,
-  FileSystemAccessResult,
-  FileSystemEntry,
-  PartialSet,
-} from "../file_system_entry.ts";
+  type PartialSet,
+} from "@miyauci/fs";
 import { isDirectoryEntry } from "../algorithm.ts";
-import type { BucketFileSystem as _BucketFileSystem } from "../storage_manager.ts";
 
-export class BucketFileSystem implements _BucketFileSystem {
-  constructor(root: string = "") {
-    this.root = resolve(root);
+export class FileSystem implements IFileSystem {
+  constructor(root: string) {
+    this.root = root;
   }
+
   root: string;
 
   locateEntry(path: FileSystemPath): FileSystemEntry | null {
@@ -55,9 +55,17 @@ export class BucketFileSystem implements _BucketFileSystem {
   }
 
   observations: Set<FileSystemObservation> = new Set();
+}
 
-  exists(): boolean {
-    return existsSync(this.root);
+export class LocalFileSystem extends FileSystem {
+  constructor(root: string = "") {
+    super(resolve(root));
+  }
+
+  getDirectory(): Promise<FileSystemDirectoryHandle> {
+    return Promise.resolve(
+      createNewFileSystemDirectoryHandle(this, new List([""])),
+    );
   }
 
   watch(): void {

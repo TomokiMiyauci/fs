@@ -3,4 +3,4 @@
  * @module
  */
 
-export { BucketFileSystem } from "./file_system.ts";
+export { FileSystem, LocalFileSystem } from "./file_system.ts";
