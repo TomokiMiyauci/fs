@@ -197,12 +197,11 @@ class DirectoryEntry implements IDirectoryEntry {
   }
 }
 
-class Effector
-  implements
-    Pick<
-      Set<FileSystemEntry>,
-      "append" | "remove" | "isEmpty" | typeof Symbol.iterator
-    > {
+class Effector implements
+  Pick<
+    Set<FileSystemEntry>,
+    "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+  > {
   protected vfs: _VirtualFileSystem;
   protected locator: FileSystemLocator;
 

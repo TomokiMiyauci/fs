@@ -24,12 +24,11 @@ export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
   }
 }
 
-class Effector
-  implements
-    Pick<
-      Set<FileSystemEntry>,
-      "append" | "remove" | "isEmpty" | typeof Symbol.iterator
-    > {
+class Effector implements
+  Pick<
+    Set<FileSystemEntry>,
+    "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+  > {
   constructor(private root: string, private path: string[]) {}
 
   append(item: FileSystemEntry): void {
