@@ -15,7 +15,7 @@ reference implementation.
 - [Usage](#usage)
   - [Supported Runtime](#supported-runtime)
   - [FileSystemObserver](#filesystemobserver)
-    - [`FileSystemObserver` with `BucketFileSystem`](#filesystemobserver-with-bucketfilesystem)
+    - [`FileSystemObserver` with `LocalFileSystem`](#filesystemobserver-with-localfilesystem)
 - [Documents](#documents)
 - [API](#api)
 - [Contributing](#contributing)
@@ -37,21 +37,11 @@ npx jsr add @miyauci/fs
 
 ## Usage
 
-`FileSystemHandle` can be referenced as
-[OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)
-(Origin Private File System aka Bucket File System).
-
 ```ts
-import { StorageManager } from "@miyauci/fs";
-import { BucketFileSystem } from "@miyauci/fs/$RUNTIME";
+import { LocalFileSystem } from "@miyauci/fs/$RUNTIME";
 
-const fileSystem = new BucketFileSystem("path/to/dir"); // default is "."
-const storage = new StorageManager(fileSystem);
-
-const handle = await storage.getDirectory();
-const fileHandle = await handle.getFileHandle("file.txt", { create: true });
-const file = await fileHandle.getFile();
-const contents = await file.text();
+const fs = new LocalFileSystem("path/to/dir"); // default is "."
+const handle = await fs.getDirectory();
 ```
 
 This allows operations to be performed on the local file system using the File
@@ -90,32 +80,30 @@ const observer = new FileSystemObserver(callback);
 await observer.observe(handle);
 ```
 
-#### `FileSystemObserver` with `BucketFileSystem`
+#### `FileSystemObserver` with `LocalFileSystem`
 
-To use `FileSystemObserver` with `BucketFileSystem`, you must call
-`BucketFileSystem#watch`.
+To use `FileSystemObserver` with `LocalFileSystem`, you must call
+`LocalFileSystem#watch`.
 
 ```ts
 import {
   FileSystemObserver,
   type FileSystemObserverCallback,
-  StorageManager,
 } from "@miyauci/fs";
-import { BucketFileSystem } from "@miyauci/fs/$RUNTIME";
+import { LocalFileSystem } from "@miyauci/fs/$RUNTIME";
 
-const fileSystem = new BucketFileSystem();
-const storage = new StorageManager(fileSystem);
-const handle = await storage.getDirectory();
+const fs = new LocalFileSystem();
+const handle = await fs.getDirectory();
 declare const callback: FileSystemObserverCallback;
 const observer = new FileSystemObserver(callback);
 
-fileSystem.watch();
+fs.watch();
 await observer.observe(handle, { recursive: true });
 
 await handle.getFileHandle("file.txt", { create: true });
 ```
 
-`BucketFileSystem#unwatch` will stop the monitoring.
+`LocalFileSystem#unwatch` will stop the monitoring.
 
 ## Documents
 

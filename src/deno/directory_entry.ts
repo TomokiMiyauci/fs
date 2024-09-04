@@ -3,7 +3,7 @@ import type {
   DirectoryEntry as _DirectoryEntry,
   FileSystemEntry,
   PartialSet,
-} from "../file_system_entry.ts";
+} from "@miyauci/fs";
 import { isDirectoryEntry } from "../algorithm.ts";
 import { FileEntry } from "./file_entry.ts";
 import { BaseEntry } from "./util.ts";

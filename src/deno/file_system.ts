@@ -1,42 +1,27 @@
 import { List, Set } from "@miyauci/infra";
 import { join } from "@std/path/join";
 import { resolve } from "@std/path/resolve";
-import { existsSync } from "@std/fs/exists";
 import {
-  type FileSystem as _FileSystem,
+  createNewFileSystemDirectoryHandle,
+  type DirectoryEntry as _DirectoryEntry,
+  type FileEntry as _FileEntry,
+  type FileSystem as IFileSystem,
+  type FileSystemChangeType,
+  type FileSystemDirectoryHandle,
+  type FileSystemEntry,
   type FileSystemEvent,
   type FileSystemObservation,
   type FileSystemPath,
   notifyObservations,
-} from "../file_system.ts";
-import type {
-  DirectoryEntry as _DirectoryEntry,
-  FileEntry as _FileEntry,
-  FileSystemEntry,
-} from "../file_system_entry.ts";
-import type { FileSystemChangeType } from "../file_system_change_record.ts";
+} from "@miyauci/fs";
 import { Watcher } from "./watcher.ts";
 import { safeStatSync } from "./io.ts";
 import { FileEntry } from "./file_entry.ts";
 import { DirectoryEntry } from "./directory_entry.ts";
-import type { BucketFileSystem as _BucketFileSystem } from "../storage_manager.ts";
 
-export class BucketFileSystem implements _BucketFileSystem {
-  #listener: FsCallback;
-  #watcher: Watcher;
-
-  constructor(root: string = "") {
-    const rootPath = resolve(root);
-
-    this.root = rootPath;
-
-    this.#listener = (ev: CustomEvent<Deno.FsEvent>): void => {
-      const e = events(ev.detail, rootPath);
-
-      notifyObservations(this, new List(e));
-    };
-
-    this.#watcher = new Watcher(rootPath, { recursive: true });
+export class FileSystem implements IFileSystem {
+  constructor(root: string) {
+    this.root = root;
   }
 
   root: string;
@@ -57,9 +42,30 @@ export class BucketFileSystem implements _BucketFileSystem {
   }
 
   observations: Set<FileSystemObservation> = new Set();
+}
 
-  exists(): boolean {
-    return existsSync(this.root, { isDirectory: true });
+export class LocalFileSystem extends FileSystem {
+  #listener: FsCallback;
+  #watcher: Watcher;
+
+  constructor(root: string = "") {
+    const rootPath = resolve(root);
+
+    super(rootPath);
+
+    this.#listener = (ev: CustomEvent<Deno.FsEvent>): void => {
+      const e = events(ev.detail, rootPath);
+
+      notifyObservations(this, new List(e));
+    };
+
+    this.#watcher = new Watcher(rootPath, { recursive: true });
+  }
+
+  getDirectory(): Promise<FileSystemDirectoryHandle> {
+    return Promise.resolve(
+      createNewFileSystemDirectoryHandle(this, new List([""])),
+    );
   }
 
   watch(): void {
