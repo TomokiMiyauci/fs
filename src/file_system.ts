@@ -1,15 +1,15 @@
+import { List, type Set } from "@miyauci/infra";
 import type {
   FileSystemHandle,
   FileSystemHandleKind,
 } from "./file_system_handle.ts";
 import type { FileSystemObserver } from "./file_system_observer.ts";
-import type {
-  FileSystemChangeRecord,
-  FileSystemChangeType,
+import {
+  createNewFileSystemChangeRecord,
+  type FileSystemChangeRecord,
+  type FileSystemChangeType,
 } from "./file_system_change_record.ts";
 import type { FileSystemEntry } from "./file_system_entry.ts";
-import { List, type Set } from "@miyauci/infra";
-import { createNewFileSystemChangeRecord } from "./file_system_change_record.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
 import { getRelationship } from "./file_system_locator.ts";
 import type { FileSystemFileHandle } from "./file_system_file_handle.ts";

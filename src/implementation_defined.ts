@@ -1,6 +1,6 @@
-import type { FileEntry } from "./file_system_entry.ts";
 import { typeByExtension } from "@std/media-types";
 import { extname } from "@std/path/extname";
+import type { FileEntry } from "./file_system_entry.ts";
 
 class UserAgent {
   /**

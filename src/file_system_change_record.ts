@@ -1,7 +1,7 @@
+import type { List } from "@miyauci/infra";
 import type { FileSystemObservation } from "./file_system.ts";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { type FileSystemLocator, resolve } from "./file_system_locator.ts";
-import type { List } from "@miyauci/infra";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#enumdef-filesystemchangetype)

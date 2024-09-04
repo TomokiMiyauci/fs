@@ -2,16 +2,17 @@ import {
   FileSystemHandle,
   isInBucketFileSystem,
 } from "./file_system_handle.ts";
-import type { FileSystemLocator } from "./file_system_locator.ts";
+import { type FileSystemLocator, locateEntry } from "./file_system_locator.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
-import { createNewFileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
 import {
   createNewFileSystemSyncAccessHandle,
   type FileSystemSyncAccessHandle,
 } from "./file_system_sync_access_handle.ts";
-import type { FileSystemWritableFileStream } from "./file_system_writable_file_stream.ts";
+import {
+  createNewFileSystemWritableFileStream,
+  type FileSystemWritableFileStream,
+} from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
-import { locateEntry } from "./file_system_locator.ts";
 import {
   type FileEntry,
   type FileSystemEntry,
