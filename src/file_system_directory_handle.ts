@@ -1,7 +1,7 @@
 import { Set } from "@miyauci/infra";
 import { asynciterator, type PairAsyncIterable } from "@miyauci/webidl";
 import { FileSystemHandle } from "./file_system_handle.ts";
-import { isDirectoryEntry, isFileEntry } from "./algorithm.ts";
+import { isDirectoryEntry, isFileEntry, isValidFileName } from "./algorithm.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import {
   createChildFileSystemFileHandle,
@@ -13,11 +13,10 @@ import {
   locateEntry,
   resolve,
 } from "./file_system_locator.ts";
-import {
-  type DirectoryEntry,
-  type FileEntry,
-  type FileSystemEntry,
-  isValidFileName,
+import type {
+  DirectoryEntry,
+  FileEntry,
+  FileSystemEntry,
 } from "./file_system_entry.ts";
 import { userAgent } from "./implementation_defined.ts";
 

@@ -12,6 +12,7 @@ import type {
   DirectoryEntry,
   FileEntry,
   FileSystemEntry,
+  ValidFileName,
 } from "./file_system_entry.ts";
 
 export function isDirectoryEntry(
@@ -24,6 +25,17 @@ export function isFileEntry(
   entry: FileSystemEntry,
 ): entry is FileEntry {
   return "binaryData" in entry;
+}
+
+export function isValidFileName(fileName: string): fileName is ValidFileName {
+  // a string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.
+  if (!fileName) return false;
+
+  if (fileName === "." || fileName === "..") return false;
+
+  if (fileName.includes("/") || fileName.includes("\\")) return false;
+
+  return true;
 }
 
 /**

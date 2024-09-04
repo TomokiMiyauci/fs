@@ -91,18 +91,11 @@ export interface FileSystemAccessResult {
 }
 
 /**
+ * A string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.
+ *
  * [File System Standard](https://whatpr.org/fs/165.html#valid-file-name)
  */
-export function isValidFileName(fileName: string): boolean {
-  // a string that is not an empty string, is not equal to "." or "..", and does not contain '/' or any other character used as path separator on the underlying platform.
-  if (!fileName) return false;
-
-  if (fileName === "." || fileName === "..") return false;
-
-  if (fileName.includes("/") || fileName.includes("\\")) return false;
-
-  return true;
-}
+export type ValidFileName = string;
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock-take)
