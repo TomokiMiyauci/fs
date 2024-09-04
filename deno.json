@@ -1,7 +1,8 @@
 {
   "name": "@miyauci/fs",
   "tasks": {
-    "test": "deno test --allow-write=$TMPDIR,$(realpath \"$TMPDIR\") --allow-read=$TMPDIR,$(realpath \"$TMPDIR\") --doc"
+    "test": "deno test --allow-write=$TMPDIR,$(realpath \"$TMPDIR\") --allow-read=$TMPDIR,$(realpath \"$TMPDIR\") --doc",
+    "lint": "deno fmt --check && deno lint && deno doc --lint src/mod.ts src/deno/mod.ts src/node/mod.ts"
   },
   "exclude": ["CHANGELOG.md"],
   "imports": {

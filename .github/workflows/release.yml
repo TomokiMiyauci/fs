@@ -24,9 +24,7 @@ jobs:
           deno-version: ${{ matrix.deno }}
 
       - name: Lint
-        run: |
-          deno fmt --check
-          deno lint
+        run: deno task lint
 
   test:
     runs-on: ${{ matrix.os }}
