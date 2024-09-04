@@ -1,3 +1,37 @@
+/**
+ * Provides JavaScript modules compliant with the [File System Standard](https://whatpr.org/fs/165.html)'s WebIDL and algorithms.
+ *
+ * @example WebIDL
+ * ```ts
+ * import {
+ *   FileSystemObserver,
+ *   type FileSystemObserverCallback,
+ * } from "@miyauci/fs";
+ *
+ * declare const callback: FileSystemObserverCallback;
+ * const observer = new FileSystemObserver(callback);
+ * ```
+ *
+ * @example [Algorithm](https://infra.spec.whatwg.org/#algorithms)
+ * ```ts
+ * import {
+ *   createNewFileSystemDirectoryHandle,
+ *   type FileSystem,
+ *   type FileSystemLocator,
+ *   type FileSystemPath,
+ *   locateEntry,
+ * } from "@miyauci/fs";
+ * declare const fileSystem: FileSystem;
+ * declare const path: FileSystemPath;
+ * const handle = createNewFileSystemDirectoryHandle(fileSystem, path);
+ *
+ * declare const locator: FileSystemLocator;
+ * const entry = locateEntry(locator);
+ * ```
+ *
+ * @module
+ */
+
 export { createNewFileSystemHandle } from "./algorithm.ts";
 export * from "./file_system_directory_handle.ts";
 export * from "./file_system_file_handle.ts";
