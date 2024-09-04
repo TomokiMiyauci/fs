@@ -47,5 +47,7 @@ export * from "./storage_manager.ts";
 
 // Re-export related modules
 export type { PermissionState } from "@miyauci/permissions";
-export { List, Set } from "@miyauci/infra";
 export type { AllowSharedBufferSource } from "@miyauci/webidl";
+
+// External package
+export type { List, Set } from "@miyauci/infra";

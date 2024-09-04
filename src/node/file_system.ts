@@ -23,10 +23,9 @@ import {
   type FileSystemEvent,
   type FileSystemObservation,
   type FileSystemPath,
-  List,
   notifyObservations,
-  Set,
 } from "@miyauci/fs";
+import { List, Set } from "@miyauci/infra";
 import { isDirectoryEntry } from "../algorithm.ts";
 
 /** {@link IFileSystem File system} for Node.js runtime. */
