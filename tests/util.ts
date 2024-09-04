@@ -15,8 +15,8 @@ import {
   notifyObservations,
 } from "../src/file_system.ts";
 import type {
-  DirectoryEntry as _DirectoryEntry,
-  FileEntry as _FileEntry,
+  DirectoryEntry as IDirectoryEntry,
+  FileEntry as IFileEntry,
   FileSystemAccessResult,
   FileSystemEntry,
   PartialSet,
@@ -163,7 +163,7 @@ export class VirtualFileSystem implements FileSystem {
   }
 }
 
-class DirectoryEntry implements _DirectoryEntry {
+class DirectoryEntry implements IDirectoryEntry {
   protected vfs: _VirtualFileSystem;
   protected locator: DirectoryLocator;
   constructor(locator: DirectoryLocator, vfs: _VirtualFileSystem) {
@@ -248,7 +248,7 @@ class Effector implements PartialSet<FileSystemEntry> {
   }
 }
 
-class FileEntry implements _FileEntry {
+class FileEntry implements IFileEntry {
   constructor(
     protected locator: FileLocator,
     protected vfs: _VirtualFileSystem,

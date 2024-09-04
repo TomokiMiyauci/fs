@@ -1,10 +1,6 @@
 import { join } from "@std/path/join";
 import { format } from "@miyauci/format";
-import type {
-  DirectoryEntry,
-  FileSystem as _FileSystem,
-  FileSystemAccessResult,
-} from "@miyauci/fs";
+import type { DirectoryEntry, FileSystemAccessResult } from "@miyauci/fs";
 import {
   DescriptorName,
   Flag,

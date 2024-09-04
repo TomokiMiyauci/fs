@@ -3,8 +3,6 @@ import { join } from "@std/path/join";
 import { resolve } from "@std/path/resolve";
 import {
   createNewFileSystemDirectoryHandle,
-  type DirectoryEntry as _DirectoryEntry,
-  type FileEntry as _FileEntry,
   type FileSystem as IFileSystem,
   type FileSystemChangeType,
   type FileSystemDirectoryHandle,

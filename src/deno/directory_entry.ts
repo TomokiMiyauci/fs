@@ -1,6 +1,6 @@
 import { join } from "@std/path/join";
 import type {
-  DirectoryEntry as _DirectoryEntry,
+  DirectoryEntry as IDirectoryEntry,
   FileSystemEntry,
   PartialSet,
 } from "@miyauci/fs";
@@ -8,7 +8,7 @@ import { isDirectoryEntry } from "../algorithm.ts";
 import { FileEntry } from "./file_entry.ts";
 import { BaseEntry } from "./util.ts";
 
-export class DirectoryEntry extends BaseEntry implements _DirectoryEntry {
+export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
   constructor(root: string, path: string[]) {
     super(root, path);
   }

@@ -1,8 +1,8 @@
-import type { FileEntry as _FileEntry } from "@miyauci/fs";
+import type { FileEntry as IFileEntry } from "@miyauci/fs";
 import { BaseEntry } from "./util.ts";
 import { DirectoryEntry } from "./directory_entry.ts";
 
-export class FileEntry extends BaseEntry implements _FileEntry {
+export class FileEntry extends BaseEntry implements IFileEntry {
   constructor(root: string, path: string[]) {
     super(root, path);
   }

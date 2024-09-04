@@ -15,8 +15,8 @@ import { join, resolve } from "node:path";
 import { type FSWatcher, watch } from "chokidar";
 import {
   createNewFileSystemDirectoryHandle,
-  type DirectoryEntry as _DirectoryEntry,
-  type FileEntry as _FileEntry,
+  type DirectoryEntry as IDirectoryEntry,
+  type FileEntry as IFileEntry,
   type FileSystem as IFileSystem,
   type FileSystemAccessResult,
   type FileSystemDirectoryHandle,
@@ -146,7 +146,7 @@ class BaseEntry {
   }
 }
 
-class FileEntry extends BaseEntry implements _FileEntry {
+class FileEntry extends BaseEntry implements IFileEntry {
   constructor(root: string, path: string[]) {
     super(root, path);
   }
@@ -171,7 +171,7 @@ class FileEntry extends BaseEntry implements _FileEntry {
   sharedLockCount: number = 0;
 }
 
-class DirectoryEntry extends BaseEntry implements _DirectoryEntry {
+class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
   constructor(root: string, path: string[]) {
     super(root, path);
   }
