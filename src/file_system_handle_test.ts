@@ -1,5 +1,4 @@
 import { runFileSystemHandleTest } from "@test/file_system_handle.ts";
-import { StorageManager } from "../src/storage_manager.ts";
 import { VirtualFileSystem } from "@test/util.ts";
 import { isInBucketFileSystem } from "./file_system_handle.ts";
 import { describe, it } from "@std/testing/bdd";
@@ -8,10 +7,10 @@ import { createNewFileSystemHandle } from "./algorithm.ts";
 import { List, Set } from "@miyauci/infra";
 
 runFileSystemHandleTest(async () => {
-  const storage = new StorageManager(new VirtualFileSystem());
+  const fs = new VirtualFileSystem();
 
   return {
-    root: await storage.getDirectory(),
+    root: await fs.getDirectory(),
   };
 });
 

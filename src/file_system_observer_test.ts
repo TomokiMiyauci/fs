@@ -1,14 +1,12 @@
 import { runFileSystemObserverTest } from "@test/file_system_observer.ts";
 import { VirtualFileSystem } from "@test/util.ts";
-import { StorageManager } from "./storage_manager.ts";
 
 runFileSystemObserverTest(async () => {
-  const fileSystem = new VirtualFileSystem();
-  const storage = new StorageManager(fileSystem);
+  const fs = new VirtualFileSystem();
 
-  fileSystem.watch();
+  fs.watch();
 
   return {
-    root: await storage.getDirectory(),
+    root: await fs.getDirectory(),
   };
 });

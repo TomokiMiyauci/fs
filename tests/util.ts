@@ -1,6 +1,7 @@
 import type { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
-import type {
-  FileSystemDirectoryHandle,
+import {
+  createNewFileSystemDirectoryHandle,
+  type FileSystemDirectoryHandle,
 } from "../src/file_system_directory_handle.ts";
 import type {
   DirectoryLocator,
@@ -119,8 +120,10 @@ export class VirtualFileSystem implements FileSystem {
   root: string = "";
   observations: Set<FileSystemObservation> = new Set();
 
-  exists(): boolean {
-    return true;
+  getDirectory(): Promise<FileSystemDirectoryHandle> {
+    return Promise.resolve(
+      createNewFileSystemDirectoryHandle(this, new List([""])),
+    );
   }
 
   watch(): void {
