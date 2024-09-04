@@ -17,13 +17,31 @@ import { safeStatSync } from "./io.ts";
 import { FileEntry } from "./file_entry.ts";
 import { DirectoryEntry } from "./directory_entry.ts";
 
+/** {@link IFileSystem File system} for Deno runtime. */
 export class FileSystem implements IFileSystem {
+  /**
+   * Construct {@link FileSystem}.
+   *
+   * @param root Absolute path.
+   *
+   * @example Basic
+   * ```ts
+   * import { FileSystem } from "@miyauci/fs/deno";
+   * const fs = new FileSystem("/path/to/dir");
+   * ```
+   */
   constructor(root: string) {
     this.root = root;
   }
 
+  /** Root directory path. */
   root: string;
 
+  /**
+   * Locale {@link FileSystemEntry entry} from {@link FileSystemPath path}.
+   *
+   * Required `allow-read` permission.
+   */
   locateEntry(path: FileSystemPath): FileSystemEntry | null {
     const fullPath = join(this.root, ...path);
 
@@ -39,13 +57,50 @@ export class FileSystem implements IFileSystem {
     }
   }
 
+  /** Set of observing {@link FileSystemObservation}. */
   observations: Set<FileSystemObservation> = new Set();
 }
 
+/**
+ * Local file system manager.
+ *
+ * @example Basic
+ * ```ts
+ * import { LocalFileSystem } from "@miyauci/fs/deno";
+ *
+ * const fs = new LocalFileSystem();
+ * const handle = await fs.getDirectory();
+ * ```
+ *
+ * @example Watching directory changes
+ * ```ts
+ * import { LocalFileSystem } from "@miyauci/fs/deno";
+ * const fs = new LocalFileSystem();
+ *
+ * fs.watch();
+ * ```
+ */
 export class LocalFileSystem extends FileSystem {
   #listener: FsCallback;
   #watcher: Watcher;
 
+  /**
+   * If {@link root} is not specified, root becomes the current working directory.
+   *
+   * @example Absolute path
+   * ```ts
+   * import { LocalFileSystem } from "@miyauci/fs/deno";
+   *
+   * const fs = new LocalFileSystem("/path/to/dir");
+   * ```
+   *
+   * @example Relative path
+   * ```ts
+   * import { LocalFileSystem } from "@miyauci/fs/deno";
+   *
+   * const fs = new LocalFileSystem("../");
+   * ```
+   */
   constructor(root: string = "") {
     const rootPath = resolve(root);
 
@@ -60,12 +115,19 @@ export class LocalFileSystem extends FileSystem {
     this.#watcher = new Watcher(rootPath, { recursive: true });
   }
 
+  /**
+   * Returns the root directory of the local file system.
+   */
   getDirectory(): Promise<FileSystemDirectoryHandle> {
     return Promise.resolve(
       createNewFileSystemDirectoryHandle(this, new List([""])),
     );
   }
 
+  /** Start to watch {@link root} directory.
+   *
+   * If {@link watch} has already been called, nothing is done.
+   */
   watch(): void {
     for (const eventType of allEvents) {
       this.#watcher.addEventListener(eventType, this.#listener);
@@ -74,16 +136,16 @@ export class LocalFileSystem extends FileSystem {
     this.#watcher.watch();
   }
 
+  /** End to watch {@link root} directory.
+   *
+   * If {@link watch} is not called, nothing is done.
+   */
   unwatch(): void {
     for (const eventType of allEvents) {
       this.#watcher.removeEventListener(eventType, this.#listener);
     }
 
     this.#watcher.unwatch();
-  }
-
-  [Symbol.dispose](): void {
-    this.unwatch();
   }
 }
 
