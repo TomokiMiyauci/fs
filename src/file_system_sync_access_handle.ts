@@ -21,22 +21,24 @@ export interface FileSystemReadWriteOptions {
 export class FileSystemSyncAccessHandle {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state)
+   *
+   * @ignore
    */
   protected state: "open" | "close" = "open";
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file)
+   *
+   * @ignore
    */
-  protected file: FileEntry;
+  protected file!: FileEntry;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file-position-cursor)
+   *
+   * @ignore
    */
   protected filePositionCursor: number = 0;
-
-  constructor(entry: FileEntry) {
-    this.file = entry;
-  }
 
   /** Reads the contents of the file associated with handle into buffer, optionally at a given offset.
    * The file cursor is updated when {@link read} is called to point to the byte after the last byte read.
@@ -49,7 +51,7 @@ export class FileSystemSyncAccessHandle {
     buffer: AllowSharedBufferSource,
     options?: FileSystemReadWriteOptions,
   ): number {
-    this.assertUnsignedLongLong(options?.at);
+    this.#assertUnsignedLongLong(options?.at);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this.state === "close") {
@@ -130,7 +132,7 @@ export class FileSystemSyncAccessHandle {
     buffer: AllowSharedBufferSource,
     options?: FileSystemReadWriteOptions,
   ): number {
-    this.assertUnsignedLongLong(options?.at);
+    this.#assertUnsignedLongLong(options?.at);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this.state === "close") {
@@ -214,7 +216,7 @@ export class FileSystemSyncAccessHandle {
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemsyncaccesshandle-truncate)
    */
   truncate(newSize: number): void {
-    this.assertUnsignedLongLong(newSize);
+    this.#assertUnsignedLongLong(newSize);
 
     // 1. If this's [[state]] is "closed", throw an "InvalidStateError" DOMException.
     if (this.state === "close") {
@@ -328,7 +330,7 @@ export class FileSystemSyncAccessHandle {
     pauseForRelease();
   }
 
-  private assertUnsignedLongLong(value: number | undefined): asserts value {
+  #assertUnsignedLongLong(value: number | undefined): asserts value {
     if (typeof value === "number" && !isUnsignedLongLong(value)) {
       throw new TypeError("Invalid range of value");
     }
@@ -343,11 +345,13 @@ function isUnsignedLongLong(value: number): boolean {
  * [File System Standard](https://whatpr.org/fs/165.html#create-a-new-filesystemsyncaccesshandle)
  */
 export function createNewFileSystemSyncAccessHandle(
-  entry: FileEntry,
+  file: FileEntry,
 ): FileSystemSyncAccessHandle {
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
+  const handle = new FileSystemSyncAccessHandle();
+
   // 2. Set handle’s [[file]] to file.
-  const handle = new FileSystemSyncAccessHandle(entry);
+  handle["file"] = file;
 
   // 3. Set handle’s [[state]] to "open".
   handle["state"] = "open";

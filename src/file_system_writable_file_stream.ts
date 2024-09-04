@@ -62,16 +62,22 @@ export class FileSystemWritableFileStream
   extends WritableStream<FileSystemWriteChunkType> {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-file)
+   *
+   * @ignore
    */
   protected file!: FileEntry;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-seekoffset)
+   *
+   * @ignore
    */
   protected seekOffset: number = 0;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-buffer)
+   *
+   * @ignore
    */
   protected buffer: Uint8Array = new Uint8Array(0);
 
@@ -219,13 +225,13 @@ export function createNewFileSystemWritableFileStream(
 }
 
 /**
+ * [File System Standard](https://whatpr.org/fs/165.html#write-a-chunk)
+ *
  * @throws {TypeError}
  * - If input `type` is `write` and input `data` is nil.
  * - If input `type` is `seek` and input `position` is nil.
  * - If input `type` is `truncate` and input `size` is nil.
  * @throws {DOMException} If permission is not 'granted'.
- *
- * [File System Standard](https://whatpr.org/fs/165.html#write-a-chunk)
  */
 export function writeChunk(
   stream: FileSystemWritableFileStream,
