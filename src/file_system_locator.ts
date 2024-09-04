@@ -29,6 +29,9 @@ export interface FileLocator extends BaseLocator {
  */
 export type FileSystemLocator = FileLocator | DirectoryLocator;
 
+/**
+ * @ignore
+ */
 interface BaseLocator {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#locator-path)

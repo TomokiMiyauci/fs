@@ -1,4 +1,3 @@
-import { List, Set } from "@miyauci/infra";
 import {
   closeSync,
   futimesSync,
@@ -24,8 +23,9 @@ import {
   type FileSystemEvent,
   type FileSystemObservation,
   type FileSystemPath,
+  List,
   notifyObservations,
-  type PartialSet,
+  Set,
 } from "@miyauci/fs";
 import { isDirectoryEntry } from "../algorithm.ts";
 
@@ -176,12 +176,17 @@ class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
     super(root, path);
   }
 
-  get children(): PartialSet<FileSystemEntry> {
+  get children(): Effector {
     return new Effector(this.root, this.path);
   }
 }
 
-class Effector implements PartialSet<FileSystemEntry> {
+class Effector
+  implements
+    Pick<
+      Set<FileSystemEntry>,
+      "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+    > {
   constructor(private root: string, private path: string[]) {}
 
   append(entry: FileSystemEntry): void {

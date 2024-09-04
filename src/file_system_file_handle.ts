@@ -284,6 +284,9 @@ export class FileSystemFileHandle extends FileSystemHandle {
   }
 }
 
+/**
+ * @ignore
+ */
 export interface FileSystemFileHandle {
   get kind(): "file";
 }

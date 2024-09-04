@@ -1,6 +1,6 @@
 import { concat } from "@std/bytes/concat";
+import type { AllowSharedBufferSource } from "@miyauci/webidl";
 import { type FileEntry, release } from "./file_system_entry.ts";
-import type { AllowSharedBufferSource } from "./webidl/type.ts";
 import { userAgent } from "./implementation_defined.ts";
 import { Msg } from "./constant.ts";
 

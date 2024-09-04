@@ -1,4 +1,5 @@
 import { Set } from "@miyauci/infra";
+import { asynciterator, type PairAsyncIterable } from "@miyauci/webidl";
 import { FileSystemHandle } from "./file_system_handle.ts";
 import { isDirectoryEntry, isFileEntry } from "./algorithm.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
@@ -6,7 +7,6 @@ import {
   createChildFileSystemFileHandle,
   type FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
-import { asynciterator, type PairAsyncIterable } from "./webidl/async.ts";
 import { Msg } from "./constant.ts";
 import {
   type FileSystemLocator,
@@ -426,6 +426,9 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
   }
 }
 
+/**
+ * @ignore
+ */
 export interface FileSystemDirectoryHandle
   extends PairAsyncIterable<string, FileSystemHandle> {
   get kind(): "directory";

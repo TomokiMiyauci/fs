@@ -2,7 +2,7 @@ import { join } from "@std/path/join";
 import type {
   DirectoryEntry as IDirectoryEntry,
   FileSystemEntry,
-  PartialSet,
+  Set,
 } from "@miyauci/fs";
 import { isDirectoryEntry } from "../algorithm.ts";
 import { FileEntry } from "./file_entry.ts";
@@ -19,12 +19,17 @@ export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
     return head.length ? new DirectoryEntry(this.root, head) : null;
   }
 
-  get children(): PartialSet<FileSystemEntry> {
+  get children(): Effector {
     return new Effector(this.root, this.path);
   }
 }
 
-class Effector implements PartialSet<FileSystemEntry> {
+class Effector
+  implements
+    Pick<
+      Set<FileSystemEntry>,
+      "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+    > {
   constructor(private root: string, private path: string[]) {}
 
   append(item: FileSystemEntry): void {

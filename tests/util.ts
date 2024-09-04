@@ -19,7 +19,6 @@ import type {
   FileEntry as IFileEntry,
   FileSystemAccessResult,
   FileSystemEntry,
-  PartialSet,
 } from "../src/file_system_entry.ts";
 import type { FileSystemWriteChunkType } from "../src/file_system_writable_file_stream.ts";
 import { isDirectoryEntry } from "../src/algorithm.ts";
@@ -170,7 +169,7 @@ class DirectoryEntry implements IDirectoryEntry {
     this.vfs = vfs;
     this.locator = locator;
   }
-  get children(): PartialSet<FileSystemEntry> {
+  get children(): Effector {
     return new Effector(this.locator, this.vfs);
   }
 
@@ -198,7 +197,12 @@ class DirectoryEntry implements IDirectoryEntry {
   }
 }
 
-class Effector implements PartialSet<FileSystemEntry> {
+class Effector
+  implements
+    Pick<
+      Set<FileSystemEntry>,
+      "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+    > {
   protected vfs: _VirtualFileSystem;
   protected locator: FileSystemLocator;
 

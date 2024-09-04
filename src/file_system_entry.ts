@@ -2,6 +2,9 @@ import type { PermissionState } from "@miyauci/permissions";
 import type { List, Set } from "@miyauci/infra";
 import type { FileSystemLocator } from "./file_system_locator.ts";
 
+/**
+ * @ignore
+ */
 interface BaseEntry {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-name)
@@ -31,8 +34,7 @@ export interface FileEntry extends BaseEntry {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-binary-data)
    */
-  get binaryData(): Uint8Array;
-  set binaryData(value: Uint8Array);
+  binaryData: Uint8Array;
 
   /** A number representing the number of milliseconds since the Unix Epoch.
    *
@@ -43,15 +45,13 @@ export interface FileEntry extends BaseEntry {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock)
    */
-  get lock(): "open" | "taken-exclusive" | "taken-shared";
-  set lock(value: "open" | "taken-exclusive" | "taken-shared");
+  lock: "open" | "taken-exclusive" | "taken-shared";
 
   /** A number representing the number shared locks that are taken at a given point in time
    *
    * [File System Standard](https://whatpr.org/fs/165.html#file-entry-shared-lock-count)
    */
-  get sharedLockCount(): number;
-  set sharedLockCount(value: number);
+  sharedLockCount: number;
 }
 
 /**
@@ -62,13 +62,11 @@ export interface DirectoryEntry extends BaseEntry {
    *
    * [File System Standard](https://whatpr.org/fs/165.html#directory-entry-children)
    */
-  readonly children: PartialSet<FileSystemEntry>;
+  readonly children: Pick<
+    Set<FileSystemEntry>,
+    "append" | "isEmpty" | "remove" | typeof Symbol.iterator
+  >;
 }
-
-export type PartialSet<T> = Pick<
-  Set<T>,
-  "append" | "isEmpty" | "remove" | typeof Symbol.iterator
->;
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#entry)
