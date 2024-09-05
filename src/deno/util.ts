@@ -1,11 +1,19 @@
 import { join } from "@std/path/join";
 import { format } from "@miyauci/format";
-import type { DirectoryEntry, FileSystemAccessResult } from "@miyauci/fs";
+import { List } from "@miyauci/infra";
+import type {
+  DirectoryEntry,
+  FileSystemAccessResult,
+  FileSystemEvent,
+  FileSystemHandleKind,
+} from "@miyauci/fs";
 import {
   DescriptorName,
   Flag,
+  KindMap,
   PERMISSION_ERROR_MESSAGE_TEMPLATE,
 } from "./constant.ts";
+import { safeStatSync } from "./io.ts";
 
 export abstract class BaseEntry {
   constructor(protected root: string, protected path: string[]) {
@@ -135,4 +143,39 @@ function writePermissionErrorMsg(path: string): string {
     flag: Flag.AllowWrite,
     path,
   });
+}
+
+export class FsEventConverter {
+  static toFileSystemEvents(
+    root: string,
+    event: Deno.FsEvent,
+  ): FileSystemEvent[] {
+    return event.paths.map((path) =>
+      this.toFileSystemEvent({ path, kind: event.kind, root })
+    );
+  }
+
+  static toFileSystemEvent({ path, root, kind }: {
+    path: string;
+    root: string;
+    kind: Deno.FsEvent["kind"];
+  }): FileSystemEvent {
+    const info = safeStatSync(path);
+    const entryType = info ? this.toEntryType(info) : null;
+    const relativePath = path.replace(root, "");
+    const segments = relativePath.split("/");
+    const modifiedPath = new List(segments);
+    const type = KindMap[kind];
+
+    return { modifiedPath, type, fromPath: null, entryType };
+  }
+
+  static toEntryType(
+    info: Pick<Deno.FileInfo, "isDirectory" | "isFile">,
+  ): FileSystemHandleKind | null {
+    if (info.isDirectory) return "directory";
+    if (info.isFile) return "file";
+
+    return null;
+  }
 }
