@@ -1,3 +1,11 @@
+# [1.0.0-beta.19](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.18...1.0.0-beta.19) (2024-09-05)
+
+
+### Features
+
+* export ValidFileName instead of isValidFileName function ([f09dd01](https://github.com/TomokiMiyauci/fs/commit/f09dd015f8de8c5336dda84cb14adfe92b5a6ae8))
+* **mod:** export external module what is used public API surface as types ([5ebebba](https://github.com/TomokiMiyauci/fs/commit/5ebebba043fc0996d9033be94e17583092ae79de))
+
 # [1.0.0-beta.18](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.17...1.0.0-beta.18) (2024-09-04)
 
 
