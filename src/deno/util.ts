@@ -1,4 +1,5 @@
 import { join } from "@std/path/join";
+import { relative } from "@std/path/relative";
 import { format } from "@miyauci/format";
 import { List } from "@miyauci/infra";
 import type {
@@ -150,24 +151,29 @@ export class FsEventConverter {
     root: string,
     event: Deno.FsEvent,
   ): FileSystemEvent[] {
-    return event.paths.map((path) =>
-      this.toFileSystemEvent({ path, kind: event.kind, root })
-    );
+    return event.paths.map((path) => {
+      const stat = safeStatSync(path);
+
+      return this.toFileSystemEvent({ path, kind: event.kind, root, stat });
+    });
   }
 
-  static toFileSystemEvent({ path, root, kind }: {
-    path: string;
-    root: string;
-    kind: Deno.FsEvent["kind"];
-  }): FileSystemEvent {
-    const info = safeStatSync(path);
-    const entryType = info ? this.toEntryType(info) : null;
-    const relativePath = path.replace(root, "");
-    const segments = relativePath.split("/");
-    const modifiedPath = new List(segments);
+  static toFileSystemEvent(
+    { path, root, kind, stat }: EventContext,
+  ): FileSystemEvent {
+    const entryType = stat ? this.toEntryType(stat) : null;
+    const modifiedPath = this.toModifiedPath(root, path);
     const type = KindMap[kind];
 
     return { modifiedPath, type, fromPath: null, entryType };
+  }
+
+  static toModifiedPath(root: string, path: string): List<string> {
+    const relativePath = relative(root, path);
+    const segments = relativePath.split("/");
+    const modifiedPath = new List(segments);
+
+    return modifiedPath;
   }
 
   static toEntryType(
@@ -178,4 +184,11 @@ export class FsEventConverter {
 
     return null;
   }
+}
+
+export interface EventContext {
+  path: string;
+  root: string;
+  kind: Deno.FsEvent["kind"];
+  stat: Pick<Deno.FileInfo, "isDirectory" | "isFile"> | undefined;
 }
