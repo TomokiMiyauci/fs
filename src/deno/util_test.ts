@@ -2,7 +2,11 @@ import { List } from "@miyauci/infra";
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import type { FileSystemEvent } from "@miyauci/fs";
-import { FsEventConverter } from "./util.ts";
+import {
+  FsEventConverter,
+  readPermissionErrorMsg,
+  writePermissionErrorMsg,
+} from "./util.ts";
 
 describe("FsEventConverter", () => {
   describe("toEntryType", () => {
@@ -86,5 +90,21 @@ describe("FsEventConverter", () => {
           .toEqual(expected);
       }
     });
+  });
+});
+
+describe("readPermissionErrorMsg", () => {
+  it("should return string", () => {
+    expect(readPermissionErrorMsg("/path")).toBe(
+      `Require read access to "/path", run again with the --allow-read flag`,
+    );
+  });
+});
+
+describe("writePermissionErrorMsg", () => {
+  it("should return string", () => {
+    expect(writePermissionErrorMsg("/path")).toBe(
+      `Require write access to "/path", run again with the --allow-write flag`,
+    );
   });
 });

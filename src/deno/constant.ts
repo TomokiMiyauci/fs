@@ -11,7 +11,7 @@ export const enum DescriptorName {
 }
 
 export const PERMISSION_ERROR_MESSAGE_TEMPLATE =
-  'Require ${name} access to "${path}", run again with the ${flag} flag';
+  'Require {name} access to "{path}", run again with the {flag} flag';
 
 export const allEvents = [
   "access",

@@ -130,7 +130,7 @@ export abstract class BaseEntry {
   }
 }
 
-function readPermissionErrorMsg(path: string): string {
+export function readPermissionErrorMsg(path: string): string {
   return format(PERMISSION_ERROR_MESSAGE_TEMPLATE, {
     name: DescriptorName.Read,
     flag: Flag.AllowRead,
@@ -138,7 +138,7 @@ function readPermissionErrorMsg(path: string): string {
   });
 }
 
-function writePermissionErrorMsg(path: string): string {
+export function writePermissionErrorMsg(path: string): string {
   return format(PERMISSION_ERROR_MESSAGE_TEMPLATE, {
     name: DescriptorName.Write,
     flag: Flag.AllowWrite,
