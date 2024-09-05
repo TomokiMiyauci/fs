@@ -1,3 +1,11 @@
+# [1.0.0-beta.20](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.19...1.0.0-beta.20) (2024-09-05)
+
+
+### Bug Fixes
+
+* **file_system:** change to return as non-bucket file system handle ([a061500](https://github.com/TomokiMiyauci/fs/commit/a06150081e98feb01e7886259200df3b8186de0e))
+* **node:** change `LocalFileSystem#getDirectory` to return as non-bucket file system handle ([dfa5934](https://github.com/TomokiMiyauci/fs/commit/dfa5934d240541e0b4f483de3cd467a2eb8ffeff))
+
 # [1.0.0-beta.19](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.18...1.0.0-beta.19) (2024-09-05)
 
 
