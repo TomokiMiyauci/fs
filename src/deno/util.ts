@@ -4,6 +4,7 @@ import { format } from "@miyauci/format";
 import { List } from "@miyauci/infra";
 import type {
   DirectoryEntry,
+  FileSystem,
   FileSystemAccessResult,
   FileSystemEvent,
   FileSystemHandleKind,
@@ -17,15 +18,18 @@ import {
 import { safeStatSync } from "./io.ts";
 
 export abstract class BaseEntry {
-  constructor(protected root: string, protected path: string[]) {
+  constructor(fileSystem: FileSystem, protected path: string[]) {
     this.name = path[path.length - 1];
+    this.fileSystem = fileSystem;
   }
 
   protected get fullPath(): string {
-    return join(this.root, ...this.path);
+    return join(this.fileSystem.root, ...this.path);
   }
 
   readonly name: string;
+
+  readonly fileSystem: FileSystem;
 
   abstract get parent(): DirectoryEntry | null;
 

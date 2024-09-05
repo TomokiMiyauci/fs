@@ -14,6 +14,7 @@ import { join } from "node:path";
 import type {
   DirectoryEntry as IDirectoryEntry,
   FileEntry as IFileEntry,
+  FileSystem,
   FileSystemAccessResult,
   FileSystemEntry,
 } from "@miyauci/fs";
@@ -21,7 +22,9 @@ import type { Set } from "@miyauci/infra";
 import { isDirectoryEntry } from "../algorithm.ts";
 
 class BaseEntry {
-  constructor(protected root: string, protected path: string[]) {}
+  constructor(fileSystem: FileSystem, protected path: string[]) {
+    this.fileSystem = fileSystem;
+  }
 
   get name(): string {
     return this.path[this.path.length - 1];
@@ -30,8 +33,10 @@ class BaseEntry {
   get parent(): DirectoryEntry | null {
     const head = this.path.slice(0, -1);
 
-    return head.length ? new DirectoryEntry(this.root, head) : null;
+    return head.length ? new DirectoryEntry(this.fileSystem, head) : null;
   }
+
+  readonly fileSystem: FileSystem;
 
   requestAccess(): FileSystemAccessResult {
     return { permissionState: "granted", errorName: "" };
@@ -43,12 +48,12 @@ class BaseEntry {
 }
 
 export class FileEntry extends BaseEntry implements IFileEntry {
-  constructor(root: string, path: string[]) {
-    super(root, path);
+  constructor(fileSystem: FileSystem, path: string[]) {
+    super(fileSystem, path);
   }
 
   get #path(): string {
-    return join(this.root, ...this.path);
+    return join(this.fileSystem.root, ...this.path);
   }
 
   get binaryData(): Uint8Array {
@@ -68,12 +73,12 @@ export class FileEntry extends BaseEntry implements IFileEntry {
 }
 
 export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
-  constructor(root: string, path: string[]) {
-    super(root, path);
+  constructor(fileSystem: FileSystem, path: string[]) {
+    super(fileSystem, path);
   }
 
   get children(): Effector {
-    return new Effector(this.root, this.path);
+    return new Effector(this.fileSystem, this.path);
   }
 }
 
@@ -82,10 +87,10 @@ class Effector implements
     Set<FileSystemEntry>,
     "append" | "remove" | "isEmpty" | typeof Symbol.iterator
   > {
-  constructor(private root: string, private path: string[]) {}
+  constructor(private fileSystem: FileSystem, private path: string[]) {}
 
   append(entry: FileSystemEntry): void {
-    const fullPath = join(this.root, ...this.path, entry.name);
+    const fullPath = join(this.fileSystem.root, ...this.path, entry.name);
 
     if (isDirectoryEntry(entry)) {
       mkdirSync(fullPath);
@@ -99,7 +104,7 @@ class Effector implements
   }
 
   remove(entry: FileSystemEntry): void {
-    const fullPath = join(this.root, ...this.path, entry.name);
+    const fullPath = join(this.fileSystem.root, ...this.path, entry.name);
 
     rmSync(fullPath, { recursive: true });
   }
@@ -109,7 +114,7 @@ class Effector implements
   }
 
   *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-    const fullPath = join(this.root, ...this.path);
+    const fullPath = join(this.fileSystem.root, ...this.path);
     const iter = readdirSync(fullPath, { withFileTypes: true });
 
     for (const dirent of iter) {
@@ -117,9 +122,9 @@ class Effector implements
       const path = this.path.concat(name);
 
       if (dirent.isDirectory()) {
-        yield new DirectoryEntry(this.root, path);
+        yield new DirectoryEntry(this.fileSystem, path);
       } else if (dirent.isFile()) {
-        yield new FileEntry(this.root, path);
+        yield new FileEntry(this.fileSystem, path);
       }
     }
   }

@@ -46,9 +46,9 @@ export class FileSystem implements IFileSystem {
       const stat = statSync(fullPath);
 
       if (stat.isDirectory()) {
-        return new DirectoryEntry(this.root, [...path]);
+        return new DirectoryEntry(this, [...path]);
       } else if (stat.isFile()) {
-        return new FileEntry(this.root, [...path]);
+        return new FileEntry(this, [...path]);
       }
 
       return null;

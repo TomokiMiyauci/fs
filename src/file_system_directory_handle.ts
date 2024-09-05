@@ -160,6 +160,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           // 8. Set child’s children to an empty set.
           children: new Set(),
           parent: entry,
+          fileSystem: entry.fileSystem,
         } satisfies DirectoryEntry;
 
         try {
@@ -281,6 +282,7 @@ export class FileSystemDirectoryHandle extends FileSystemHandle {
           sharedLockCount: 0,
           lock: "open",
           parent: entry,
+          fileSystem: entry.fileSystem,
         } satisfies FileEntry;
 
         try {

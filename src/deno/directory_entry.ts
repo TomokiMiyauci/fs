@@ -1,6 +1,7 @@
 import { join } from "@std/path/join";
 import type {
   DirectoryEntry as IDirectoryEntry,
+  FileSystem,
   FileSystemEntry,
   Set,
 } from "@miyauci/fs";
@@ -9,18 +10,18 @@ import { FileEntry } from "./file_entry.ts";
 import { BaseEntry } from "./util.ts";
 
 export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
-  constructor(root: string, path: string[]) {
-    super(root, path);
+  constructor(fileSystem: FileSystem, path: string[]) {
+    super(fileSystem, path);
   }
 
   get parent(): DirectoryEntry | null {
     const head = this.path.slice(0, -1);
 
-    return head.length ? new DirectoryEntry(this.root, head) : null;
+    return head.length ? new DirectoryEntry(this.fileSystem, head) : null;
   }
 
   get children(): Effector {
-    return new Effector(this.root, this.path);
+    return new Effector(this.fileSystem, this.path);
   }
 }
 
@@ -29,10 +30,10 @@ class Effector implements
     Set<FileSystemEntry>,
     "append" | "remove" | "isEmpty" | typeof Symbol.iterator
   > {
-  constructor(private root: string, private path: string[]) {}
+  constructor(private fileSystem: FileSystem, private path: string[]) {}
 
   append(item: FileSystemEntry): void {
-    const fullPath = join(this.root, ...this.path, item.name);
+    const fullPath = join(this.fileSystem.root, ...this.path, item.name);
 
     if (isDirectoryEntry(item)) {
       Deno.mkdirSync(fullPath);
@@ -44,7 +45,7 @@ class Effector implements
   }
 
   remove(item: FileSystemEntry): void {
-    const fullPath = join(this.root, ...this.path, item.name);
+    const fullPath = join(this.fileSystem.root, ...this.path, item.name);
 
     Deno.removeSync(fullPath, { recursive: true });
   }
@@ -54,7 +55,7 @@ class Effector implements
   }
 
   *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-    const fullPath = join(this.root, ...this.path);
+    const fullPath = join(this.fileSystem.root, ...this.path);
 
     const iter = Deno.readDirSync(fullPath);
 
@@ -63,9 +64,9 @@ class Effector implements
       const path = this.path.concat(name);
 
       if (entry.isDirectory) {
-        yield new DirectoryEntry(this.root, path);
+        yield new DirectoryEntry(this.fileSystem, path);
       } else if (entry.isFile) {
-        yield new FileEntry(this.root, path);
+        yield new FileEntry(this.fileSystem, path);
       } else {
         throw new Error("symlink is not supported");
       }

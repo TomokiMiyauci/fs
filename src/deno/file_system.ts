@@ -50,8 +50,8 @@ export class FileSystem implements IFileSystem {
     try {
       const stat = Deno.statSync(fullPath);
 
-      if (stat.isFile) return new FileEntry(this.root, [...path]);
-      if (stat.isDirectory) return new DirectoryEntry(this.root, [...path]);
+      if (stat.isFile) return new FileEntry(this, [...path]);
+      if (stat.isDirectory) return new DirectoryEntry(this, [...path]);
 
       return null;
     } catch {

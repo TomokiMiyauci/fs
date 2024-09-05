@@ -1,16 +1,16 @@
-import type { FileEntry as IFileEntry } from "@miyauci/fs";
+import type { FileEntry as IFileEntry, FileSystem } from "@miyauci/fs";
 import { BaseEntry } from "./util.ts";
 import { DirectoryEntry } from "./directory_entry.ts";
 
 export class FileEntry extends BaseEntry implements IFileEntry {
-  constructor(root: string, path: string[]) {
-    super(root, path);
+  constructor(fileSystem: FileSystem, path: string[]) {
+    super(fileSystem, path);
   }
 
   get parent(): DirectoryEntry | null {
     const head = this.path.slice(0, -1);
 
-    return head.length ? new DirectoryEntry(this.root, head) : null;
+    return head.length ? new DirectoryEntry(this.fileSystem, head) : null;
   }
 
   get modificationTimestamp(): number {

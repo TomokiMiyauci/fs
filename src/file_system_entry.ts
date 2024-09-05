@@ -1,9 +1,10 @@
 import type { PermissionState } from "@miyauci/permissions";
 import type { List, Set } from "@miyauci/infra";
 import type { FileSystemLocator } from "./file_system_locator.ts";
+import type { FileSystem } from "./file_system.ts";
 
 /**
- * @ignore
+ * @internal
  */
 interface BaseEntry {
   /**
@@ -15,6 +16,11 @@ interface BaseEntry {
    * [File System Standard](https://whatpr.org/fs/165.html#entry-parent)
    */
   readonly parent: DirectoryEntry | null;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-entry-file-system)
+   */
+  readonly fileSystem: FileSystem;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-query-access)

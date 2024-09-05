@@ -3,11 +3,6 @@ import {
   createNewFileSystemDirectoryHandle,
   type FileSystemDirectoryHandle,
 } from "../src/file_system_directory_handle.ts";
-import type {
-  DirectoryLocator,
-  FileLocator,
-  FileSystemLocator,
-} from "../src/file_system_locator.ts";
 import {
   type FileSystem,
   type FileSystemObservation,
@@ -106,14 +101,9 @@ export class VirtualFileSystem implements FileSystem {
 
     if (!source) return null;
 
-    if (source instanceof Map) {
-      return new DirectoryEntry(
-        { kind: "directory", path, fileSystem: this },
-        this.vfs,
-      );
-    }
+    if (source instanceof Map) return new DirectoryEntry(this, path, this.vfs);
 
-    return new FileEntry({ kind: "file", path, fileSystem: this }, this.vfs);
+    return new FileEntry(this, path, this.vfs);
   }
 
   root: string = "";
@@ -164,30 +154,33 @@ export class VirtualFileSystem implements FileSystem {
 
 class DirectoryEntry implements IDirectoryEntry {
   protected vfs: _VirtualFileSystem;
-  protected locator: DirectoryLocator;
-  constructor(locator: DirectoryLocator, vfs: _VirtualFileSystem) {
+  protected path: FileSystemPath;
+  constructor(
+    fileSystem: FileSystem,
+    path: FileSystemPath,
+    vfs: _VirtualFileSystem,
+  ) {
     this.vfs = vfs;
-    this.locator = locator;
+    this.path = path;
+    this.fileSystem = fileSystem;
   }
   get children(): Effector {
-    return new Effector(this.locator, this.vfs);
+    return new Effector(this.fileSystem, this.path, this.vfs);
   }
 
   get name(): string {
-    return this.locator.path[this.locator.path.size - 1];
+    return this.path[this.path.size - 1];
   }
 
   get parent(): DirectoryEntry | null {
-    const head = [...this.locator.path].slice(0, -1);
+    const head = [...this.path].slice(0, -1);
 
     return head.length
-      ? new DirectoryEntry({
-        kind: "directory",
-        path: new List(head),
-        fileSystem: this.locator.fileSystem,
-      }, this.vfs)
+      ? new DirectoryEntry(this.fileSystem, new List(head), this.vfs)
       : null;
   }
+
+  readonly fileSystem: FileSystem;
 
   queryAccess(): FileSystemAccessResult {
     return { permissionState: "granted", errorName: "" };
@@ -202,23 +195,29 @@ class Effector implements
     Set<FileSystemEntry>,
     "append" | "remove" | "isEmpty" | typeof Symbol.iterator
   > {
+  protected fileSystem: FileSystem;
   protected vfs: _VirtualFileSystem;
-  protected locator: FileSystemLocator;
+  protected path: FileSystemPath;
 
-  constructor(locator: FileSystemLocator, vfs: _VirtualFileSystem) {
+  constructor(
+    fileSystem: FileSystem,
+    path: FileSystemPath,
+    vfs: _VirtualFileSystem,
+  ) {
     this.vfs = vfs;
-    this.locator = locator;
+    this.path = path;
+    this.fileSystem = fileSystem;
   }
 
   append(item: FileSystemEntry) {
-    const paths = [...this.locator.path].concat(item.name);
+    const paths = [...this.path].concat(item.name);
 
     if (isDirectoryEntry(item)) this.vfs.createDirectory(paths);
     else this.vfs.createFile(paths);
   }
 
   remove(item: FileSystemEntry) {
-    const paths = [...this.locator.path].concat(item.name);
+    const paths = [...this.path].concat(item.name);
 
     this.vfs.remove(paths);
   }
@@ -230,22 +229,14 @@ class Effector implements
   }
 
   *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
-    for (const item of this.vfs.readDirectory([...this.locator.path])) {
-      const path = this.locator.path.clone();
+    for (const item of this.vfs.readDirectory([...this.path])) {
+      const path = this.path.clone();
       path.append(item.name);
 
       if (item.isFile) {
-        yield new FileEntry({
-          kind: "file",
-          fileSystem: this.locator.fileSystem,
-          path,
-        }, this.vfs);
+        yield new FileEntry(this.fileSystem, path, this.vfs);
       } else {
-        yield new DirectoryEntry({
-          kind: "directory",
-          fileSystem: this.locator.fileSystem,
-          path,
-        }, this.vfs);
+        yield new DirectoryEntry(this.fileSystem, path, this.vfs);
       }
     }
   }
@@ -253,12 +244,15 @@ class Effector implements
 
 class FileEntry implements IFileEntry {
   constructor(
-    protected locator: FileLocator,
+    fileSystem: FileSystem,
+    protected path: FileSystemPath,
     protected vfs: _VirtualFileSystem,
-  ) {}
+  ) {
+    this.fileSystem = fileSystem;
+  }
 
   get paths(): string[] {
-    return [...this.locator.path];
+    return [...this.path];
   }
 
   get modificationTimestamp() {
@@ -266,18 +260,16 @@ class FileEntry implements IFileEntry {
   }
 
   get name(): string {
-    return this.locator.path[this.locator.path.size - 1];
+    return this.path[this.path.size - 1];
   }
+
+  readonly fileSystem: FileSystem;
 
   get parent(): DirectoryEntry | null {
     const head = this.paths.slice(0, -1);
 
     return head.length
-      ? new DirectoryEntry({
-        kind: "directory",
-        path: new List(head),
-        fileSystem: this.locator.fileSystem,
-      }, this.vfs)
+      ? new DirectoryEntry(this.fileSystem, new List(head), this.vfs)
       : null;
   }
 
