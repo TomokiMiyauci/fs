@@ -8,6 +8,7 @@ import {
   type FileSystemDirectoryHandle,
   type FileSystemEntry,
   type FileSystemEvent,
+  type FileSystemHandleKind,
   type FileSystemObservation,
   type FileSystemPath,
   notifyObservations,
@@ -107,9 +108,9 @@ export class LocalFileSystem extends FileSystem {
     super(rootPath);
 
     this.#listener = (ev: CustomEvent<Deno.FsEvent>): void => {
-      const e = events(ev.detail, rootPath);
+      const events = FsEventConverter.toFileSystemEvents(rootPath, ev.detail);
 
-      notifyObservations(this, new List(e));
+      notifyObservations(this, new List(events));
     };
 
     this.#watcher = new Watcher(rootPath, { recursive: true });
@@ -158,46 +159,54 @@ const allEvents = [
   "remove",
 ] satisfies Deno.FsEvent["kind"][];
 
-function events(ev: Deno.FsEvent, root: string): FileSystemEvent[] {
-  return ev.paths.map((path) => {
+export class FsEventConverter {
+  static toFileSystemEvents(
+    root: string,
+    event: Deno.FsEvent,
+  ): FileSystemEvent[] {
+    return event.paths.map((path) =>
+      this.toFileSystemEvent({ path, kind: event.kind, root })
+    );
+  }
+
+  static toFileSystemEvent({ path, root, kind }: {
+    path: string;
+    root: string;
+    kind: Deno.FsEvent["kind"];
+  }): FileSystemEvent {
     const info = safeStatSync(path);
-
-    const entryType = info ? typeEntry(info) : null;
-
+    const entryType = info ? this.toEntryType(info) : null;
     const relativePath = path.replace(root, "");
     const segments = relativePath.split("/");
-
     const modifiedPath = new List(segments);
-    const type = kind(ev.kind);
+    const type = kindMap[kind];
 
     return { modifiedPath, type, fromPath: null, entryType };
-  });
-}
+  }
 
-function typeEntry(info: Deno.FileInfo) {
-  if (info.isDirectory) return "directory";
-  if (info.isFile) return "file";
+  static toEntryType(
+    info: Pick<Deno.FileInfo, "isDirectory" | "isFile">,
+  ): FileSystemHandleKind | null {
+    if (info.isDirectory) return "directory";
+    if (info.isFile) return "file";
 
-  return null;
-}
-
-function kind(kind: Deno.FsEvent["kind"]): FileSystemChangeType {
-  switch (kind) {
-    case "any":
-    case "access":
-    case "other":
-      return "unknown";
-
-    case "create":
-      return "appeared";
-    case "modify":
-      return "modified";
-    case "remove":
-      return "disappeared";
-    case "rename":
-      return "moved";
+    return null;
   }
 }
+
+const kindMap = {
+  any: "unknown",
+  access: "unknown",
+  other: "unknown",
+  create: "appeared",
+  modify: "modified",
+  remove: "disappeared",
+  rename: "moved",
+} satisfies KindMap;
+
+type KindMap = {
+  [k in Deno.FsEvent["kind"]]: FileSystemChangeType;
+};
 
 interface FsCallback {
   (event: CustomEvent<Deno.FsEvent>): void;
