@@ -1,5 +1,5 @@
 import { statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, parse, resolve } from "node:path";
 import { type FSWatcher, watch } from "chokidar";
 import {
   createNewFileSystemDirectoryHandle,
@@ -13,6 +13,8 @@ import {
 import { List, Set } from "@miyauci/infra";
 import { DirectoryEntry, FileEntry } from "./entry.ts";
 import { createEvent } from "./util.ts";
+import { Msg } from "../constant.ts";
+import { isDirectoryEntry } from "../algorithm.ts";
 
 /** {@link IFileSystem File system} for Node.js runtime. */
 export class FileSystem implements IFileSystem {
@@ -79,6 +81,8 @@ export class FileSystem implements IFileSystem {
  * ```
  */
 export class LocalFileSystem extends FileSystem {
+  #base: string;
+
   /**
    * If {@link root} is not specified, root becomes the current working directory.
    *
@@ -97,15 +101,37 @@ export class LocalFileSystem extends FileSystem {
    * ```
    */
   constructor(root: string = "") {
-    super(resolve(root));
+    const fullPath = resolve(root);
+    const { dir: rootPath, base } = parse(fullPath);
+
+    super(rootPath);
+
+    this.#base = base;
   }
 
   /**
    * Returns the root directory of the local file system.
+   *
+   * @throws {DOMException}
+   * - If the entry of {@link root} does not exist.
+   * - If the entry of {@link root} is not directory.
    */
   getDirectory(): Promise<FileSystemDirectoryHandle> {
+    const path = new List([this.#base]);
+    const entry = this.locateEntry(path);
+
+    if (!entry) {
+      return Promise.reject(new DOMException(Msg.NotFound, "NotFound"));
+    }
+
+    if (!isDirectoryEntry(entry)) {
+      return Promise.reject(
+        new DOMException(Msg.Mismatch, "TypeMismatchError"),
+      );
+    }
+
     return Promise.resolve(
-      createNewFileSystemDirectoryHandle(this, new List([""])),
+      createNewFileSystemDirectoryHandle(this, path),
     );
   }
 
