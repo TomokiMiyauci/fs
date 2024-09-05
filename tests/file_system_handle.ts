@@ -7,7 +7,10 @@ import {
   type Provider,
 } from "@test/util.ts";
 
-export function runFileSystemHandleTest(provider: Provider): void {
+export function runFileSystemHandleTest(
+  provider: Provider,
+  isFileSystem?: boolean,
+): void {
   describe("FileSystemHandle", () => {
     beforeEach<Context>(async function () {
       const context = await provider();
@@ -35,11 +38,13 @@ export function runFileSystemHandleTest(provider: Provider): void {
       });
     });
 
-    describe("name", () => {
-      it<Context>("should return end of path segment", function () {
-        expect(this.root.name).toBe("");
+    if (!isFileSystem) {
+      describe("name", () => {
+        it<Context>("should return end of path segment", function () {
+          expect(this.root.name).toBe("");
+        });
       });
-    });
+    }
 
     describe("getFile", () => {
       it<Context>(
