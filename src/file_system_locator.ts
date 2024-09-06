@@ -31,7 +31,7 @@ export interface FileLocator extends BaseLocator {
 export type FileSystemLocator = FileLocator | DirectoryLocator;
 
 /**
- * @ignore
+ * @internal
  */
 interface BaseLocator {
   /**

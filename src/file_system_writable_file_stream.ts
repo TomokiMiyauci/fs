@@ -63,21 +63,21 @@ export class FileSystemWritableFileStream
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-file)
    *
-   * @ignore
+   * @internal
    */
   protected file!: FileEntry;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-seekoffset)
    *
-   * @ignore
+   * @internal
    */
   protected seekOffset: number = 0;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-buffer)
    *
-   * @ignore
+   * @internal
    */
   protected buffer: Uint8Array = new Uint8Array(0);
 

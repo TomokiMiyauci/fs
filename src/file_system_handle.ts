@@ -14,7 +14,7 @@ export class FileSystemHandle {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemhandle-locator)
    *
-   * @ignore
+   * @internal
    */
   protected locator!: FileSystemLocator;
 

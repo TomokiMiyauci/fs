@@ -47,14 +47,14 @@ export class FileSystemObserver {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver-callback)
    *
-   * @ignore
+   * @internal
    */
   protected callback: FileSystemObserverCallback;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemobserver-observations)
    *
-   * @ignore
+   * @internal
    */
   protected observations: Map<FileSystemLocator, FileSystemObservation>;
 

@@ -22,21 +22,21 @@ export class FileSystemSyncAccessHandle {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-state)
    *
-   * @ignore
+   * @internal
    */
   protected state: "open" | "close" = "open";
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file)
    *
-   * @ignore
+   * @internal
    */
   protected file!: FileEntry;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file-position-cursor)
    *
-   * @ignore
+   * @internal
    */
   protected filePositionCursor: number = 0;
 
