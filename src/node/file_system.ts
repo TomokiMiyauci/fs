@@ -57,6 +57,9 @@ export class FileSystem implements IFileSystem {
     }
   }
 
+  /**
+   * Return {@link FileSystemPath path} from {@link FileSystemEntry entry}.
+   */
   getPath(entry: FileSystemEntry): FileSystemPath {
     const path = new List([entry.name]);
     let parent = entry.parent;
