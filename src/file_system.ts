@@ -29,7 +29,12 @@ export interface FileSystem {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-root)
    */
-  root: string;
+  readonly root: string;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-observations)
+   */
+  readonly observations: Set<FileSystemObservation>;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-locate-an-entry)
@@ -40,11 +45,6 @@ export interface FileSystem {
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-get-the-path)
    */
   getPath(entry: FileSystemEntry): FileSystemPath;
-
-  /**
-   * [File System Standard](https://whatpr.org/fs/165.html#file-system-observations)
-   */
-  observations: Set<FileSystemObservation>;
 }
 
 /**
@@ -361,17 +361,17 @@ export interface FileSystemObservation {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-observation-observer)
    */
-  observer: FileSystemObserver;
+  readonly observer: FileSystemObserver;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-observation-root-handle)
    */
-  rootHandle: FileSystemHandle;
+  readonly rootHandle: FileSystemHandle;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-observation-recursive)
    */
-  recursive: boolean;
+  readonly recursive: boolean;
 }
 
 /**
@@ -381,22 +381,22 @@ export interface FileSystemEvent {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-file-system-event-type)
    */
-  type: FileSystemChangeType;
+  readonly type: FileSystemChangeType;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-file-system-event-entry-type)
    */
-  entryType: FileSystemHandleKind | null;
+  readonly entryType: FileSystemHandleKind | null;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-file-system-event-modified-path)
    */
-  modifiedPath: FileSystemPath;
+  readonly modifiedPath: FileSystemPath;
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-file-system-event-from-path)
    */
-  fromPath: FileSystemPath | null;
+  readonly fromPath: FileSystemPath | null;
 }
 
 function assertNonNullable<T>(

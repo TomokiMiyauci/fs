@@ -6,9 +6,9 @@ class UserAgent {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#file-system-queue)
    */
-  fileSystemQueue: ParallelQueue = new ParallelQueue();
+  readonly fileSystemQueue: ParallelQueue = new ParallelQueue();
 
-  storageTask: ParallelQueue = new ParallelQueue();
+  readonly storageTask: ParallelQueue = new ParallelQueue();
 }
 
 class ParallelQueue {
