@@ -1,3 +1,11 @@
+# [1.0.0-beta.21](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.20...1.0.0-beta.21) (2024-09-06)
+
+
+### Features
+
+* **file_system_entry:** add `fileSystem` field to `FileSystemEntry` ([8bebcdb](https://github.com/TomokiMiyauci/fs/commit/8bebcdb9110a8502db7b8e703e591e178f6369f7))
+* **file_system:** add `getPath` field to `FileSystem` interface ([be0f10b](https://github.com/TomokiMiyauci/fs/commit/be0f10bfd7b6b1a74cf1ffbb0779bd56fbdcc7b6))
+
 # [1.0.0-beta.20](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.19...1.0.0-beta.20) (2024-09-05)
 
 
