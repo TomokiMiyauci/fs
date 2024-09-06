@@ -2,6 +2,7 @@ import { List, range } from "@miyauci/infra";
 import type { FileSystemEntry } from "./file_system_entry.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
 import type { FileSystemHandleKind } from "./file_system_handle.ts";
+import { isFileEntry } from "./algorithm.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#directory-locator)
@@ -154,16 +155,23 @@ export function locateEntry(
   return entry;
 }
 
-// export function getLocator(entry: FileSystemEntry): FileSystemLocator {
-//   // Let fileSystem be entry’s file system.
+/**
+ * [File System Standard](https://whatpr.org/fs/165.html#getting-the-locator)
+ */
+export function getLocator(entry: FileSystemEntry): FileSystemLocator {
+  // 1. Let fileSystem be entry’s file system.
+  const fileSystem = entry.fileSystem;
 
-//   // Let path be the result of running fileSystem’s get the path given entry.
+  // 2. Let path be the result of running fileSystem’s get the path given entry.
+  const path = fileSystem.getPath(entry);
 
-//   // Let locator be a file system locator whose path is path and whose file system is fileSystem.
+  // 4. If entry is a file entry, set locator’s kind to "file".
+  // 5. If entry is a directory entry, set locator’s kind to "directory".
+  const kind = isFileEntry(entry) ? "file" : "directory";
 
-//   // If entry is a file entry, set locator’s kind to "file".
+  // 3. Let locator be a file system locator whose path is path and whose file system is fileSystem.
+  const locator = { path, fileSystem, kind } satisfies FileSystemLocator;
 
-//   // If entry is a directory entry, set locator’s kind to "directory".
-
-//   // Return entry.
-// }
+  // 6. Return entry.
+  return locator;
+}

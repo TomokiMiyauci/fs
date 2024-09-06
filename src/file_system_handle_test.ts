@@ -19,6 +19,9 @@ describe("isInBucketFileSystem", () => {
     const fileHandle = createNewFileSystemHandle(
       {
         locateEntry: () => null,
+        getPath() {
+          return new List([""]);
+        },
         observations: new Set(),
         root: "",
       },
@@ -33,6 +36,9 @@ describe("isInBucketFileSystem", () => {
     const fileHandle = createNewFileSystemHandle(
       {
         locateEntry: () => null,
+        getPath() {
+          return new List([""]);
+        },
         observations: new Set(),
         root: "",
       },

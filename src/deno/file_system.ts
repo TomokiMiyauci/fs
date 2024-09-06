@@ -59,6 +59,19 @@ export class FileSystem implements IFileSystem {
     }
   }
 
+  getPath(entry: FileSystemEntry): FileSystemPath {
+    const path = new List([entry.name]);
+    let parent = entry.parent;
+
+    while (parent) {
+      path.prepend(parent.name);
+
+      parent = parent.parent;
+    }
+
+    return path;
+  }
+
   /** Set of observing {@link FileSystemObservation}. */
   observations: Set<FileSystemObservation> = new Set();
 }

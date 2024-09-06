@@ -106,6 +106,19 @@ export class VirtualFileSystem implements FileSystem {
     return new FileEntry(this, path, this.vfs);
   }
 
+  getPath(entry: FileSystemEntry): FileSystemPath {
+    const path = new List([entry.name]);
+    let parent = entry.parent;
+
+    while (parent) {
+      path.prepend(parent.name);
+
+      parent = parent.parent;
+    }
+
+    return path;
+  }
+
   root: string = "";
   observations: Set<FileSystemObservation> = new Set();
 
