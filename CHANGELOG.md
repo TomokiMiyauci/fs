@@ -1,3 +1,12 @@
+# [1.0.0-beta.22](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.21...1.0.0-beta.22) (2024-09-06)
+
+
+### Features
+
+* **file_system_change_record:** change module type to class ([53ea951](https://github.com/TomokiMiyauci/fs/commit/53ea9512d9f742b232ec02fc6b5dac5184289891))
+* **file_system:** default to readonly for fields not specified in the specification ([6d162d2](https://github.com/TomokiMiyauci/fs/commit/6d162d206092a5e6cb264c0e10320f72ec500711))
+* **src:** change constructor to protected ([5119eea](https://github.com/TomokiMiyauci/fs/commit/5119eea2ebe4259ab30b3dfb3ecec37f6533fc15))
+
 # [1.0.0-beta.21](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.20...1.0.0-beta.21) (2024-09-06)
 
 
