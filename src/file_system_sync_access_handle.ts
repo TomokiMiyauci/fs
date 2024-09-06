@@ -42,6 +42,8 @@ export class FileSystemSyncAccessHandle {
    */
   protected filePositionCursor: number = 0;
 
+  protected constructor() {}
+
   /** Reads the contents of the file associated with handle into buffer, optionally at a given offset.
    * The file cursor is updated when {@link read} is called to point to the byte after the last byte read.
    *
@@ -349,8 +351,9 @@ function isUnsignedLongLong(value: number): boolean {
 export function createNewFileSystemSyncAccessHandle(
   file: FileEntry,
 ): FileSystemSyncAccessHandle {
+  // @ts-ignore Allow protected constructor construction
   // 1. Let handle be a new FileSystemSyncAccessHandle in realm.
-  const handle = new FileSystemSyncAccessHandle();
+  const handle: FileSystemSyncAccessHandle = new FileSystemSyncAccessHandle();
 
   // 2. Set handle’s [[file]] to file.
   handle["file"] = file;

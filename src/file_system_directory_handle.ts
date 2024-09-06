@@ -53,6 +53,7 @@ export interface FileSystemRemoveOptions {
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemdirectoryhandle)
  */
+// @ts-ignore Allow use for protected constructors
 @asynciterator({
   init(_, iterator): void {
     // 1. Set iterator’s past results to an empty set.
@@ -530,8 +531,9 @@ export function createChildFileSystemDirectoryHandle(
   parentLocator: FileSystemLocator,
   name: string,
 ): FileSystemDirectoryHandle {
+  // @ts-ignore Allow protected constructor construction
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
-  const handle = new FileSystemDirectoryHandle();
+  const handle: FileSystemDirectoryHandle = new FileSystemDirectoryHandle();
 
   // 2. Let childType be "directory".
   const childType = "directory";
@@ -561,8 +563,9 @@ export function createNewFileSystemDirectoryHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,
 ): FileSystemDirectoryHandle {
+  // @ts-ignore Allow protected constructor construction
   // 1. Let handle be a new FileSystemDirectoryHandle in realm.
-  const handle = new FileSystemDirectoryHandle();
+  const handle: FileSystemDirectoryHandle = new FileSystemDirectoryHandle();
 
   // 2. Set handle’s locator to a file system locator whose kind is "directory", file system is fileSystem, and path is path.
   handle["locator"] = { kind: "directory", fileSystem, path };

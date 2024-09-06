@@ -301,8 +301,9 @@ export function createChildFileSystemFileHandle(
   parentLocator: FileSystemLocator,
   name: string,
 ): FileSystemFileHandle {
+  // @ts-ignore Allow protected constructor construction
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new FileSystemFileHandle();
+  const handle: FileSystemFileHandle = new FileSystemFileHandle();
 
   // 2. Let childType be "file".
   const childType = "file";
@@ -332,8 +333,9 @@ export function createNewFileSystemFileHandle(
   fileSystem: FileSystem,
   path: FileSystemPath,
 ): FileSystemFileHandle {
+  // @ts-ignore Allow protected constructor construction
   // 1. Let handle be a new FileSystemFileHandle in realm.
-  const handle = new FileSystemFileHandle();
+  const handle: FileSystemFileHandle = new FileSystemFileHandle();
 
   // 2. Set handle’s locator to a file system locator whose kind is "file", file system is fileSystem, and path is path.
   handle["locator"] = { kind: "file", fileSystem, path };
