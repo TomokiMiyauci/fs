@@ -42,6 +42,9 @@ export class FileSystemSyncAccessHandle {
    */
   protected filePositionCursor: number = 0;
 
+  /**
+   * @ignore
+   */
   protected constructor() {}
 
   /** Reads the contents of the file associated with handle into buffer, optionally at a given offset.

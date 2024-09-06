@@ -36,6 +36,9 @@ export type FileSystemChangeType =
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemchangerecord)
  */
 export class FileSystemChangeRecord {
+  /**
+   * @ignore
+   */
   protected constructor() {}
 
   /** The handle that was passed to `FileSystemObserver.observe()`.

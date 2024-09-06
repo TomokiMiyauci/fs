@@ -11,6 +11,9 @@ export type FileSystemHandleKind = "directory" | "file";
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemhandle)
  */
 export class FileSystemHandle {
+  /**
+   * @ignore
+   */
   protected constructor() {}
 
   /**
