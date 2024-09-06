@@ -1,13 +1,22 @@
 import { List, range } from "@miyauci/infra";
 import type { FileSystemEntry } from "./file_system_entry.ts";
 import type { FileSystem, FileSystemPath } from "./file_system.ts";
-import type { FileSystemHandleKind } from "./file_system_handle.ts";
 import { isFileEntry } from "./algorithm.ts";
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#directory-locator)
  */
-export interface DirectoryLocator extends BaseLocator {
+export interface DirectoryLocator {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-path)
+   */
+  readonly path: FileSystemPath;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-root)
+   */
+  readonly fileSystem: FileSystem;
+
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandlekind-directory)
    */
@@ -17,7 +26,17 @@ export interface DirectoryLocator extends BaseLocator {
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#file-locator)
  */
-export interface FileLocator extends BaseLocator {
+export interface FileLocator {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-path)
+   */
+  readonly path: FileSystemPath;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#locator-root)
+   */
+  readonly fileSystem: FileSystem;
+
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemhandlekind-file)
    */
@@ -29,26 +48,6 @@ export interface FileLocator extends BaseLocator {
  * [File System Standard](https://whatpr.org/fs/165.html#file-system-locator)
  */
 export type FileSystemLocator = FileLocator | DirectoryLocator;
-
-/**
- * @internal
- */
-interface BaseLocator {
-  /**
-   * [File System Standard](https://whatpr.org/fs/165.html#locator-path)
-   */
-  readonly path: FileSystemPath;
-
-  /**
-   * [File System Standard](https://whatpr.org/fs/165.html#locator-kind)
-   */
-  readonly kind: FileSystemHandleKind;
-
-  /**
-   * [File System Standard](https://whatpr.org/fs/165.html#locator-root)
-   */
-  readonly fileSystem: FileSystem;
-}
 
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#locator-resolve)

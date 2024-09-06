@@ -4,9 +4,9 @@ import type { FileSystemLocator } from "./file_system_locator.ts";
 import type { FileSystem } from "./file_system.ts";
 
 /**
- * @internal
+ * [File System Standard](https://whatpr.org/fs/165.html#file)
  */
-interface BaseEntry {
+export interface FileEntry {
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-name)
    */
@@ -22,6 +22,28 @@ interface BaseEntry {
    */
   readonly fileSystem: FileSystem;
 
+  /** A number representing the number of milliseconds since the Unix Epoch.
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-modification-timestamp)
+   */
+  readonly modificationTimestamp: number;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-binary-data)
+   */
+  binaryData: Uint8Array;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock)
+   */
+  lock: "open" | "taken-exclusive" | "taken-shared";
+
+  /** A number representing the number shared locks that are taken at a given point in time
+   *
+   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-shared-lock-count)
+   */
+  sharedLockCount: number;
+
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#entry-query-access)
    */
@@ -34,36 +56,24 @@ interface BaseEntry {
 }
 
 /**
- * [File System Standard](https://whatpr.org/fs/165.html#file)
- */
-export interface FileEntry extends BaseEntry {
-  /**
-   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-binary-data)
-   */
-  binaryData: Uint8Array;
-
-  /** A number representing the number of milliseconds since the Unix Epoch.
-   *
-   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-modification-timestamp)
-   */
-  readonly modificationTimestamp: number;
-
-  /**
-   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-lock)
-   */
-  lock: "open" | "taken-exclusive" | "taken-shared";
-
-  /** A number representing the number shared locks that are taken at a given point in time
-   *
-   * [File System Standard](https://whatpr.org/fs/165.html#file-entry-shared-lock-count)
-   */
-  sharedLockCount: number;
-}
-
-/**
  * [File System Standard](https://whatpr.org/fs/165.html#directory)
  */
-export interface DirectoryEntry extends BaseEntry {
+export interface DirectoryEntry {
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-name)
+   */
+  readonly name: string;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-parent)
+   */
+  readonly parent: DirectoryEntry | null;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#file-system-entry-file-system)
+   */
+  readonly fileSystem: FileSystem;
+
   /** File system entries.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#directory-entry-children)
@@ -72,6 +82,16 @@ export interface DirectoryEntry extends BaseEntry {
     Set<FileSystemEntry>,
     "append" | "isEmpty" | "remove" | typeof Symbol.iterator
   >;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-query-access)
+   */
+  queryAccess(mode: "read" | "readwrite"): FileSystemAccessResult;
+
+  /**
+   * [File System Standard](https://whatpr.org/fs/165.html#entry-request-access)
+   */
+  requestAccess(mode: "read" | "readwrite"): FileSystemAccessResult;
 }
 
 /**
