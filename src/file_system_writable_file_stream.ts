@@ -68,6 +68,8 @@ export class FileSystemWritableFileStream
   protected file!: FileEntry;
 
   /**
+   * It is initially 0.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-seekoffset)
    *
    * @internal
@@ -75,6 +77,8 @@ export class FileSystemWritableFileStream
   protected seekOffset: number = 0;
 
   /**
+   * It is initially empty.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemwritablefilestream-buffer)
    *
    * @internal

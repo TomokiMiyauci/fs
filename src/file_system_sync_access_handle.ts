@@ -24,7 +24,7 @@ export class FileSystemSyncAccessHandle {
    *
    * @internal
    */
-  protected state: "open" | "close" = "open";
+  protected state!: "open" | "close";
 
   /**
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file)
@@ -34,6 +34,8 @@ export class FileSystemSyncAccessHandle {
   protected file!: FileEntry;
 
   /**
+   * Initialized at byte offset 0 from the top of the file.
+   *
    * [File System Standard](https://whatpr.org/fs/165.html#filesystemsyncaccesshandle-file-position-cursor)
    *
    * @internal
