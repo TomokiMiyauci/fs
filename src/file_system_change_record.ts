@@ -35,33 +35,35 @@ export type FileSystemChangeType =
 /**
  * [File System Standard](https://whatpr.org/fs/165.html#filesystemchangerecord)
  */
-export interface FileSystemChangeRecord {
+export class FileSystemChangeRecord {
+  protected constructor() {}
+
   /** The handle that was passed to `FileSystemObserver.observe()`.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-root)
    */
-  readonly root: FileSystemHandle;
+  readonly root!: FileSystemHandle;
 
   /** The path of {@link changedHandle} relative to {@link root}.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-changedhandle)
    */
-  readonly changedHandle: FileSystemHandle;
+  readonly changedHandle!: FileSystemHandle;
 
   /** The type of change.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-type)
    */
-  readonly type: FileSystemChangeType;
+  readonly type!: FileSystemChangeType;
 
   /** The path of `changedHandle` relative to `root` */
-  readonly relativePathComponents: readonly string[];
+  readonly relativePathComponents!: readonly string[];
 
   /** If {@link type} is "moved", this corresponds to the former path of {@link changedHandle} relative to {@link root}, if the former path is known; otherwise null.
    *
    * [File System Standard](https://whatpr.org/fs/165.html#dom-filesystemchangerecord-relativepathmovedfrom)
    */
-  readonly relativePathMovedFrom: readonly string[] | null;
+  readonly relativePathMovedFrom!: readonly string[] | null;
 }
 
 /**
@@ -98,22 +100,34 @@ export function createNewFileSystemChangeRecord(
 
   // 7. Let realm be changedHandle’s relevant realm.
 
+  // @ts-ignore Allow protected constructor construction
   // 8. Let record be a new FileSystemChangeRecord in realm.
-  const record = {
-    // 9. Set record’s root to root.
-    root,
-    // 10. Set record’s changedHandle to changedHandle.
-    changedHandle,
-    // 11. Set record’s relativePathComponents to relativePathComponents.
-    relativePathComponents: [...relativePathComponents ?? []],
-    // 12. Set record’s type to type.
-    type,
-    // 13. Set record’s relativePathMovedFrom to relativePathMovedFrom.
-    relativePathMovedFrom: relativePathMovedFrom
-      ? [...relativePathMovedFrom]
-      : null,
-  } satisfies FileSystemChangeRecord;
+  const record: Writable<FileSystemChangeRecord> = new FileSystemChangeRecord();
+
+  // 9. Set record’s root to root.
+  record.root = root;
+
+  // 10. Set record’s changedHandle to changedHandle.
+  record.changedHandle = changedHandle;
+
+  // 11. Set record’s relativePathComponents to relativePathComponents.
+  record.relativePathComponents = [...relativePathComponents ?? []];
+
+  // 12. Set record’s type to type.
+  record.type = type;
+
+  // 13. Set record’s relativePathMovedFrom to relativePathMovedFrom.
+  record.relativePathMovedFrom = relativePathMovedFrom
+    ? [...relativePathMovedFrom]
+    : null;
 
   // 14. Return record.
   return record;
 }
+
+/**
+ * @internal
+ */
+type Writable<T> = {
+  -readonly [P in keyof T]: T[P];
+};
