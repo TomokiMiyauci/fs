@@ -66,22 +66,42 @@ describe("createNewFileSystemChangeRecord", () => {
     expect(record.root).toBe(rootHandle);
   });
 
+  it("should return changed record", () => {
+    const record = createNewFileSystemChangeRecord(
+      {
+        observer: new FileSystemObserver(() => {}),
+        recursive: false,
+        rootHandle,
+      },
+      changedHandle,
+      "appeared",
+      null,
+    );
+
+    expect(record.type).toBe("appeared");
+    expect(record.changedHandle).toBe(changedHandle);
+    expect(record.relativePathComponents).toEqual(["file.txt"]);
+    expect(record.relativePathMovedFrom).toBe(null);
+    expect(record.root).toBe(rootHandle);
+  });
+
   it("should specify relativePathMovedFrom", () => {
+    const changedHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List(["file.txt"]),
+      "file",
+    );
     const record = createNewFileSystemChangeRecord(
       { observer, recursive: false, rootHandle },
       changedHandle,
-      "moved",
-      {
-        kind: "file",
-        fileSystem,
-        path: new List(["", "changed.txt"]),
-      },
+      "modified",
+      null,
     );
 
-    expect(record.type).toBe("moved");
+    expect(record.type).toBe("modified");
     expect(record.changedHandle).toBe(changedHandle);
-    expect(record.relativePathComponents).toEqual(["file.txt"]);
-    expect(record.relativePathMovedFrom).toEqual(["changed.txt"]);
+    expect(record.relativePathComponents).toEqual([]);
+    expect(record.relativePathMovedFrom).toBe(null);
     expect(record.root).toBe(rootHandle);
   });
 });
