@@ -9,7 +9,7 @@
       "jsr:@miyauci/upsert@^1.3.0": "jsr:@miyauci/upsert@1.3.0",
       "jsr:@std/assert@^1.0.1": "jsr:@std/assert@1.0.2",
       "jsr:@std/assert@^1.0.2": "jsr:@std/assert@1.0.2",
-      "jsr:@std/async@^1.0.3": "jsr:@std/async@1.0.3",
+      "jsr:@std/async@^1.0.5": "jsr:@std/async@1.0.5",
       "jsr:@std/bytes": "jsr:@std/bytes@1.0.2",
       "jsr:@std/bytes@^1.0.2": "jsr:@std/bytes@1.0.2",
       "jsr:@std/data-structures@^1.0.1": "jsr:@std/data-structures@1.0.1",
@@ -60,8 +60,8 @@
           "jsr:@std/internal@^1.0.1"
         ]
       },
-      "@std/async@1.0.3": {
-        "integrity": "6ed64678db43451683c6c176a21426a2ccd21ba0269ebb2c36133ede3f165792"
+      "@std/async@1.0.5": {
+        "integrity": "31d68214bfbb31bd4c6022401d484e3964147c76c9220098baa703a39b6c2da6"
       },
       "@std/bytes@1.0.2": {
         "integrity": "fbdee322bbd8c599a6af186a1603b3355e59a5fb1baa139f8f4c3c9a1b3e3d57"
@@ -204,7 +204,7 @@
       "jsr:@miyauci/format@^1.1.0",
       "jsr:@miyauci/infra@^1.0.0",
       "jsr:@std/assert@^1.0.2",
-      "jsr:@std/async@^1.0.3",
+      "jsr:@std/async@^1.0.5",
       "jsr:@std/bytes@^1.0.2",
       "jsr:@std/expect@^1.0.0",
       "jsr:@std/fs@^1.0.1",
