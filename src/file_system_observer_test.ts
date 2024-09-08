@@ -52,6 +52,63 @@ describe("FileSystemObserver", () => {
     this.observer = new FileSystemObserver(() => {});
   });
 
+  describe("observe", () => {
+    it<Context>(
+      "should throw DOMException if located entry's permission is defined",
+      async function () {
+        const fileSystem = new FileSystem();
+
+        fileSystem.locateEntry = () => {
+          return {
+            name: "",
+            parent: null,
+            fileSystem,
+            get children(): Set<FileSystemEntry> {
+              return new Set();
+            },
+            queryAccess() {
+              return { permissionState: "denied", errorName: "" };
+            },
+            requestAccess() {
+              return { permissionState: "denied", errorName: "" };
+            },
+          };
+        };
+
+        const dir = createNewFileSystemHandle(
+          fileSystem,
+          new List([""]),
+          "directory",
+        );
+
+        await expect(this.observer.observe(dir)).rejects.toThrow(
+          DOMException,
+        );
+      },
+    );
+
+    it<Context>(
+      "should throw DOMException if located entry's permission is defined",
+      async function () {
+        const fileSystem = new FileSystem();
+
+        fileSystem.locateEntry = () => {
+          return null;
+        };
+
+        const dir = createNewFileSystemHandle(
+          fileSystem,
+          new List([""]),
+          "directory",
+        );
+
+        await expect(this.observer.observe(dir)).rejects.toThrow(
+          DOMException,
+        );
+      },
+    );
+  });
+
   describe("unobserve", () => {
     it<Context>(
       "should do nothing if observations is empty",
