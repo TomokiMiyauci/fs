@@ -2,7 +2,7 @@ import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List, Set } from "@miyauci/infra";
 import { delay } from "@std/async/delay";
-import { isInScope, sendError } from "./file_system.ts";
+import { isInScope, notify, sendError } from "./file_system.ts";
 import type {
   FileSystem as IFileSystem,
   FileSystemObservation as IFileSystemObservation,
@@ -152,5 +152,116 @@ describe("isInScope", () => {
       ),
       new FileSystemObservation(fileSystem, new List([""]), true),
     )).toBeTruthy();
+  });
+});
+
+describe("notify", () => {
+  it("should do nothing if eventType is modified and eventEntryType is directory", async () => {
+    const fileSystem = new FileSystem();
+    const rootHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+
+    const records: FileSystemChangeRecord[] = [];
+
+    notify(
+      {
+        observer: new FileSystemObserver((allRecords) => {
+          records.push(...allRecords);
+        }),
+        recursive: false,
+        rootHandle,
+      },
+      new List([{
+        type: "modified",
+        entryType: "directory",
+        fromPath: null,
+        modifiedPath: new List(["dir"]),
+      }]),
+      fileSystem,
+    );
+
+    await delay(0);
+
+    expect(records.length).toBe(0);
+  });
+
+  it("should infer entry type if event's entry type is null", async () => {
+    const fileSystem = new FileSystem();
+    const rootHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+    const observation = {
+      observer: new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      }),
+      recursive: false,
+      rootHandle,
+    } satisfies FileSystemObservation;
+
+    const records: FileSystemChangeRecord[] = [];
+
+    notify(
+      observation,
+      new List([{
+        type: "appeared",
+        entryType: null,
+        fromPath: null,
+        modifiedPath: new List([""]),
+      }]),
+      fileSystem,
+    );
+
+    await delay(0);
+
+    expect(records.length).toBe(1);
+
+    const record = records[0];
+    expect(record.changedHandle.kind).toBe("directory");
+    expect(record).toEqual(
+      createNewFileSystemChangeRecord(
+        observation,
+        createNewFileSystemHandle(fileSystem, new List([""]), "directory"),
+        "appeared",
+        null,
+      ),
+    );
+  });
+
+  it("should skip event of moved what is not in scope", async () => {
+    const fileSystem = new FileSystem();
+    const rootHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+    const observation = {
+      observer: new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      }),
+      recursive: false,
+      rootHandle,
+    } satisfies FileSystemObservation;
+
+    const records: FileSystemChangeRecord[] = [];
+
+    notify(
+      observation,
+      new List([{
+        type: "moved",
+        entryType: null,
+        fromPath: new List([]),
+        modifiedPath: new List([]),
+      }]),
+      new FileSystem(),
+    );
+
+    await delay(0);
+
+    expect(records.length).toBe(0);
   });
 });
