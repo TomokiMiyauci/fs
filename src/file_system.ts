@@ -278,6 +278,7 @@ export function notify(
     // 16. Append record to records.
     records.append(record);
 
+    // TODO: Probably it should not be a comparison of references
     // 17. If eventType is equal to "disappeared" and changedHandle’s locator is equal to observationLocator:
     if (
       eventType === "disappeared" &&

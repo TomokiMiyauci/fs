@@ -270,7 +270,7 @@ describe("notify", () => {
     expect(records.length).toBe(0);
   });
 
-  it("should emit moved file event", async () => {
+  it("should emit appeared event if the event is moved and it's path is not from path in scope", async () => {
     const fileSystem = new FileSystem();
 
     const fileEntry = {
@@ -312,7 +312,10 @@ describe("notify", () => {
     fileSystem.locateEntry = (path: FileSystemPath) => {
       if (path.size === 1 && path[0] === "") return rootEntry;
 
-      if (path.size === 2 && path[0] === "" && path[1] === "file.txt") {
+      if (
+        path.size === 3 && path[0] === "" && path[1] === "dir" &&
+        path[2] === "file.txt"
+      ) {
         return fileEntry;
       }
 
@@ -343,7 +346,7 @@ describe("notify", () => {
       new List([{
         type: "moved",
         entryType: "file",
-        fromPath: new List(["", "file.txt"]),
+        fromPath: new List(["", "dir", "file.txt"]),
         modifiedPath: new List(["", "moved.txt"]),
       }]),
       fileSystem,
@@ -359,8 +362,108 @@ describe("notify", () => {
           new List(["", "moved.txt"]),
           "file",
         ),
-        "moved",
-        { fileSystem, kind: "file", path: new List(["", "file.txt"]) },
+        "appeared",
+        { fileSystem, kind: "file", path: new List(["file.txt"]) },
+      ),
+    ]);
+  });
+
+  it("should emit disappeared event if the event is moved and it's path is not modified path in scope", async () => {
+    const fileSystem = new FileSystem();
+
+    const fileEntry = {
+      fileSystem,
+      binaryData: new Uint8Array(),
+      lock: "open",
+      sharedLockCount: 0,
+      modificationTimestamp: Date.now(),
+      name: "file.txt",
+      get parent() {
+        return rootEntry;
+      },
+      queryAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+      requestAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+    } satisfies FileEntry;
+    const rootEntry = {
+      fileSystem,
+      get children(): Set<FileSystemEntry> {
+        return new Set([fileEntry]);
+      },
+      parent: null,
+      queryAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+      requestAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+      name: "",
+    } satisfies DirectoryEntry;
+    const movedEntry = {
+      ...fileEntry,
+      name: "moved.txt",
+    };
+
+    fileSystem.locateEntry = (path: FileSystemPath) => {
+      if (path.size === 1 && path[0] === "") return rootEntry;
+
+      if (
+        path.size === 2 && path[0] === "" && path[1] === "file.txt"
+      ) {
+        return fileEntry;
+      }
+
+      if (
+        path.size === 3 && path[0] === "" && path[1] === "dir" &&
+        path[2] === "moved.txt"
+      ) {
+        return movedEntry;
+      }
+
+      return null;
+    };
+
+    const rootHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+    const observation = {
+      observer: new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      }),
+      recursive: false,
+      rootHandle,
+    } satisfies FileSystemObservation;
+
+    const records: FileSystemChangeRecord[] = [];
+
+    notify(
+      observation,
+      new List([{
+        type: "moved",
+        entryType: "file",
+        fromPath: new List(["", "file.txt"]),
+        modifiedPath: new List(["", "dir", "moved.txt"]),
+      }]),
+      fileSystem,
+    );
+
+    await delay(0);
+
+    expect(records).toEqual([
+      createNewFileSystemChangeRecord(
+        observation,
+        createNewFileSystemHandle(
+          fileSystem,
+          new List(["", "file.txt"]),
+          "file",
+        ),
+        "disappeared",
+        { fileSystem, kind: "file", path: new List(["dir", "file.txt"]) },
       ),
     ]);
   });
