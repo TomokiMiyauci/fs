@@ -1,7 +1,8 @@
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List, Set } from "@miyauci/infra";
-import { isInScope } from "./file_system.ts";
+import { delay } from "@std/async/delay";
+import { isInScope, sendError } from "./file_system.ts";
 import type {
   FileSystem as IFileSystem,
   FileSystemObservation as IFileSystemObservation,
@@ -10,6 +11,10 @@ import { FileSystemObserver } from "./file_system_observer.ts";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
 import type { FileSystemEntry } from "./file_system_entry.ts";
+import {
+  createNewFileSystemChangeRecord,
+  type FileSystemChangeRecord,
+} from "./file_system_change_record.ts";
 
 class FileSystem implements IFileSystem {
   getPath(entry: FileSystemEntry) {
@@ -44,6 +49,50 @@ class FileSystemObservation implements IFileSystemObservation {
   observer: FileSystemObserver = new FileSystemObserver(() => {});
   rootHandle: FileSystemHandle;
 }
+
+describe("sendError", () => {
+  it("should do nothing if observations is empty", () => {
+    const observations = new Set<FileSystemObservation>();
+    const fileSystem = new FileSystem();
+    fileSystem["observations"] = observations;
+
+    sendError(observations, fileSystem);
+  });
+
+  it("should clear observations after calling sendError and emit error event", async () => {
+    const observations = new Set<FileSystemObservation>();
+    const fileSystem = new FileSystem();
+
+    fileSystem["observations"] = observations;
+
+    const allRecords: FileSystemChangeRecord[] = [];
+    const rootHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+    const observation = {
+      observer: new FileSystemObserver((records) => {
+        allRecords.push(...records);
+      }),
+
+      recursive: false,
+      rootHandle,
+    } satisfies FileSystemObservation;
+    observations.append(observation);
+
+    expect(observations.isEmpty).toBeFalsy();
+
+    sendError(observations, fileSystem);
+
+    await delay(0);
+
+    expect(observations.isEmpty).toBeTruthy();
+    expect(allRecords).toEqual([
+      createNewFileSystemChangeRecord(observation, rootHandle, "errored", null),
+    ]);
+  });
+});
 
 describe("isInScope", () => {
   it("should return false if relationship is 'other'", () => {
