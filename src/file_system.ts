@@ -15,6 +15,7 @@ import { getRelationship } from "./file_system_locator.ts";
 import type { FileSystemFileHandle } from "./file_system_file_handle.ts";
 import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
 import { userAgent } from "./implementation_defined.ts";
+import { getLocator } from "./file_system_locator.ts";
 
 /** A list of one or more strings.
  *
@@ -262,13 +263,16 @@ export function notify(
       }
     }
 
+    const entry = fromPath && fileSystem.locateEntry(fromPath);
+    const locator = entry && getLocator(entry);
+
     // 15. Let record be the result of creating a new FileSystemChangeRecord for observation given changedHandle, eventType, and fromPath.
     // TODO: fromPath is maybe wrong
     const record = createNewFileSystemChangeRecord(
       observation,
       changedHandle,
       eventType,
-      null, // fromPath,
+      locator,
     );
 
     // 16. Append record to records.

@@ -6,11 +6,16 @@ import { isInScope, notify, sendError } from "./file_system.ts";
 import type {
   FileSystem as IFileSystem,
   FileSystemObservation as IFileSystemObservation,
+  FileSystemPath,
 } from "./file_system.ts";
 import { FileSystemObserver } from "./file_system_observer.ts";
 import type { FileSystemHandle } from "./file_system_handle.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
-import type { FileSystemEntry } from "./file_system_entry.ts";
+import type {
+  DirectoryEntry,
+  FileEntry,
+  FileSystemEntry,
+} from "./file_system_entry.ts";
 import {
   createNewFileSystemChangeRecord,
   type FileSystemChangeRecord,
@@ -29,7 +34,7 @@ class FileSystem implements IFileSystem {
 
     return path;
   }
-  locateEntry() {
+  locateEntry(_: FileSystemPath): FileSystemEntry | null {
     return null;
   }
   root: string = "";
@@ -263,5 +268,100 @@ describe("notify", () => {
     await delay(0);
 
     expect(records.length).toBe(0);
+  });
+
+  it("should emit moved file event", async () => {
+    const fileSystem = new FileSystem();
+
+    const fileEntry = {
+      fileSystem,
+      binaryData: new Uint8Array(),
+      lock: "open",
+      sharedLockCount: 0,
+      modificationTimestamp: Date.now(),
+      name: "file.txt",
+      get parent() {
+        return rootEntry;
+      },
+      queryAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+      requestAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+    } satisfies FileEntry;
+    const rootEntry = {
+      fileSystem,
+      get children(): Set<FileSystemEntry> {
+        return new Set([fileEntry]);
+      },
+      parent: null,
+      queryAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+      requestAccess() {
+        return { permissionState: "granted", errorName: "" };
+      },
+      name: "",
+    } satisfies DirectoryEntry;
+    const movedEntry = {
+      ...fileEntry,
+      name: "moved.txt",
+    };
+
+    fileSystem.locateEntry = (path: FileSystemPath) => {
+      if (path.size === 1 && path[0] === "") return rootEntry;
+
+      if (path.size === 2 && path[0] === "" && path[1] === "file.txt") {
+        return fileEntry;
+      }
+
+      if (path.size === 2 && path[0] === "" && path[1] === "moved.txt") {
+        return movedEntry;
+      }
+
+      return null;
+    };
+
+    const rootHandle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+    const observation = {
+      observer: new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      }),
+      recursive: false,
+      rootHandle,
+    } satisfies FileSystemObservation;
+
+    const records: FileSystemChangeRecord[] = [];
+
+    notify(
+      observation,
+      new List([{
+        type: "moved",
+        entryType: "file",
+        fromPath: new List(["", "file.txt"]),
+        modifiedPath: new List(["", "moved.txt"]),
+      }]),
+      fileSystem,
+    );
+
+    await delay(0);
+
+    expect(records).toEqual([
+      createNewFileSystemChangeRecord(
+        observation,
+        createNewFileSystemHandle(
+          fileSystem,
+          new List(["", "moved.txt"]),
+          "file",
+        ),
+        "moved",
+        { fileSystem, kind: "file", path: new List(["", "file.txt"]) },
+      ),
+    ]);
   });
 });
