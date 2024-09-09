@@ -111,7 +111,9 @@ export class FileSystemObserver {
       userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject result with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
-          return reject(new DOMException(accessResult.errorName));
+          return reject(
+            new DOMException(Msg.PermissionDenied, accessResult.errorName),
+          );
         }
 
         // 2. If entry is null, reject result with a "NotFoundError" DOMException and abort these steps.

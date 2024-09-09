@@ -179,7 +179,9 @@ export function createNewFileSystemWritableFileStream(
       userAgent.storageTask.enqueue(() => {
         // 1. If accessResult’s permission state is not "granted", reject closeResult with a DOMException of accessResult’s error name and abort these steps.
         if (accessResult && accessResult.permissionState !== "granted") {
-          return reject(new DOMException(accessResult.errorName));
+          return reject(
+            new DOMException(Msg.PermissionDenied, accessResult.errorName),
+          );
         }
 
         // 2. Run implementation-defined malware scans and safe browsing checks. If these checks fail, reject closeResult with an "AbortError" DOMException and abort these steps.
@@ -270,7 +272,9 @@ export function writeChunk(
     userAgent.storageTask.enqueue(async () => {
       // 1. If accessResult’s permission state is not "granted", reject p with a DOMException of accessResult’s error name and abort these steps.
       if (accessResult && accessResult.permissionState !== "granted") {
-        return reject(new DOMException(accessResult.errorName));
+        return reject(
+          new DOMException(Msg.PermissionDenied, accessResult.errorName),
+        );
       }
 
       // 2. Let command be input["type"] if input is a dictionary; otherwise "write".
