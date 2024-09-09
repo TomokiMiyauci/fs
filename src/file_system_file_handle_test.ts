@@ -177,6 +177,20 @@ describe("FileSystemFileHandle", () => {
     );
 
     it<Context>(
+      "should throw error if located entry does not exist",
+      async function () {
+        const handle = createNewFileSystemFileHandle(
+          this.fileSystem,
+          new List(["file.txt"]),
+        );
+
+        await expect(handle.createWritable()).rejects.toThrow(
+          new DOMException(Msg.NotFound, "NotFoundError"),
+        );
+      },
+    );
+
+    it<Context>(
       "should throw error if located entry is already taken exclusive",
       async function () {
         this.fileEntry.lock = "taken-exclusive";
