@@ -85,6 +85,69 @@ describe("FileSystemFileHandle", () => {
     });
   });
 
+  describe("getFile", () => {
+    it<Context>(
+      "should throw error if located entry does not permit",
+      async function () {
+        const errorName = "DENIED";
+        this.fileEntry.queryAccess = () => {
+          return { errorName, permissionState: "denied" };
+        };
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "file.txt") {
+            return this.fileEntry;
+          }
+
+          return null;
+        };
+
+        const handle = createNewFileSystemFileHandle(
+          this.fileSystem,
+          new List(["file.txt"]),
+        );
+
+        await expect(handle.getFile()).rejects.toThrow(
+          new DOMException(Msg.PermissionDenied, errorName),
+        );
+      },
+    );
+
+    it<Context>(
+      "should throw error if located entry does not exist",
+      async function () {
+        const handle = createNewFileSystemFileHandle(
+          this.fileSystem,
+          new List(["file.txt"]),
+        );
+
+        await expect(handle.getFile()).rejects.toThrow(
+          new DOMException(Msg.NotFound, "NotFoundError"),
+        );
+      },
+    );
+
+    it<Context>(
+      "should return File",
+      async function () {
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "file.txt") {
+            return this.fileEntry;
+          }
+
+          return null;
+        };
+
+        const handle = createNewFileSystemFileHandle(
+          this.fileSystem,
+          new List(["file.txt"]),
+        );
+
+        await expect(handle.getFile()).resolves.toBeTruthy();
+      },
+    );
+  });
+
   describe("createWritable", () => {
     it<Context>(
       "should throw error if located entry does not permit",
