@@ -224,11 +224,11 @@ describe("FileSystemFileHandle", () => {
       async function () {
         const handle = createNewFileSystemFileHandle(
           this.fileSystem,
-          new List(["file.txt"]),
+          new List(["", "file.txt"]),
         );
 
         await expect(handle.createSyncAccessHandle()).rejects.toThrow(
-          DOMException,
+          new DOMException(Msg.NotFound, "NotFoundError"),
         );
       },
     );
