@@ -395,4 +395,159 @@ describe("FileSystemDirectoryHandle", () => {
       },
     );
   });
+
+  describe("removeEntry", () => {
+    it<Context>("should throw error if name is invalid", async function () {
+      await expect(this.handle.removeEntry("")).rejects.toThrow(
+        new TypeError(Msg.InvalidName),
+      );
+    });
+
+    it<Context>(
+      "should throw error if located entry does not exist",
+      async function () {
+        await expect(this.handle.removeEntry("dir")).rejects.toThrow(
+          new DOMException(Msg.NotFound, "NotFound"),
+        );
+      },
+    );
+
+    it<Context>(
+      "should throw error if located entry does not permit",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const errorName = "DeniedError";
+        dir.requestAccess = () => {
+          return { permissionState: "denied", errorName };
+        };
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(this.handle.removeEntry("file.txt")).rejects.toThrow(
+          new DOMException(Msg.PermissionDenied, errorName),
+        );
+      },
+    );
+
+    it<Context>(
+      "should throw error if child exists and it is directory what has child entry",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const entry = new DirectoryEntry(this.fileSystem);
+
+        const name = "dir";
+        entry.name = name;
+
+        class MySet extends Set<FileSystemEntry> {
+          *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+            yield entry;
+          }
+
+          get isEmpty(): boolean {
+            return false;
+          }
+        }
+
+        entry.children = new MySet();
+        dir.children = new MySet();
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(this.handle.removeEntry(name))
+          .rejects.toThrow(
+            new DOMException(
+              Msg.InvalidModification,
+              "InvalidModificationError",
+            ),
+          );
+      },
+    );
+
+    it<Context>(
+      "should throw error if removing is failed",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const file = new FileEntry(this.fileSystem);
+        const name = "file.txt";
+        file.name = name;
+
+        class MyError extends Error {
+          name = "custom";
+        }
+        const error = new MyError();
+
+        class MySet extends Set<FileSystemEntry> {
+          remove(_: FileSystemEntry): void {
+            throw error;
+          }
+          *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+            yield file;
+          }
+        }
+        dir.children = new MySet();
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(this.handle.removeEntry(name))
+          .rejects.toThrow(error);
+      },
+    );
+
+    it<Context>(
+      "should throw error if it does not match entry",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const name = "dir";
+        dir.name = name;
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(this.handle.removeEntry(name))
+          .rejects.toThrow(
+            new DOMException(Msg.NotFound, "NotFoundError"),
+          );
+      },
+    );
+
+    it<Context>(
+      "should return void if success",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const file = new FileEntry(this.fileSystem);
+        const name = "file.txt";
+        file.name = name;
+
+        class MySet extends Set<FileSystemEntry> {
+          *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+            yield file;
+          }
+        }
+        dir.children = new MySet();
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(this.handle.removeEntry(name))
+          .resolves.toBeFalsy();
+      },
+    );
+  });
 });
