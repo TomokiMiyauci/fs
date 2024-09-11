@@ -3,6 +3,7 @@ import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import type {
   DirectoryEntry as IDirectoryEntry,
+  FileEntry as IFileEntry,
   FileSystemAccessResult,
   FileSystemEntry,
 } from "./file_system_entry.ts";
@@ -54,8 +55,34 @@ class DirectoryEntry implements IDirectoryEntry {
 
   parent: null = null;
 
-  children: Set<FileSystemEntry> = new Set();
+  children: Pick<
+    Set<FileSystemEntry>,
+    "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+  > = new Set();
 
+  requestAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+
+  queryAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+}
+
+class FileEntry implements IFileEntry {
+  name: string = "";
+
+  binaryData: Uint8Array = new Uint8Array();
+
+  fileSystem: FileSystem = new FileSystem();
+
+  parent: null = null;
+
+  modificationTimestamp: number = Date.now();
+
+  lock: "open" | "taken-exclusive" | "taken-shared" = "open";
+
+  sharedLockCount: number = 0;
   requestAccess(): FileSystemAccessResult {
     return { permissionState: "granted", errorName: "" };
   }
@@ -119,6 +146,114 @@ describe("FileSystemDirectoryHandle", () => {
         await expect(this.handle.getDirectoryHandle("dir")).rejects.toThrow(
           new DOMException(Msg.PermissionDenied, errorName),
         );
+      },
+    );
+
+    it<Context>(
+      "should throw error if child exists and it is not directory",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const entry = new FileEntry();
+
+        entry.name = "dir";
+
+        class MySet extends Set<FileSystemEntry> {
+          *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+            yield entry;
+          }
+        }
+        dir.children = new MySet();
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(this.handle.getDirectoryHandle("dir"))
+          .rejects.toThrow(
+            new DOMException(Msg.Mismatch, "TypeMismatchError"),
+          );
+      },
+    );
+
+    it<Context>(
+      "should throw error if appending is failed",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const error = new Error();
+
+        class MySet extends Set<FileSystemEntry> {
+          append(_: FileSystemEntry): void {
+            throw error;
+          }
+        }
+        dir.children = new MySet();
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+          if (path.size === 2 && path[0] === "" && path[1] === "dir") {
+            return dir;
+          }
+
+          return null;
+        };
+
+        await expect(this.handle.getDirectoryHandle("dir", { create: true }))
+          .rejects.toThrow(
+            error,
+          );
+      },
+    );
+
+    it<Context>(
+      "should return directory handle if create true",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const name = "dir";
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        const childDir = await this.handle.getDirectoryHandle(name, {
+          create: true,
+        });
+
+        expect(childDir.name).toBe(name);
+        expect(childDir.kind).toBe("directory");
+      },
+    );
+
+    it<Context>(
+      "should return directory handle if create false",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const name = "dir";
+        const childDir = new DirectoryEntry(this.fileSystem);
+        childDir.name = name;
+
+        class MySet extends Set<FileSystemEntry> {
+          *[Symbol.iterator](): IterableIterator<FileSystemEntry> {
+            yield childDir;
+          }
+        }
+        dir.children = new MySet();
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        const handle = await this.handle.getDirectoryHandle(name, {
+          create: true,
+        });
+
+        expect(handle.name).toBe(name);
+        expect(handle.kind).toBe("directory");
       },
     );
   });
