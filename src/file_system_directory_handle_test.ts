@@ -92,6 +92,19 @@ class FileEntry implements IFileEntry {
 }
 
 describe("FileSystemDirectoryHandle", () => {
+  interface Context {
+    fileSystem: FileSystem;
+    handle: FileSystemDirectoryHandle;
+  }
+
+  beforeEach<Context>(function () {
+    this.fileSystem = new FileSystem();
+    this.handle = createNewFileSystemDirectoryHandle(
+      this.fileSystem,
+      new List([""]),
+    );
+  });
+
   describe("constructor", () => {
     it("should not construct", () => {
       // @ts-expect-error it should not construct
@@ -100,19 +113,6 @@ describe("FileSystemDirectoryHandle", () => {
   });
 
   describe("getDirectoryHandle", () => {
-    interface Context {
-      fileSystem: FileSystem;
-      handle: FileSystemDirectoryHandle;
-    }
-
-    beforeEach<Context>(function () {
-      this.fileSystem = new FileSystem();
-      this.handle = createNewFileSystemDirectoryHandle(
-        this.fileSystem,
-        new List([""]),
-      );
-    });
-
     it<Context>("should throw error if name is invalid", async function () {
       await expect(this.handle.getDirectoryHandle("")).rejects.toThrow(
         new TypeError(Msg.InvalidName),
@@ -255,19 +255,6 @@ describe("FileSystemDirectoryHandle", () => {
   });
 
   describe("getFileHandle", () => {
-    interface Context {
-      fileSystem: FileSystem;
-      handle: FileSystemDirectoryHandle;
-    }
-
-    beforeEach<Context>(function () {
-      this.fileSystem = new FileSystem();
-      this.handle = createNewFileSystemDirectoryHandle(
-        this.fileSystem,
-        new List([""]),
-      );
-    });
-
     it<Context>("should throw error if name is invalid", async function () {
       await expect(this.handle.getFileHandle("")).rejects.toThrow(
         new TypeError(Msg.InvalidName),
