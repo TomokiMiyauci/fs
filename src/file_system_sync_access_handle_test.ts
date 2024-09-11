@@ -86,6 +86,13 @@ describe("FileSystemSyncAccessHandle", () => {
         new DOMException(Msg.InvalidOperation, "InvalidStateError"),
       );
     });
+
+    it<Context>("should write with ArrayBuffer", function () {
+      const buffer = new ArrayBuffer(5);
+
+      expect(this.handle.write(buffer)).toBe(5);
+      expect(this.fileEntry.binaryData.byteLength).toBe(5);
+    });
   });
 
   describe("truncate", () => {
