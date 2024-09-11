@@ -1,5 +1,4 @@
 import type {
-  DirectoryEntry as IDirectoryEntry,
   FileEntry as IFileEntry,
   FileSystemAccessResult,
   FileSystemEntry,
