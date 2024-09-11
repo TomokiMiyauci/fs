@@ -1,108 +1,107 @@
-import { describe, it } from "@std/testing/bdd";
+import { beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { List, Set } from "@miyauci/infra";
+import { List } from "@miyauci/infra";
+import { FileSystem } from "@test/helper.ts";
 import {
   createNewFileSystemChangeRecord,
   FileSystemChangeRecord,
 } from "./file_system_change_record.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
 import { FileSystemObserver } from "./file_system_observer.ts";
-import type {
-  FileSystem as IFileSystem,
-  FileSystemObservation,
-} from "./file_system.ts";
-import type { FileSystemEntry } from "./file_system_entry.ts";
+import type { FileSystemFileHandle } from "./file_system_file_handle.ts";
+import type { FileSystemDirectoryHandle } from "./file_system_directory_handle.ts";
 
-class FileSystem implements IFileSystem {
-  getPath(entry: FileSystemEntry) {
-    const path = new List([entry.name]);
-    let parent = entry.parent;
-
-    while (parent) {
-      path.prepend(parent.name);
-
-      parent = parent.parent;
-    }
-
-    return path;
-  }
-  locateEntry() {
-    return null;
-  }
-  root: string = "";
-  observations: Set<FileSystemObservation> = new Set();
+interface Context {
+  fileSystem: FileSystem;
+  rootHandle: FileSystemDirectoryHandle | FileSystemFileHandle;
+  observer: FileSystemObserver;
 }
 
 describe("createNewFileSystemChangeRecord", () => {
-  const fileSystem = new FileSystem();
-  const rootHandle = createNewFileSystemHandle(
-    fileSystem,
-    new List([""]),
-    "directory",
-  );
-  const changedHandle = createNewFileSystemHandle(
-    fileSystem,
-    new List(["", "file.txt"]),
-    "file",
-  );
-  const observer = new FileSystemObserver(() => {});
-
-  it("should return changed record", () => {
-    const record = createNewFileSystemChangeRecord(
-      {
-        observer: new FileSystemObserver(() => {}),
-        recursive: false,
-        rootHandle,
-      },
-      changedHandle,
-      "appeared",
-      null,
+  beforeAll<Context>(function () {
+    this.fileSystem = new FileSystem();
+    this.rootHandle = createNewFileSystemHandle(
+      this.fileSystem,
+      new List([""]),
+      "directory",
     );
-
-    expect(record.type).toBe("appeared");
-    expect(record.changedHandle).toBe(changedHandle);
-    expect(record.relativePathComponents).toEqual(["file.txt"]);
-    expect(record.relativePathMovedFrom).toBe(null);
-    expect(record.root).toBe(rootHandle);
+    this.observer = new FileSystemObserver(() => {});
   });
 
-  it("should return changed record", () => {
-    const record = createNewFileSystemChangeRecord(
-      {
-        observer: new FileSystemObserver(() => {}),
-        recursive: false,
-        rootHandle,
-      },
-      changedHandle,
-      "appeared",
-      null,
-    );
-
-    expect(record.type).toBe("appeared");
-    expect(record.changedHandle).toBe(changedHandle);
-    expect(record.relativePathComponents).toEqual(["file.txt"]);
-    expect(record.relativePathMovedFrom).toBe(null);
-    expect(record.root).toBe(rootHandle);
-  });
-
-  it("should specify relativePathMovedFrom", () => {
+  it<Context>("should return changed record", function () {
     const changedHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List(["file.txt"]),
+      this.fileSystem,
+      new List(["", "file.txt"]),
       "file",
     );
     const record = createNewFileSystemChangeRecord(
-      { observer, recursive: false, rootHandle },
+      {
+        observer: this.observer,
+        recursive: false,
+        rootHandle: this.rootHandle,
+      },
       changedHandle,
-      "modified",
+      "appeared",
       null,
     );
 
-    expect(record.type).toBe("modified");
+    expect(record.type).toBe("appeared");
     expect(record.changedHandle).toBe(changedHandle);
-    expect(record.relativePathComponents).toEqual([]);
+    expect(record.relativePathComponents).toEqual(["file.txt"]);
     expect(record.relativePathMovedFrom).toBe(null);
-    expect(record.root).toBe(rootHandle);
+    expect(record.root).toBe(this.rootHandle);
+  });
+
+  it<Context>("should return changed record", function () {
+    const changedHandle = createNewFileSystemHandle(
+      this.fileSystem,
+      new List(["", "file.txt"]),
+      "file",
+    );
+    const record = createNewFileSystemChangeRecord(
+      {
+        observer: this.observer,
+        recursive: false,
+        rootHandle: this.rootHandle,
+      },
+      changedHandle,
+      "appeared",
+      null,
+    );
+
+    expect(record.type).toBe("appeared");
+    expect(record.changedHandle).toBe(changedHandle);
+    expect(record.relativePathComponents).toEqual(["file.txt"]);
+    expect(record.relativePathMovedFrom).toBe(null);
+    expect(record.root).toBe(this.rootHandle);
+  });
+
+  it<Context>("should specify relativePathMovedFrom", function () {
+    const changedHandle = createNewFileSystemHandle(
+      this.fileSystem,
+      new List(["", "new.txt"]),
+      "file",
+    );
+    const record = createNewFileSystemChangeRecord(
+      {
+        observer: this.observer,
+        recursive: false,
+        rootHandle: this.rootHandle,
+      },
+      changedHandle,
+      "moved",
+      {
+        fileSystem: this.fileSystem,
+        kind: "file",
+        path: new List(["", "file.txt"]),
+      },
+    );
+
+    expect(record.type).toBe("moved");
+    expect(record.changedHandle).toBe(changedHandle);
+    expect(record.relativePathComponents).toEqual(["new.txt"]);
+    expect(record.relativePathMovedFrom).toEqual(["file.txt"]);
+    expect(record.root).toBe(this.rootHandle);
   });
 });
 
