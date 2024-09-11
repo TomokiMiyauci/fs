@@ -550,4 +550,68 @@ describe("FileSystemDirectoryHandle", () => {
       },
     );
   });
+
+  describe("iterable", () => {
+    it<Context>("should throw error if name is invalid", async function () {
+      await expect(Array.fromAsync(this.handle.keys())).rejects.toThrow(
+        new DOMException(Msg.NotFound, "NotFoundError"),
+      );
+    });
+
+    it<Context>(
+      "should throw error if located entry does not permit",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+        const errorName = "DeniedError";
+        dir.queryAccess = () => {
+          return { permissionState: "denied", errorName };
+        };
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(Array.fromAsync(this.handle.keys())).rejects.toThrow(
+          new DOMException(Msg.PermissionDenied, errorName),
+        );
+      },
+    );
+
+    it<Context>(
+      "should return empty array if children is empty",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await expect(Array.fromAsync(this.handle.keys())).resolves.toEqual([]);
+      },
+    );
+
+    it<Context>(
+      "should return 2 entries",
+      async function () {
+        const dir = new DirectoryEntry(this.fileSystem);
+
+        this.fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dir;
+
+          return null;
+        };
+
+        await this.handle.getDirectoryHandle("dir", { create: true });
+        await this.handle.getDirectoryHandle("file.txt", { create: true });
+
+        await expect(Array.fromAsync(this.handle.keys())).resolves.toEqual([
+          "dir",
+          "file.txt",
+        ]);
+      },
+    );
+  });
 });
