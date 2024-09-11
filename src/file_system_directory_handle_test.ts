@@ -96,6 +96,15 @@ describe("FileSystemDirectoryHandle", () => {
     it<Context>(
       "should throw error if located entry does not exist",
       async function () {
+        await expect(this.handle.getDirectoryHandle("dir")).rejects.toThrow(
+          new DOMException(Msg.NotFound, "NotFound"),
+        );
+      },
+    );
+
+    it<Context>(
+      "should throw error if located entry does not permit",
+      async function () {
         const dir = new DirectoryEntry(this.fileSystem);
         const errorName = "DeniedError";
         dir.queryAccess = () => {
