@@ -120,9 +120,8 @@ export function createNewFileSystemChangeRecord(
   record.type = type;
 
   // 13. Set record’s relativePathMovedFrom to relativePathMovedFrom.
-  record.relativePathMovedFrom = relativePathMovedFrom
-    ? [...relativePathMovedFrom]
-    : null;
+  record.relativePathMovedFrom = relativePathMovedFrom &&
+    [...relativePathMovedFrom];
 
   // 14. Return record.
   return record;
