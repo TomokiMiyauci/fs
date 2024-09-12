@@ -115,4 +115,10 @@ describe("FileSystemObserver", () => {
       },
     );
   });
+
+  describe("disconnect", () => {
+    it<Context>("should do nothing before observe", function () {
+      this.observer.disconnect();
+    });
+  });
 });
