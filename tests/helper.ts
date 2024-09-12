@@ -1,4 +1,5 @@
 import type {
+  DirectoryEntry as IDirectoryEntry,
   FileEntry as IFileEntry,
   FileSystemAccessResult,
   FileSystemEntry,
@@ -23,6 +24,26 @@ export class FileEntry implements IFileEntry {
   lock: "open" | "taken-exclusive" | "taken-shared" = "open";
 
   sharedLockCount: number = 0;
+  requestAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+
+  queryAccess(): FileSystemAccessResult {
+    return { permissionState: "granted", errorName: "" };
+  }
+}
+
+export class DirectoryEntry implements IDirectoryEntry {
+  constructor(public fileSystem: FileSystem) {}
+  name: string = "";
+
+  parent: null = null;
+
+  children: Pick<
+    Set<FileSystemEntry>,
+    "append" | "remove" | "isEmpty" | typeof Symbol.iterator
+  > = new Set();
+
   requestAccess(): FileSystemAccessResult {
     return { permissionState: "granted", errorName: "" };
   }

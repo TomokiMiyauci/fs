@@ -1,23 +1,13 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { List, Set } from "@miyauci/infra";
+import { List } from "@miyauci/infra";
 import {
   createNewFileSystemFileHandle,
   FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
 import { runFileSystemFileHandleTest } from "@test/file_system_file_handle.ts";
 import { VirtualFileSystem } from "@test/util.ts";
-import type {
-  FileSystem as IFileSystem,
-  FileSystemObservation,
-  FileSystemPath,
-} from "./file_system.ts";
-import type {
-  DirectoryEntry,
-  FileEntry as IFileEntry,
-  FileSystemAccessResult,
-  FileSystemEntry,
-} from "./file_system_entry.ts";
+import { FileEntry, FileSystem } from "@test/helper.ts";
 import { Msg } from "./constant.ts";
 
 runFileSystemFileHandleTest(async () => {
@@ -28,45 +18,6 @@ runFileSystemFileHandleTest(async () => {
     root,
   };
 });
-
-class FileSystem implements IFileSystem {
-  getPath(entry: FileSystemEntry) {
-    const path = new List([entry.name]);
-    let parent = entry.parent;
-
-    while (parent) {
-      path.prepend(parent.name);
-
-      parent = parent.parent;
-    }
-
-    return path;
-  }
-  locateEntry(_: FileSystemPath): FileSystemEntry | null {
-    return null;
-  }
-  root: string = "";
-  observations: Set<FileSystemObservation> = new Set();
-}
-
-class FileEntry implements IFileEntry {
-  constructor(public fileSystem: FileSystem) {}
-  name: string = "";
-  queryAccess(_: "read" | "readwrite"): FileSystemAccessResult {
-    return { errorName: "", permissionState: "granted" };
-  }
-
-  requestAccess(_: "read" | "readwrite"): FileSystemAccessResult {
-    return { errorName: "", permissionState: "granted" };
-  }
-
-  parent: DirectoryEntry | null = null;
-
-  modificationTimestamp: number = Date.now();
-  lock: "open" | "taken-exclusive" | "taken-shared" = "open";
-  sharedLockCount: number = 0;
-  binaryData: Uint8Array = new Uint8Array();
-}
 
 describe("FileSystemFileHandle", () => {
   interface Context {

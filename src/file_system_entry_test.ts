@@ -1,60 +1,23 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { List, Set } from "@miyauci/infra";
+import { List } from "@miyauci/infra";
+import { FileEntry, FileSystem } from "@test/helper.ts";
 import {
-  type FileEntry as IFileEntry,
-  type FileSystemAccessResult,
   isSameLocator,
   isSamePath,
   release,
   take,
 } from "./file_system_entry.ts";
-import type {
-  FileSystem as IFileSystem,
-  FileSystemObservation,
-} from "./file_system.ts";
 
-class FileSystem implements IFileSystem {
-  root: string = "";
-  observations: Set<FileSystemObservation> = new Set();
-  getPath() {
-    return new List(["file.txt"]);
-  }
-  locateEntry() {
-    return null;
-  }
-}
-
-class FileEntry implements IFileEntry {
-  name: string = "file.txt";
-
-  binaryData: Uint8Array = new Uint8Array();
-
-  fileSystem: FileSystem = new FileSystem();
-
-  parent: null = null;
-
-  modificationTimestamp: number = Date.now();
-
-  lock: "open" | "taken-exclusive" | "taken-shared" = "open";
-
-  sharedLockCount: number = 0;
-  requestAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-
-  queryAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
+interface Context {
+  fileSystem: FileSystem;
+  entry: FileEntry;
 }
 
 describe("take", () => {
-  interface Context {
-    entry: FileEntry;
-  }
-
   beforeEach<Context>(function () {
-    this.entry = new FileEntry();
+    this.fileSystem = new FileSystem();
+    this.entry = new FileEntry(this.fileSystem);
   });
 
   it<Context>(
@@ -118,12 +81,9 @@ describe("take", () => {
 });
 
 describe("release", () => {
-  interface Context {
-    entry: FileEntry;
-  }
-
   beforeEach<Context>(function () {
-    this.entry = new FileEntry();
+    this.fileSystem = new FileSystem();
+    this.entry = new FileEntry(this.fileSystem);
   });
 
   it<Context>("should return 'open' if lock is open", function () {

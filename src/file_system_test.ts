@@ -2,9 +2,9 @@ import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List, Set } from "@miyauci/infra";
 import { delay } from "@std/async/delay";
+import { FileSystem } from "@test/helper.ts";
 import { isInScope, notify, sendError } from "./file_system.ts";
 import type {
-  FileSystem as IFileSystem,
   FileSystemObservation as IFileSystemObservation,
   FileSystemPath,
 } from "./file_system.ts";
@@ -20,26 +20,6 @@ import {
   createNewFileSystemChangeRecord,
   type FileSystemChangeRecord,
 } from "./file_system_change_record.ts";
-
-class FileSystem implements IFileSystem {
-  getPath(entry: FileSystemEntry) {
-    const path = new List([entry.name]);
-    let parent = entry.parent;
-
-    while (parent) {
-      path.prepend(parent.name);
-
-      parent = parent.parent;
-    }
-
-    return path;
-  }
-  locateEntry(_: FileSystemPath): FileSystemEntry | null {
-    return null;
-  }
-  root: string = "";
-  observations: Set<FileSystemObservation> = new Set();
-}
 
 class FileSystemObservation implements IFileSystemObservation {
   constructor(fileSystem: FileSystem, path: List<string>, recursive = false) {

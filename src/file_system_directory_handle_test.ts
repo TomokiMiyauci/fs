@@ -1,23 +1,14 @@
 import { List, Set } from "@miyauci/infra";
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import type {
-  DirectoryEntry as IDirectoryEntry,
-  FileEntry as IFileEntry,
-  FileSystemAccessResult,
-  FileSystemEntry,
-} from "./file_system_entry.ts";
-import type {
-  FileSystem as IFileSystem,
-  FileSystemObservation,
-  FileSystemPath,
-} from "./file_system.ts";
+import type { FileSystemEntry } from "./file_system_entry.ts";
 import { Msg } from "./constant.ts";
 import {
   createNewFileSystemDirectoryHandle,
   FileSystemDirectoryHandle,
 } from "./file_system_directory_handle.ts";
 import { VirtualFileSystem } from "@test/util.ts";
+import { DirectoryEntry, FileEntry, FileSystem } from "@test/helper.ts";
 import { runFileSystemDirectoryHandleTest } from "@test/file_system_directory_handle.ts";
 
 runFileSystemDirectoryHandleTest(async () => {
@@ -28,68 +19,6 @@ runFileSystemDirectoryHandleTest(async () => {
     root,
   };
 });
-
-class FileSystem implements IFileSystem {
-  root: string = "";
-  observations: Set<FileSystemObservation> = new Set();
-  getPath(entry: FileSystemEntry): List<string> {
-    const path = new List([entry.name]);
-    let parent = entry.parent;
-
-    while (parent) {
-      path.prepend(parent.name);
-
-      parent = parent.parent;
-    }
-
-    return path;
-  }
-  locateEntry(_: FileSystemPath): FileSystemEntry | null {
-    return null;
-  }
-}
-
-class DirectoryEntry implements IDirectoryEntry {
-  constructor(public fileSystem: FileSystem) {}
-  name: string = "";
-
-  parent: null = null;
-
-  children: Pick<
-    Set<FileSystemEntry>,
-    "append" | "remove" | "isEmpty" | typeof Symbol.iterator
-  > = new Set();
-
-  requestAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-
-  queryAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-}
-
-class FileEntry implements IFileEntry {
-  constructor(public fileSystem: FileSystem) {}
-  name: string = "";
-
-  binaryData: Uint8Array = new Uint8Array();
-
-  parent: null = null;
-
-  modificationTimestamp: number = Date.now();
-
-  lock: "open" | "taken-exclusive" | "taken-shared" = "open";
-
-  sharedLockCount: number = 0;
-  requestAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-
-  queryAccess(): FileSystemAccessResult {
-    return { permissionState: "granted", errorName: "" };
-  }
-}
 
 describe("FileSystemDirectoryHandle", () => {
   interface Context {
