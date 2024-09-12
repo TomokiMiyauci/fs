@@ -1,39 +1,28 @@
 // from @see https://github.com/web-platform-tests/wpt/blob/master/fs/script-tests/FileSystemDirectoryHandle-getDirectoryHandle.js
 
 import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { describe, it } from "@std/testing/bdd";
 import type { FileSystemDirectoryHandle } from "../src/file_system_directory_handle.ts";
 import type { FileSystemWriteChunkType } from "../src/file_system_writable_file_stream.ts";
 import { FileSystemFileHandle } from "../src/file_system_file_handle.ts";
 import {
-  type Context,
   createDirectory,
   createEmptyFile,
   createFileWithContents,
   getFileContents,
   getFileSize,
   pathSeparators,
-  type Provider,
 } from "@test/util.ts";
+import { type Context, runTests } from "./target.ts";
 
-export function runFileSystemDirectoryHandleTest(provider: Provider): void {
+runTests(() => {
   describe("FileSystemDirectoryHandle", () => {
-    beforeEach<Context>(async function () {
-      const context = await provider();
-
-      this.root = context.root;
-      this.onAfterEach = context.onAfterEach?.bind(context);
-    });
-
-    afterEach<Context>(function () {
-      return this.onAfterEach?.();
-    });
-
     describe("isSameEntry", () => {
       it<Context>(
         "isSameEntry for identical directory handles returns true",
         async function () {
-          await expect(this.root.isSameEntry(this.root)).resolves.toBeTruthy();
+          await expect(this.root.isSameEntry(this.root)).resolves
+            .toBeTruthy();
 
           const subDir = await this.root.getDirectoryHandle("subdir-name", {
             create: true,
@@ -75,7 +64,8 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
       it<Context>(
         "getDirectoryHandle(create=false) rejects for non-existing directories",
         async function () {
-          await expect(this.root.getDirectoryHandle("non-existing-dir")).rejects
+          await expect(this.root.getDirectoryHandle("non-existing-dir"))
+            .rejects
             .toThrow(DOMException);
         },
       );
@@ -93,9 +83,11 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
           expect(handle.kind).toBe("directory");
           expect(handle.name).toBe("non-existing-dir");
           await expect(getDirectoryEntryCount(handle)).resolves.toBe(0);
-          await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
-            "non-existing-dir/",
-          ]);
+          await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual(
+            [
+              "non-existing-dir/",
+            ],
+          );
         },
       );
 
@@ -200,7 +192,8 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
         async function () {
           await expect(this.root.getFileHandle("..")).rejects
             .toThrow(TypeError);
-          await expect(this.root.getFileHandle("..", { create: true })).rejects
+          await expect(this.root.getFileHandle("..", { create: true }))
+            .rejects
             .toThrow(TypeError);
         },
       );
@@ -370,7 +363,8 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
           const name = "dir-name";
           await this.root.getDirectoryHandle(name, { create: true });
 
-          await expect(this.root.getFileHandle(name, { create: true })).rejects
+          await expect(this.root.getFileHandle(name, { create: true }))
+            .rejects
             .toThrow(
               DOMException,
             );
@@ -392,7 +386,8 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
         async function () {
           await expect(this.root.getFileHandle(".", { create: true })).rejects
             .toThrow(TypeError);
-          await expect(this.root.getFileHandle(".", { create: false })).rejects
+          await expect(this.root.getFileHandle(".", { create: false }))
+            .rejects
             .toThrow(TypeError);
         },
       );
@@ -400,9 +395,11 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
       it<Context>(
         "getFileHandle() with `..` name",
         async function () {
-          await expect(this.root.getFileHandle("..", { create: true })).rejects
+          await expect(this.root.getFileHandle("..", { create: true }))
+            .rejects
             .toThrow(TypeError);
-          await expect(this.root.getFileHandle("..", { create: false })).rejects
+          await expect(this.root.getFileHandle("..", { create: false }))
+            .rejects
             .toThrow(TypeError);
         },
       );
@@ -698,9 +695,11 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
           await createFileWithContents(this.root, "file-to-keep", "abc");
 
           await this.root.removeEntry("file-to-remove");
-          await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
-            "file-to-keep",
-          ]);
+          await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual(
+            [
+              "file-to-keep",
+            ],
+          );
 
           await expect(getFileContents(handle)).rejects.toThrow();
         },
@@ -717,16 +716,19 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
 
           await this.root.removeEntry("file-to-remove");
 
-          await expect(this.root.removeEntry("file-to-remove")).rejects.toThrow(
-            DOMException,
-          );
+          await expect(this.root.removeEntry("file-to-remove")).rejects
+            .toThrow(
+              DOMException,
+            );
         },
       );
 
       it<Context>(
         "removeEntry() to remove an empty directory",
         async function () {
-          await this.root.getDirectoryHandle("dir-to-remove", { create: true });
+          await this.root.getDirectoryHandle("dir-to-remove", {
+            create: true,
+          });
           await createFileWithContents(this.root, "file-to-keep", "abc");
           await this.root.removeEntry("dir-to-remove");
 
@@ -742,9 +744,10 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
           const dir = await createDirectory(this.root, "dir-to-remove");
           await createFileWithContents(dir, "file-in-dir", "abc");
 
-          await expect(this.root.removeEntry("dir-to-remove")).rejects.toThrow(
-            DOMException,
-          );
+          await expect(this.root.removeEntry("dir-to-remove")).rejects
+            .toThrow(
+              DOMException,
+            );
         },
       );
 
@@ -841,9 +844,11 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
           await writable.close();
           await this.root.removeEntry("file-to-remove");
 
-          await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual([
-            "file-to-keep",
-          ]);
+          await expect(getSortedDirectoryEntries(this.root)).resolves.toEqual(
+            [
+              "file-to-keep",
+            ],
+          );
         },
       );
 
@@ -907,30 +912,30 @@ export function runFileSystemDirectoryHandleTest(provider: Provider): void {
       );
     });
   });
-}
 
-function getAscii(): string {
-  let name = "";
-  // test the ascii characters -- start after the non-character ASCII values, exclude DEL
-  for (let i = 32; i < 127; i++) {
-    // Path separators are disallowed
-    let disallow = false;
-    for (let j = 0; j < pathSeparators.length; ++j) {
-      if (String.fromCharCode(i) == pathSeparators[j]) {
-        disallow = true;
+  function getAscii(): string {
+    let name = "";
+    // test the ascii characters -- start after the non-character ASCII values, exclude DEL
+    for (let i = 32; i < 127; i++) {
+      // Path separators are disallowed
+      let disallow = false;
+      for (let j = 0; j < pathSeparators.length; ++j) {
+        if (String.fromCharCode(i) == pathSeparators[j]) {
+          disallow = true;
+        }
+      }
+      if (!disallow) {
+        name += String.fromCharCode(i);
       }
     }
-    if (!disallow) {
+    // Add in CR, LF, FF, Tab, Vertical Tab
+    for (let i = 9; i < 14; i++) {
       name += String.fromCharCode(i);
     }
-  }
-  // Add in CR, LF, FF, Tab, Vertical Tab
-  for (let i = 9; i < 14; i++) {
-    name += String.fromCharCode(i);
-  }
 
-  return name;
-}
+    return name;
+  }
+});
 
 async function getDirectoryEntryCount(
   handle: FileSystemDirectoryHandle,

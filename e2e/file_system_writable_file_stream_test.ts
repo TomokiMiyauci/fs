@@ -4,30 +4,18 @@
  */
 
 import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { describe, it } from "@std/testing/bdd";
 import {
-  type Context,
   createDirectory,
   createEmptyFile,
   createFileWithContents,
   getFileContents,
   getFileSize,
-  type Provider,
 } from "@test/util.ts";
+import { type Context, runTests } from "./target.ts";
 
-export function runFileSystemWritableFileStreamTest(provider: Provider): void {
+runTests(() => {
   describe("FileSystemWritableFileStream", () => {
-    beforeEach<Context>(async function () {
-      const context = await provider();
-
-      this.root = context.root;
-      this.onAfterEach = context.onAfterEach?.bind(context);
-    });
-
-    afterEach<Context>(function () {
-      return this.onAfterEach?.();
-    });
-
     describe("integration", () => {
       it<Context>(
         "truncate() to shrink a file",
@@ -195,7 +183,10 @@ export function runFileSystemWritableFileStreamTest(provider: Provider): void {
       it<Context>(
         "write() with WriteParams without position to an empty file",
         async function () {
-          const handle = await createEmptyFile(this.root, "write_param_empty");
+          const handle = await createEmptyFile(
+            this.root,
+            "write_param_empty",
+          );
           const stream = await handle.createWritable();
 
           await stream.write({ type: "write", data: "1234567890" });
@@ -209,7 +200,10 @@ export function runFileSystemWritableFileStreamTest(provider: Provider): void {
       it<Context>(
         "write() a string to an empty file with zero offset",
         async function () {
-          const handle = await createEmptyFile(this.root, "string_zero_offset");
+          const handle = await createEmptyFile(
+            this.root,
+            "string_zero_offset",
+          );
           const stream = await handle.createWritable();
 
           await stream.write({
@@ -683,11 +677,16 @@ export function runFileSystemWritableFileStreamTest(provider: Provider): void {
           const source_blob = await source_file.getFile();
           await this.root.removeEntry(source_file.name);
 
-          const handle = await createEmptyFile(this.root, "invalid_blob_test");
+          const handle = await createEmptyFile(
+            this.root,
+            "invalid_blob_test",
+          );
           const stream = await handle.createWritable();
 
           // The specification does not raise NotFoundError on write and writeChunk calls.
-          await expect(stream.write(source_blob)).rejects.toThrow(DOMException);
+          await expect(stream.write(source_blob)).rejects.toThrow(
+            DOMException,
+          );
           await expect(stream.close()).rejects.toThrow(TypeError);
 
           await expect(getFileContents(handle)).resolves.toBe("bazbar");
@@ -839,7 +838,9 @@ export function runFileSystemWritableFileStreamTest(provider: Provider): void {
 
           await rs.pipeTo(wfs, { preventCancel: true });
 
-          await expect(getFileContents(handle)).resolves.toBe("bazbar\0\0\0\0");
+          await expect(getFileContents(handle)).resolves.toBe(
+            "bazbar\0\0\0\0",
+          );
           await expect(getFileSize(handle)).resolves.toBe(10);
         },
       );
@@ -916,4 +917,4 @@ export function runFileSystemWritableFileStreamTest(provider: Provider): void {
       );
     });
   });
-}
+});

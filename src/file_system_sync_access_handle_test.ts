@@ -1,21 +1,11 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { runFileSystemSyncAccessHandleTest } from "@test/file_system_sync_access_handle.ts";
-import { VirtualFileSystem } from "@test/util.ts";
 import {
   createNewFileSystemSyncAccessHandle,
   FileSystemSyncAccessHandle,
 } from "./file_system_sync_access_handle.ts";
 import { FileEntry, FileSystem } from "@test/helper.ts";
 import { Msg } from "./constant.ts";
-
-runFileSystemSyncAccessHandleTest(async () => {
-  const fs = new VirtualFileSystem();
-
-  return {
-    root: await fs.getDirectory(),
-  };
-});
 
 interface Context {
   fileSystem: FileSystem;

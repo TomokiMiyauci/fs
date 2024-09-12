@@ -1,30 +1,8 @@
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { runFileSystemHandleTest } from "@test/file_system_handle.ts";
-import { runFileSystemFileHandleTest } from "@test/file_system_file_handle.ts";
-import { runFileSystemDirectoryHandleTest } from "@test/file_system_directory_handle.ts";
-import { runFileSystemWritableFileStreamTest } from "@test/file_system_writable_file_stream.ts";
 import { LocalFileSystem } from "./file_system.ts";
 import { parse } from "@std/path/parse";
 import { join } from "@std/path/join";
-
-async function provide() {
-  const rootPath = await Deno.makeTempDir();
-  const fs = new LocalFileSystem(rootPath);
-  const root = await fs.getDirectory();
-
-  return {
-    root,
-    onAfterEach() {
-      return Deno.remove(rootPath, { recursive: true });
-    },
-  };
-}
-
-runFileSystemHandleTest(provide, true);
-runFileSystemFileHandleTest(provide);
-runFileSystemDirectoryHandleTest(provide);
-runFileSystemWritableFileStreamTest(provide);
 
 describe("FileSystemHandle", () => {
   it("should return end of root segment", async function () {

@@ -1,25 +1,10 @@
 import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import {
-  type Context,
-  createDirectory,
-  createEmptyFile,
-  type Provider,
-} from "@test/util.ts";
+import { describe, it } from "@std/testing/bdd";
+import { createDirectory, createEmptyFile } from "@test/util.ts";
+import { type Context, runTests } from "./target.ts";
 
-export function runFileSystemFileHandleTest(provider: Provider): void {
+runTests(() => {
   describe("FileSystemFileHandle", () => {
-    beforeEach<Context>(async function () {
-      const context = await provider();
-
-      this.root = context.root;
-      this.onAfterEach = context.onAfterEach?.bind(context);
-    });
-
-    afterEach<Context>(function () {
-      return this.onAfterEach?.();
-    });
-
     describe("isSameEntry", () => {
       it<Context>(
         "isSameEntry for identical file handles returns true",
@@ -144,4 +129,4 @@ export function runFileSystemFileHandleTest(provider: Provider): void {
       );
     });
   });
-}
+});

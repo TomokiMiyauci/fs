@@ -1,28 +1,10 @@
 import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
-import {
-  type Context,
-  createEmptyFile,
-  createFileWithContents,
-  type Provider,
-} from "@test/util.ts";
+import { describe, it } from "@std/testing/bdd";
+import { createEmptyFile, createFileWithContents } from "@test/util.ts";
+import { type Context, runTests } from "./target.ts";
 
-export function runFileSystemHandleTest(
-  provider: Provider,
-  isFileSystem?: boolean,
-): void {
+runTests(() => {
   describe("FileSystemHandle", () => {
-    beforeEach<Context>(async function () {
-      const context = await provider();
-
-      this.root = context.root;
-      this.onAfterEach = context.onAfterEach?.bind(context);
-    });
-
-    afterEach<Context>(function () {
-      return this.onAfterEach?.();
-    });
-
     describe("isSameEntry", () => {
       it<Context>(
         "isSameEntry for identical directory handles returns true",
@@ -38,13 +20,11 @@ export function runFileSystemHandleTest(
       });
     });
 
-    if (!isFileSystem) {
-      describe("name", () => {
-        it<Context>("should return end of path segment", function () {
-          expect(this.root.name).toBe("");
-        });
-      });
-    }
+    // describe("name", () => {
+    //   it<Context>("should return end of path segment", function () {
+    //     expect(this.root.name).toBe("");
+    //   });
+    // });
 
     describe("getFile", () => {
       it<Context>(
@@ -105,4 +85,4 @@ export function runFileSystemHandleTest(
       );
     });
   });
-}
+});

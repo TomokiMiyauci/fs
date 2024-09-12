@@ -5,19 +5,8 @@ import {
   createNewFileSystemFileHandle,
   FileSystemFileHandle,
 } from "./file_system_file_handle.ts";
-import { runFileSystemFileHandleTest } from "@test/file_system_file_handle.ts";
-import { VirtualFileSystem } from "@test/util.ts";
 import { FileEntry, FileSystem } from "@test/helper.ts";
 import { Msg } from "./constant.ts";
-
-runFileSystemFileHandleTest(async () => {
-  const fs = new VirtualFileSystem();
-  const root = await fs.getDirectory();
-
-  return {
-    root,
-  };
-});
 
 describe("FileSystemFileHandle", () => {
   interface Context {

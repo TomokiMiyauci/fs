@@ -1,7 +1,5 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { runFileSystemWritableFileStreamTest } from "@test/file_system_writable_file_stream.ts";
-import { VirtualFileSystem } from "@test/util.ts";
 import { FileEntry, FileSystem } from "@test/helper.ts";
 import {
   createNewFileSystemWritableFileStream,
@@ -9,14 +7,6 @@ import {
   writeChunk,
 } from "./file_system_writable_file_stream.ts";
 import { Msg } from "./constant.ts";
-
-runFileSystemWritableFileStreamTest(async () => {
-  const fs = new VirtualFileSystem();
-
-  return {
-    root: await fs.getDirectory(),
-  };
-});
 
 describe("FileSystemWritableFileStream", () => {
   interface Context {

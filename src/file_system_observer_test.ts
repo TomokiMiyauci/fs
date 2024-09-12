@@ -2,24 +2,12 @@ import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List, Set } from "@miyauci/infra";
 import { FileSystemObserver } from "./file_system_observer.ts";
-import { runFileSystemObserverTest } from "@test/file_system_observer.ts";
-import { VirtualFileSystem } from "@test/util.ts";
 import type {
   FileSystem as IFileSystem,
   FileSystemObservation,
 } from "./file_system.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
 import type { FileSystemEntry } from "./file_system_entry.ts";
-
-runFileSystemObserverTest(async () => {
-  const fs = new VirtualFileSystem();
-
-  fs.watch();
-
-  return {
-    root: await fs.getDirectory(),
-  };
-});
 
 class FileSystem implements IFileSystem {
   root: string = "";
