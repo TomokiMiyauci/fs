@@ -1,41 +1,17 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { List, Set } from "@miyauci/infra";
+import { List } from "@miyauci/infra";
+import { DirectoryEntry, FileSystem } from "@test/helper.ts";
+import { delay } from "@std/async/delay";
 import { FileSystemObserver } from "./file_system_observer.ts";
-import type {
-  FileSystem as IFileSystem,
-  FileSystemObservation,
-} from "./file_system.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
-import type { FileSystemEntry } from "./file_system_entry.ts";
+import { Msg } from "./constant.ts";
 
-class FileSystem implements IFileSystem {
-  root: string = "";
-  observations: Set<FileSystemObservation> = new Set();
-  getPath() {
-    return new List([""]);
-  }
-  locateEntry(): FileSystemEntry | null {
-    return {
-      name: "",
-      parent: null,
-      children: new Set(),
-      queryAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      requestAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      fileSystem: this,
-    };
-  }
+interface Context {
+  observer: FileSystemObserver;
 }
 
 describe("FileSystemObserver", () => {
-  interface Context {
-    observer: FileSystemObserver;
-  }
-
   beforeEach<Context>(function () {
     this.observer = new FileSystemObserver(() => {});
   });
@@ -45,22 +21,13 @@ describe("FileSystemObserver", () => {
       "should throw DOMException if located entry's permission is defined",
       async function () {
         const fileSystem = new FileSystem();
-
+        const dirEntry = new DirectoryEntry(fileSystem);
+        const errorName = "custom";
+        dirEntry.queryAccess = () => {
+          return { permissionState: "denied", errorName };
+        };
         fileSystem.locateEntry = () => {
-          return {
-            name: "",
-            parent: null,
-            fileSystem,
-            get children(): Set<FileSystemEntry> {
-              return new Set();
-            },
-            queryAccess() {
-              return { permissionState: "denied", errorName: "" };
-            },
-            requestAccess() {
-              return { permissionState: "denied", errorName: "" };
-            },
-          };
+          return dirEntry;
         };
 
         const dir = createNewFileSystemHandle(
@@ -70,7 +37,7 @@ describe("FileSystemObserver", () => {
         );
 
         await expect(this.observer.observe(dir)).rejects.toThrow(
-          DOMException,
+          new DOMException(Msg.PermissionDenied, errorName),
         );
       },
     );
@@ -110,7 +77,7 @@ describe("FileSystemObserver", () => {
 
         this.observer.unobserve(dir);
 
-        await wait(0);
+        await delay(0);
 
         expect(fileSystem.observations.size).toBe(0);
         expect(this.observer["observations"].size).toBe(0);
@@ -121,6 +88,13 @@ describe("FileSystemObserver", () => {
       "should remove observations if observe before unobserve",
       async function () {
         const fileSystem = new FileSystem();
+        fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") {
+            return new DirectoryEntry(fileSystem);
+          }
+
+          return null;
+        };
         const dir = createNewFileSystemHandle(
           fileSystem,
           new List([""]),
@@ -134,7 +108,7 @@ describe("FileSystemObserver", () => {
 
         this.observer.unobserve(dir);
 
-        await wait(0);
+        await delay(0);
 
         expect(fileSystem.observations.size).toBe(0);
         expect(this.observer["observations"].size).toBe(0);
@@ -142,7 +116,3 @@ describe("FileSystemObserver", () => {
     );
   });
 });
-
-function wait(ms: number): Promise<void> {
-  return new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
-}
