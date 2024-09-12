@@ -120,5 +120,37 @@ describe("FileSystemObserver", () => {
     it<Context>("should do nothing before observe", function () {
       this.observer.disconnect();
     });
+
+    it<Context>(
+      "should clear observations by calling disconnect",
+      async function () {
+        const fileSystem = new FileSystem();
+        const dirEntry = new DirectoryEntry(fileSystem);
+
+        fileSystem.locateEntry = (path) => {
+          if (path.size === 1 && path[0] === "") return dirEntry;
+
+          return null;
+        };
+
+        const dir = createNewFileSystemHandle(
+          fileSystem,
+          new List([""]),
+          "directory",
+        );
+
+        await this.observer.observe(dir);
+
+        await delay(0);
+
+        expect(this.observer["observations"].size).toBe(1);
+
+        this.observer.disconnect();
+
+        await delay(0);
+
+        expect(this.observer["observations"].isEmpty).toBeTruthy();
+      },
+    );
   });
 });
