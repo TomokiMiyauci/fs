@@ -1,3 +1,4 @@
+import { List, Set } from "@miyauci/infra";
 import type {
   DirectoryEntry as IDirectoryEntry,
   FileEntry as IFileEntry,
@@ -6,10 +7,11 @@ import type {
 } from "../src/file_system_entry.ts";
 import type {
   FileSystem as IFileSystem,
-  FileSystemObservation,
+  FileSystemObservation as IFileSystemObservation,
   FileSystemPath,
 } from "../src/file_system.ts";
-import { List, Set } from "@miyauci/infra";
+import type { FileSystemHandle } from "../src/file_system_handle.ts";
+import { FileSystemObserver } from "../src/file_system_observer.ts";
 
 export class FileEntry implements IFileEntry {
   constructor(public fileSystem: FileSystem) {}
@@ -17,7 +19,7 @@ export class FileEntry implements IFileEntry {
 
   binaryData: Uint8Array = new Uint8Array();
 
-  parent: null = null;
+  parent: null | DirectoryEntry = null;
 
   modificationTimestamp: number = Date.now();
 
@@ -71,4 +73,13 @@ export class FileSystem implements IFileSystem {
   locateEntry(_: FileSystemPath): FileSystemEntry | null {
     return null;
   }
+}
+
+export class FileSystemObservation implements IFileSystemObservation {
+  constructor(handle: FileSystemHandle) {
+    this.rootHandle = handle;
+  }
+  recursive: boolean = false;
+  observer: FileSystemObserver = new FileSystemObserver(() => {});
+  rootHandle: FileSystemHandle;
 }
