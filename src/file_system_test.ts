@@ -1,450 +1,445 @@
-import { describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List, Set } from "@miyauci/infra";
 import { delay } from "@std/async/delay";
-import { FileSystem } from "@test/helper.ts";
-import { isInScope, notify, sendError } from "./file_system.ts";
-import type {
-  FileSystemObservation as IFileSystemObservation,
-  FileSystemPath,
-} from "./file_system.ts";
-import { FileSystemObserver } from "./file_system_observer.ts";
-import type { FileSystemHandle } from "./file_system_handle.ts";
-import { createNewFileSystemHandle } from "./algorithm.ts";
-import type {
+import {
   DirectoryEntry,
   FileEntry,
-  FileSystemEntry,
-} from "./file_system_entry.ts";
+  FileSystem,
+  FileSystemObservation,
+} from "@test/helper.ts";
+import { isInScope, notify, sendError } from "./file_system.ts";
+import type { FileSystemPath } from "./file_system.ts";
+import { FileSystemObserver } from "./file_system_observer.ts";
+import { createNewFileSystemHandle } from "./algorithm.ts";
 import {
   createNewFileSystemChangeRecord,
   type FileSystemChangeRecord,
 } from "./file_system_change_record.ts";
 
-class FileSystemObservation implements IFileSystemObservation {
-  constructor(fileSystem: FileSystem, path: List<string>, recursive = false) {
-    this.rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      path,
-      "directory",
-    );
-    this.recursive = recursive;
-  }
-  recursive: boolean;
-  observer: FileSystemObserver = new FileSystemObserver(() => {});
-  rootHandle: FileSystemHandle;
+interface Context {
+  fileSystem: FileSystem;
 }
 
 describe("sendError", () => {
-  it("should do nothing if observations is empty", () => {
-    const observations = new Set<FileSystemObservation>();
-    const fileSystem = new FileSystem();
-    fileSystem["observations"] = observations;
-
-    sendError(observations, fileSystem);
+  beforeEach<Context>(function () {
+    this.fileSystem = new FileSystem();
   });
 
-  it("should clear observations after calling sendError and emit error event", async () => {
+  it<Context>("should do nothing if observations is empty", function () {
     const observations = new Set<FileSystemObservation>();
-    const fileSystem = new FileSystem();
+    this.fileSystem["observations"] = observations;
 
-    fileSystem["observations"] = observations;
-
-    const allRecords: FileSystemChangeRecord[] = [];
-    const rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List([""]),
-      "directory",
-    );
-    const observation = {
-      observer: new FileSystemObserver((records) => {
-        allRecords.push(...records);
-      }),
-
-      recursive: false,
-      rootHandle,
-    } satisfies FileSystemObservation;
-    observations.append(observation);
-
-    expect(observations.isEmpty).toBeFalsy();
-
-    sendError(observations, fileSystem);
-
-    await delay(0);
-
-    expect(observations.isEmpty).toBeTruthy();
-    expect(allRecords).toEqual([
-      createNewFileSystemChangeRecord(observation, rootHandle, "errored", null),
-    ]);
+    sendError(observations, this.fileSystem);
   });
+
+  it<Context>(
+    "should clear observations after calling sendError and emit error event",
+    async function () {
+      const observations = new Set<FileSystemObservation>();
+
+      this.fileSystem["observations"] = observations;
+
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+      observations.append(observation);
+
+      expect(observations.isEmpty).toBeFalsy();
+
+      sendError(observations, this.fileSystem);
+
+      await delay(0);
+
+      expect(observations.isEmpty).toBeTruthy();
+      expect(records).toEqual([
+        createNewFileSystemChangeRecord(
+          observation,
+          rootHandle,
+          "errored",
+          null,
+        ),
+      ]);
+    },
+  );
 });
 
 describe("isInScope", () => {
-  it("should return false if relationship is 'other'", () => {
+  beforeEach<Context>(function () {
+    this.fileSystem = new FileSystem();
+  });
+
+  it<Context>("should return false if relationship is 'other'", function () {
+    const handle = createNewFileSystemHandle(
+      this.fileSystem,
+      new List(),
+      "directory",
+    );
+
     expect(isInScope(
       createNewFileSystemHandle(
         new FileSystem(),
         new List(),
         "file",
       ),
-      new FileSystemObservation(new FileSystem(), new List()),
+      new FileSystemObservation(handle),
     )).toBeFalsy();
   });
 
-  it("should return true if relationship is 'ancestor'", () => {
-    const fileSystem = new FileSystem();
+  it<Context>("should return true if relationship is 'ancestor'", function () {
+    const handle = createNewFileSystemHandle(
+      this.fileSystem,
+      new List(["", "dir", "nested"]),
+      "directory",
+    );
+
     expect(isInScope(
       createNewFileSystemHandle(
-        fileSystem,
+        this.fileSystem,
         new List(["", "dir"]),
         "directory",
       ),
-      new FileSystemObservation(fileSystem, new List(["", "dir", "nested"])),
+      new FileSystemObservation(handle),
     )).toBeTruthy();
   });
 
-  it("should return true if relationship is 'direct child'", () => {
-    const fileSystem = new FileSystem();
-    expect(isInScope(
-      createNewFileSystemHandle(
-        fileSystem,
-        new List(["", "dir", "nested"]),
+  it<Context>(
+    "should return true if relationship is 'direct child'",
+    function () {
+      const handle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List(["", "dir"]),
         "directory",
-      ),
-      new FileSystemObservation(fileSystem, new List(["", "dir"])),
-    )).toBeTruthy();
-  });
+      );
 
-  it("should return false if relationship is 'descendant' and recursive is false", () => {
-    const fileSystem = new FileSystem();
-    expect(isInScope(
-      createNewFileSystemHandle(
-        fileSystem,
-        new List(["", "dir", "nested"]),
-        "directory",
-      ),
-      new FileSystemObservation(fileSystem, new List([""])),
-    )).toBeFalsy();
-  });
+      expect(isInScope(
+        createNewFileSystemHandle(
+          this.fileSystem,
+          new List(["", "dir", "nested"]),
+          "directory",
+        ),
+        new FileSystemObservation(handle),
+      )).toBeTruthy();
+    },
+  );
 
-  it("should return true if relationship is 'descendant' and recursive is true", () => {
-    const fileSystem = new FileSystem();
-    expect(isInScope(
-      createNewFileSystemHandle(
-        fileSystem,
-        new List(["", "dir", "nested"]),
+  it<Context>(
+    "should return false if relationship is 'descendant' and recursive is false",
+    function () {
+      const handle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
         "directory",
-      ),
-      new FileSystemObservation(fileSystem, new List([""]), true),
-    )).toBeTruthy();
-  });
+      );
+
+      expect(isInScope(
+        createNewFileSystemHandle(
+          this.fileSystem,
+          new List(["", "dir", "nested"]),
+          "directory",
+        ),
+        new FileSystemObservation(handle),
+      )).toBeFalsy();
+    },
+  );
+
+  it<Context>(
+    "should return true if relationship is 'descendant' and recursive is true",
+    function () {
+      const handle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const observation = new FileSystemObservation(handle);
+      observation.recursive = true;
+      expect(isInScope(
+        createNewFileSystemHandle(
+          this.fileSystem,
+          new List(["", "dir", "nested"]),
+          "directory",
+        ),
+        observation,
+      )).toBeTruthy();
+    },
+  );
 });
 
 describe("notify", () => {
-  it("should do nothing if eventType is modified and eventEntryType is directory", async () => {
-    const fileSystem = new FileSystem();
-    const rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List([""]),
-      "directory",
-    );
-
-    const records: FileSystemChangeRecord[] = [];
-
-    notify(
-      {
-        observer: new FileSystemObserver((allRecords) => {
-          records.push(...allRecords);
-        }),
-        recursive: false,
-        rootHandle,
-      },
-      new List([{
-        type: "modified",
-        entryType: "directory",
-        fromPath: null,
-        modifiedPath: new List(["dir"]),
-      }]),
-      fileSystem,
-    );
-
-    await delay(0);
-
-    expect(records.length).toBe(0);
+  beforeEach<Context>(function () {
+    this.fileSystem = new FileSystem();
   });
 
-  it("should infer entry type if event's entry type is null", async () => {
-    const fileSystem = new FileSystem();
-    const rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List([""]),
-      "directory",
-    );
-    const observation = {
-      observer: new FileSystemObserver((allRecords) => {
+  it<Context>(
+    "should do nothing if eventType is modified and eventEntryType is directory",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const records: FileSystemChangeRecord[] = [];
+
+      notify(
+        {
+          observer: new FileSystemObserver((allRecords) => {
+            records.push(...allRecords);
+          }),
+          recursive: false,
+          rootHandle,
+        },
+        new List([{
+          type: "modified",
+          entryType: "directory",
+          fromPath: null,
+          modifiedPath: new List(["dir"]),
+        }]),
+        this.fileSystem,
+      );
+
+      await delay(0);
+
+      expect(records.length).toBe(0);
+    },
+  );
+
+  it<Context>(
+    "should infer entry type if event's entry type is null",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
         records.push(...allRecords);
-      }),
-      recursive: false,
-      rootHandle,
-    } satisfies FileSystemObservation;
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
 
-    const records: FileSystemChangeRecord[] = [];
-
-    notify(
-      observation,
-      new List([{
-        type: "appeared",
-        entryType: null,
-        fromPath: null,
-        modifiedPath: new List([""]),
-      }]),
-      fileSystem,
-    );
-
-    await delay(0);
-
-    expect(records.length).toBe(1);
-
-    const record = records[0];
-    expect(record.changedHandle.kind).toBe("directory");
-    expect(record).toEqual(
-      createNewFileSystemChangeRecord(
+      notify(
         observation,
-        createNewFileSystemHandle(fileSystem, new List([""]), "directory"),
-        "appeared",
-        null,
-      ),
-    );
-  });
+        new List([{
+          type: "appeared",
+          entryType: null,
+          fromPath: null,
+          modifiedPath: new List([""]),
+        }]),
+        this.fileSystem,
+      );
 
-  it("should skip event of moved what is not in scope", async () => {
-    const fileSystem = new FileSystem();
-    const rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List([""]),
-      "directory",
-    );
-    const observation = {
-      observer: new FileSystemObserver((allRecords) => {
-        records.push(...allRecords);
-      }),
-      recursive: false,
-      rootHandle,
-    } satisfies FileSystemObservation;
+      await delay(0);
 
-    const records: FileSystemChangeRecord[] = [];
+      expect(records.length).toBe(1);
 
-    notify(
-      observation,
-      new List([{
-        type: "moved",
-        entryType: null,
-        fromPath: new List([]),
-        modifiedPath: new List([]),
-      }]),
-      new FileSystem(),
-    );
-
-    await delay(0);
-
-    expect(records.length).toBe(0);
-  });
-
-  it("should emit appeared event if the event is moved and it's path is not from path in scope", async () => {
-    const fileSystem = new FileSystem();
-
-    const fileEntry = {
-      fileSystem,
-      binaryData: new Uint8Array(),
-      lock: "open",
-      sharedLockCount: 0,
-      modificationTimestamp: Date.now(),
-      name: "file.txt",
-      get parent() {
-        return rootEntry;
-      },
-      queryAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      requestAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-    } satisfies FileEntry;
-    const rootEntry = {
-      fileSystem,
-      get children(): Set<FileSystemEntry> {
-        return new Set([fileEntry]);
-      },
-      parent: null,
-      queryAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      requestAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      name: "",
-    } satisfies DirectoryEntry;
-    const movedEntry = {
-      ...fileEntry,
-      name: "moved.txt",
-    };
-
-    fileSystem.locateEntry = (path: FileSystemPath) => {
-      if (path.size === 1 && path[0] === "") return rootEntry;
-
-      if (
-        path.size === 3 && path[0] === "" && path[1] === "dir" &&
-        path[2] === "file.txt"
-      ) {
-        return fileEntry;
-      }
-
-      if (path.size === 2 && path[0] === "" && path[1] === "moved.txt") {
-        return movedEntry;
-      }
-
-      return null;
-    };
-
-    const rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List([""]),
-      "directory",
-    );
-    const observation = {
-      observer: new FileSystemObserver((allRecords) => {
-        records.push(...allRecords);
-      }),
-      recursive: false,
-      rootHandle,
-    } satisfies FileSystemObservation;
-
-    const records: FileSystemChangeRecord[] = [];
-
-    notify(
-      observation,
-      new List([{
-        type: "moved",
-        entryType: "file",
-        fromPath: new List(["", "dir", "file.txt"]),
-        modifiedPath: new List(["", "moved.txt"]),
-      }]),
-      fileSystem,
-    );
-
-    await delay(0);
-
-    expect(records).toEqual([
-      createNewFileSystemChangeRecord(
-        observation,
-        createNewFileSystemHandle(
-          fileSystem,
-          new List(["", "moved.txt"]),
-          "file",
+      const record = records[0];
+      expect(record.changedHandle.kind).toBe("directory");
+      expect(record).toEqual(
+        createNewFileSystemChangeRecord(
+          observation,
+          createNewFileSystemHandle(
+            this.fileSystem,
+            new List([""]),
+            "directory",
+          ),
+          "appeared",
+          null,
         ),
-        "appeared",
-        { fileSystem, kind: "file", path: new List(["file.txt"]) },
-      ),
-    ]);
-  });
+      );
+    },
+  );
 
-  it("should emit disappeared event if the event is moved and it's path is not modified path in scope", async () => {
-    const fileSystem = new FileSystem();
+  it<Context>(
+    "should skip event of moved what is not in scope",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
 
-    const fileEntry = {
-      fileSystem,
-      binaryData: new Uint8Array(),
-      lock: "open",
-      sharedLockCount: 0,
-      modificationTimestamp: Date.now(),
-      name: "file.txt",
-      get parent() {
-        return rootEntry;
-      },
-      queryAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      requestAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-    } satisfies FileEntry;
-    const rootEntry = {
-      fileSystem,
-      get children(): Set<FileSystemEntry> {
-        return new Set([fileEntry]);
-      },
-      parent: null,
-      queryAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      requestAccess() {
-        return { permissionState: "granted", errorName: "" };
-      },
-      name: "",
-    } satisfies DirectoryEntry;
-    const movedEntry = {
-      ...fileEntry,
-      name: "moved.txt",
-    };
-
-    fileSystem.locateEntry = (path: FileSystemPath) => {
-      if (path.size === 1 && path[0] === "") return rootEntry;
-
-      if (
-        path.size === 2 && path[0] === "" && path[1] === "file.txt"
-      ) {
-        return fileEntry;
-      }
-
-      if (
-        path.size === 3 && path[0] === "" && path[1] === "dir" &&
-        path[2] === "moved.txt"
-      ) {
-        return movedEntry;
-      }
-
-      return null;
-    };
-
-    const rootHandle = createNewFileSystemHandle(
-      fileSystem,
-      new List([""]),
-      "directory",
-    );
-    const observation = {
-      observer: new FileSystemObserver((allRecords) => {
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
         records.push(...allRecords);
-      }),
-      recursive: false,
-      rootHandle,
-    } satisfies FileSystemObservation;
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
 
-    const records: FileSystemChangeRecord[] = [];
-
-    notify(
-      observation,
-      new List([{
-        type: "moved",
-        entryType: "file",
-        fromPath: new List(["", "file.txt"]),
-        modifiedPath: new List(["", "dir", "moved.txt"]),
-      }]),
-      fileSystem,
-    );
-
-    await delay(0);
-
-    expect(records).toEqual([
-      createNewFileSystemChangeRecord(
+      notify(
         observation,
-        createNewFileSystemHandle(
-          fileSystem,
-          new List(["", "file.txt"]),
-          "file",
+        new List([{
+          type: "moved",
+          entryType: null,
+          fromPath: new List([]),
+          modifiedPath: new List([]),
+        }]),
+        new FileSystem(),
+      );
+
+      await delay(0);
+
+      expect(records.length).toBe(0);
+    },
+  );
+
+  it<Context>(
+    "should emit appeared event if the event is moved and it's path is not from path in scope",
+    async function () {
+      const fileEntry = new FileEntry(this.fileSystem);
+      fileEntry.name = "file.txt";
+
+      const rootEntry = new DirectoryEntry(this.fileSystem);
+      rootEntry.children = new Set([fileEntry]);
+
+      const movedEntry = new FileEntry(this.fileSystem);
+      movedEntry.name = "moved.txt";
+
+      this.fileSystem.locateEntry = (path: FileSystemPath) => {
+        if (path.size === 1 && path[0] === "") return rootEntry;
+
+        if (
+          path.size === 3 && path[0] === "" && path[1] === "dir" &&
+          path[2] === "file.txt"
+        ) {
+          return fileEntry;
+        }
+
+        if (path.size === 2 && path[0] === "" && path[1] === "moved.txt") {
+          return movedEntry;
+        }
+
+        return null;
+      };
+
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+
+      notify(
+        observation,
+        new List([{
+          type: "moved",
+          entryType: "file",
+          fromPath: new List(["", "dir", "file.txt"]),
+          modifiedPath: new List(["", "moved.txt"]),
+        }]),
+        this.fileSystem,
+      );
+
+      await delay(0);
+
+      expect(records).toEqual([
+        createNewFileSystemChangeRecord(
+          observation,
+          createNewFileSystemHandle(
+            this.fileSystem,
+            new List(["", "moved.txt"]),
+            "file",
+          ),
+          "appeared",
+          {
+            fileSystem: this.fileSystem,
+            kind: "file",
+            path: new List(["file.txt"]),
+          },
         ),
-        "disappeared",
-        { fileSystem, kind: "file", path: new List(["dir", "file.txt"]) },
-      ),
-    ]);
-  });
+      ]);
+    },
+  );
+
+  it<Context>(
+    "should emit disappeared event if the event is moved and it's path is not modified path in scope",
+    async function () {
+      const fileSystem = new FileSystem();
+
+      const fileEntry = new FileEntry(this.fileSystem);
+      fileEntry.name = "file.txt";
+
+      const rootEntry = new DirectoryEntry(this.fileSystem);
+      rootEntry.children = new Set([fileEntry]);
+
+      const movedEntry = new FileEntry(this.fileSystem);
+      movedEntry.name = "moved.txt";
+
+      fileSystem.locateEntry = (path: FileSystemPath) => {
+        if (path.size === 1 && path[0] === "") return rootEntry;
+
+        if (
+          path.size === 2 && path[0] === "" && path[1] === "file.txt"
+        ) {
+          return fileEntry;
+        }
+
+        if (
+          path.size === 3 && path[0] === "" && path[1] === "dir" &&
+          path[2] === "moved.txt"
+        ) {
+          return movedEntry;
+        }
+
+        return null;
+      };
+
+      const rootHandle = createNewFileSystemHandle(
+        fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+
+      notify(
+        observation,
+        new List([{
+          type: "moved",
+          entryType: "file",
+          fromPath: new List(["", "file.txt"]),
+          modifiedPath: new List(["", "dir", "moved.txt"]),
+        }]),
+        fileSystem,
+      );
+
+      await delay(0);
+
+      expect(records).toEqual([
+        createNewFileSystemChangeRecord(
+          observation,
+          createNewFileSystemHandle(
+            fileSystem,
+            new List(["", "file.txt"]),
+            "file",
+          ),
+          "disappeared",
+          { fileSystem, kind: "file", path: new List(["dir", "file.txt"]) },
+        ),
+      ]);
+    },
+  );
 });
