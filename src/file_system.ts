@@ -9,7 +9,7 @@ import {
   type FileSystemChangeRecord,
   type FileSystemChangeType,
 } from "./file_system_change_record.ts";
-import type { FileSystemEntry } from "./file_system_entry.ts";
+import { type FileSystemEntry, isSameLocator } from "./file_system_entry.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
 import { getRelationship } from "./file_system_locator.ts";
 import type { FileSystemFileHandle } from "./file_system_file_handle.ts";
@@ -278,11 +278,11 @@ export function notify(
     // 16. Append record to records.
     records.append(record);
 
-    // TODO: Probably it should not be a comparison of references
     // 17. If eventType is equal to "disappeared" and changedHandle’s locator is equal to observationLocator:
+    // TODO: 17. If eventType is equal to "disappeared" and changedHandle’s locator is the same locator as a observationLocator:
     if (
       eventType === "disappeared" &&
-      changedHandle["locator"] === observationLocator
+      isSameLocator(changedHandle["locator"], observationLocator)
     ) {
       // 1. Set errorRecord to the result of creating a new FileSystemChangeRecord for observation given changedHandle, "errored", and null.
       const errorRecord = createNewFileSystemChangeRecord(

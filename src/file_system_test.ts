@@ -372,8 +372,6 @@ describe("notify", () => {
   it<Context>(
     "should emit disappeared event if the event is moved and it's path is not modified path in scope",
     async function () {
-      const fileSystem = new FileSystem();
-
       const fileEntry = new FileEntry(this.fileSystem);
       fileEntry.name = "file.txt";
 
@@ -383,7 +381,7 @@ describe("notify", () => {
       const movedEntry = new FileEntry(this.fileSystem);
       movedEntry.name = "moved.txt";
 
-      fileSystem.locateEntry = (path: FileSystemPath) => {
+      this.fileSystem.locateEntry = (path: FileSystemPath) => {
         if (path.size === 1 && path[0] === "") return rootEntry;
 
         if (
@@ -403,7 +401,7 @@ describe("notify", () => {
       };
 
       const rootHandle = createNewFileSystemHandle(
-        fileSystem,
+        this.fileSystem,
         new List([""]),
         "directory",
       );
@@ -423,7 +421,7 @@ describe("notify", () => {
           fromPath: new List(["", "file.txt"]),
           modifiedPath: new List(["", "dir", "moved.txt"]),
         }]),
-        fileSystem,
+        this.fileSystem,
       );
 
       await delay(0);
@@ -432,12 +430,63 @@ describe("notify", () => {
         createNewFileSystemChangeRecord(
           observation,
           createNewFileSystemHandle(
-            fileSystem,
+            this.fileSystem,
             new List(["", "file.txt"]),
             "file",
           ),
           "disappeared",
-          { fileSystem, kind: "file", path: new List(["dir", "file.txt"]) },
+          {
+            fileSystem: this.fileSystem,
+            kind: "file",
+            path: new List(["dir", "file.txt"]),
+          },
+        ),
+      ]);
+    },
+  );
+
+  it<Context>(
+    "should emit error event if disappear root handle",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+
+      notify(
+        observation,
+        new List([{
+          type: "disappeared",
+          entryType: "directory",
+          fromPath: null,
+          modifiedPath: new List([""]),
+        }]),
+        this.fileSystem,
+      );
+
+      await delay(0);
+
+      expect(records.length).toBe(2);
+      expect(records).toEqual([
+        createNewFileSystemChangeRecord(
+          observation,
+          rootHandle,
+          "disappeared",
+          null,
+        ),
+        createNewFileSystemChangeRecord(
+          observation,
+          rootHandle,
+          "errored",
+          null,
         ),
       ]);
     },
