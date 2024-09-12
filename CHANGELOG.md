@@ -1,3 +1,10 @@
+# [1.0.0-beta.25](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.24...1.0.0-beta.25) (2024-09-12)
+
+
+### Bug Fixes
+
+* **file_system:** fix locator comparison algorithm ([cb546a2](https://github.com/TomokiMiyauci/fs/commit/cb546a2f0bc2cea99ac86b949ea8905401a3ea80))
+
 # [1.0.0-beta.24](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.23...1.0.0-beta.24) (2024-09-09)
 
 
