@@ -30,7 +30,7 @@ export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
   }
 }
 
-class Effector implements
+export class Effector implements
   Pick<
     Set<FileSystemEntry>,
     "append" | "remove" | "isEmpty" | typeof Symbol.iterator
@@ -72,8 +72,6 @@ class Effector implements
         yield new DirectoryEntry(this.fileSystem, path);
       } else if (entry.isFile) {
         yield new FileEntry(this.fileSystem, path);
-      } else {
-        throw new Error("symlink is not supported");
       }
     }
   }

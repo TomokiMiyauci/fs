@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { DirectoryEntry } from "./directory_entry.ts";
+import { DirectoryEntry, Effector } from "./directory_entry.ts";
 import { FileSystem } from "./file_system.ts";
+import { join } from "@std/path/join";
 
 interface Context {
   root: string;
@@ -10,7 +11,8 @@ interface Context {
 
 describe("DirectoryEntry", () => {
   beforeEach<Context>(async function () {
-    this.root = await Deno.makeTempDir();
+    const path = await Deno.makeTempDir();
+    this.root = await Deno.realPath(path);
     this.fileSystem = new FileSystem(this.root);
   });
 
@@ -41,5 +43,24 @@ describe("DirectoryEntry", () => {
         expect(entry.parent).toBeTruthy();
       },
     );
+  });
+});
+
+describe("Effector", () => {
+  beforeEach<Context>(async function () {
+    this.root = await Deno.makeTempDir();
+    this.fileSystem = new FileSystem(this.root);
+  });
+
+  afterEach<Context>(async function () {
+    await Deno.remove(this.root);
+  });
+
+  describe("Symbol.iterator", () => {
+    it<Context>("should return empty", function () {
+      const effector = new Effector(this.fileSystem, []);
+
+      expect([...effector]).toEqual([]);
+    });
   });
 });
