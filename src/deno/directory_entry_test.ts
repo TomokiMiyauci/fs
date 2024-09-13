@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { DirectoryEntry, Effector } from "./directory_entry.ts";
 import { FileSystem } from "./file_system.ts";
-import { join } from "@std/path/join";
 
 interface Context {
   root: string;
