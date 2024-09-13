@@ -12,7 +12,7 @@ import {
   getFileContents,
   getFileSize,
   pathSeparators,
-} from "@test/util.ts";
+} from "./util.ts";
 import { type Context, runTests } from "./target.ts";
 
 runTests(() => {

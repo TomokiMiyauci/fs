@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe } from "@std/testing/bdd";
 import type { FileSystemDirectoryHandle } from "../src/file_system_directory_handle.ts";
-import { VirtualFileSystem } from "@test/util.ts";
+import { InMemoryFileSystem } from "@miyauci/fs/in-memory";
 import * as DenoRuntime from "@miyauci/fs/deno";
 import * as NodeRuntime from "@miyauci/fs/node";
 
@@ -21,7 +21,7 @@ export const targets: Target[] = [
   {
     name: "InMemoryFileSystem",
     async beforeEach() {
-      const fs = new VirtualFileSystem();
+      const fs = new InMemoryFileSystem();
 
       fs.watch();
 

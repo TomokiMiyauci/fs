@@ -11,7 +11,7 @@ import {
   createFileWithContents,
   getFileContents,
   getFileSize,
-} from "@test/util.ts";
+} from "./util.ts";
 import { type Context, runTests } from "./target.ts";
 
 runTests(() => {

@@ -1,6 +1,6 @@
 import { expect } from "@std/expect";
 import { describe, it } from "@std/testing/bdd";
-import { createDirectory, createEmptyFile } from "@test/util.ts";
+import { createDirectory, createEmptyFile } from "./util.ts";
 import { type Context, runTests } from "./target.ts";
 
 runTests(() => {
