@@ -21,6 +21,5 @@ export const enum Msg {
   InvalidOperation = "Fail to modify underlying file system",
   NotInBucketFileSystemOperation =
     "Access Handles may only be created on temporary file systems",
-  PermissionDenied =
-    "The request is not allowed by the user agent or the platform in the current context.",
+  PermissionDenied = "The user aborted a request.",
 }
