@@ -1,6 +1,5 @@
 import { join } from "@std/path/join";
 import { relative } from "@std/path/relative";
-import { format } from "@miyauci/format";
 import { List } from "@miyauci/infra";
 import type {
   DirectoryEntry,
@@ -9,12 +8,7 @@ import type {
   FileSystemEvent,
   FileSystemHandleKind,
 } from "@miyauci/fs";
-import {
-  DescriptorName,
-  Flag,
-  KindMap,
-  PERMISSION_ERROR_MESSAGE_TEMPLATE,
-} from "./constant.ts";
+import { ABORT_ERROR, KindMap } from "./constant.ts";
 import { safeStatSync } from "./io.ts";
 
 export abstract class BaseEntry {
@@ -44,7 +38,7 @@ export abstract class BaseEntry {
         if (result.state !== "granted") {
           return {
             permissionState: result.state,
-            errorName: readPermissionErrorMsg(this.fullPath),
+            errorName: ABORT_ERROR,
           };
         }
 
@@ -59,7 +53,7 @@ export abstract class BaseEntry {
         if (readResult.state !== "granted") {
           return {
             permissionState: readResult.state,
-            errorName: readPermissionErrorMsg(this.fullPath),
+            errorName: ABORT_ERROR,
           };
         }
 
@@ -71,7 +65,7 @@ export abstract class BaseEntry {
         if (writeResult.state !== "granted") {
           return {
             permissionState: readResult.state,
-            errorName: writePermissionErrorMsg(this.fullPath),
+            errorName: ABORT_ERROR,
           };
         }
 
@@ -94,7 +88,7 @@ export abstract class BaseEntry {
         if (result.state !== "granted") {
           return {
             permissionState: result.state,
-            errorName: readPermissionErrorMsg(this.fullPath),
+            errorName: ABORT_ERROR,
           };
         }
 
@@ -109,7 +103,7 @@ export abstract class BaseEntry {
         if (readResult.state !== "granted") {
           return {
             permissionState: readResult.state,
-            errorName: readPermissionErrorMsg(this.fullPath),
+            errorName: ABORT_ERROR,
           };
         }
 
@@ -121,7 +115,7 @@ export abstract class BaseEntry {
         if (writeResult.state !== "granted") {
           return {
             permissionState: readResult.state,
-            errorName: writePermissionErrorMsg(this.fullPath),
+            errorName: ABORT_ERROR,
           };
         }
 
@@ -132,22 +126,6 @@ export abstract class BaseEntry {
       }
     }
   }
-}
-
-export function readPermissionErrorMsg(path: string): string {
-  return format(PERMISSION_ERROR_MESSAGE_TEMPLATE, {
-    name: DescriptorName.Read,
-    flag: Flag.AllowRead,
-    path,
-  });
-}
-
-export function writePermissionErrorMsg(path: string): string {
-  return format(PERMISSION_ERROR_MESSAGE_TEMPLATE, {
-    name: DescriptorName.Write,
-    flag: Flag.AllowWrite,
-    path,
-  });
 }
 
 export class FsEventConverter {

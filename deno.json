@@ -6,7 +6,6 @@
   },
   "exclude": ["CHANGELOG.md"],
   "imports": {
-    "@miyauci/format": "jsr:@miyauci/format@^1.1.0",
     "@miyauci/fs": "./src/mod.ts",
     "@miyauci/fs/$RUNTIME": "./src/deno/mod.ts",
     "@miyauci/fs/deno": "./src/deno/mod.ts",

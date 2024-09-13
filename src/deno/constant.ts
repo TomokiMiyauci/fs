@@ -1,17 +1,6 @@
 import type { FileSystemChangeType } from "@miyauci/fs";
 
-export const enum Flag {
-  AllowRead = "--allow-read",
-  AllowWrite = "--allow-write",
-}
-
-export const enum DescriptorName {
-  Read = "read",
-  Write = "write",
-}
-
-export const PERMISSION_ERROR_MESSAGE_TEMPLATE =
-  'Require {name} access to "{path}", run again with the {flag} flag';
+export const ABORT_ERROR = "AbortError";
 
 export const allEvents = [
   "access",

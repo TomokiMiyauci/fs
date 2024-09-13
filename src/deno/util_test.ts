@@ -1,12 +1,72 @@
 import { List } from "@miyauci/infra";
-import { describe, it } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import type { FileSystemEvent } from "@miyauci/fs";
-import {
-  FsEventConverter,
-  readPermissionErrorMsg,
-  writePermissionErrorMsg,
-} from "./util.ts";
+import { BaseEntry, FsEventConverter } from "./util.ts";
+import { FileSystem } from "./file_system.ts";
+import type { DirectoryEntry } from "../file_system_entry.ts";
+
+describe("BaseEntry", () => {
+  interface Context {
+    root: string;
+    fileSystem: FileSystem;
+    entry: BaseEntry;
+  }
+
+  class MyEntry extends BaseEntry {
+    get parent(): DirectoryEntry | null {
+      return null;
+    }
+  }
+
+  beforeEach<Context>(async function () {
+    this.root = await Deno.makeTempDir();
+    this.fileSystem = new FileSystem(this.root);
+    this.entry = new MyEntry(this.fileSystem, [""]);
+  });
+
+  afterEach<Context>(async function () {
+    await Deno.remove(this.root, { recursive: true });
+  });
+
+  describe("name", () => {
+    it<Context>("should return last segment of path", function () {
+      expect(this.entry.name).toBe("");
+    });
+  });
+
+  describe("queryAccess", () => {
+    it<Context>("should grant with read", function () {
+      expect(this.entry.queryAccess("read")).toEqual({
+        permissionState: "granted",
+        errorName: "",
+      });
+    });
+
+    it<Context>("should grant with readwrite", function () {
+      expect(this.entry.queryAccess("readwrite")).toEqual({
+        permissionState: "granted",
+        errorName: "",
+      });
+    });
+  });
+
+  describe("requestAccess", () => {
+    it<Context>("should grant with read", function () {
+      expect(this.entry.requestAccess("read")).toEqual({
+        permissionState: "granted",
+        errorName: "",
+      });
+    });
+
+    it<Context>("should grant with readwrite", function () {
+      expect(this.entry.requestAccess("readwrite")).toEqual({
+        permissionState: "granted",
+        errorName: "",
+      });
+    });
+  });
+});
 
 describe("FsEventConverter", () => {
   describe("toEntryType", () => {
@@ -90,21 +150,5 @@ describe("FsEventConverter", () => {
           .toEqual(expected);
       }
     });
-  });
-});
-
-describe("readPermissionErrorMsg", () => {
-  it("should return string", () => {
-    expect(readPermissionErrorMsg("/path")).toBe(
-      `Require read access to "/path", run again with the --allow-read flag`,
-    );
-  });
-});
-
-describe("writePermissionErrorMsg", () => {
-  it("should return string", () => {
-    expect(writePermissionErrorMsg("/path")).toBe(
-      `Require write access to "/path", run again with the --allow-write flag`,
-    );
   });
 });
