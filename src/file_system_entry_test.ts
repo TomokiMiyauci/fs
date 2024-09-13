@@ -1,7 +1,7 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List } from "@miyauci/infra";
-import { FileEntry, FileSystem } from "@test/helper.ts";
+import { FileEntry, FileSystem } from "@test/util.ts";
 import {
   isSameLocator,
   isSamePath,

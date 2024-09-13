@@ -7,7 +7,7 @@ import {
   FileEntry,
   FileSystem,
   FileSystemObservation,
-} from "@test/helper.ts";
+} from "@test/util.ts";
 import { isInScope, notify, sendError } from "./file_system.ts";
 import type { FileSystemPath } from "./file_system.ts";
 import { FileSystemObserver } from "./file_system_observer.ts";

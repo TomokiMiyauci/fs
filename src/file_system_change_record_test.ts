@@ -1,7 +1,7 @@
 import { beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List } from "@miyauci/infra";
-import { FileSystem } from "@test/helper.ts";
+import { FileSystem } from "@test/util.ts";
 import {
   createNewFileSystemChangeRecord,
   FileSystemChangeRecord,

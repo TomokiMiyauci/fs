@@ -11,6 +11,7 @@
     "@miyauci/fs/$RUNTIME": "./src/deno/mod.ts",
     "@miyauci/fs/deno": "./src/deno/mod.ts",
     "@miyauci/fs/node": "./src/node/mod.ts",
+    "@miyauci/fs/in-memory": "./src/in_memory/mod.ts",
     "@miyauci/infra": "jsr:@miyauci/infra@^1.0.0",
     "@miyauci/permissions": "./src/permissions/mod.ts",
     "@miyauci/webidl": "./src/webidl/mod.ts",

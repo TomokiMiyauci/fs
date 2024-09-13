@@ -4,7 +4,7 @@ import {
   createNewFileSystemSyncAccessHandle,
   FileSystemSyncAccessHandle,
 } from "./file_system_sync_access_handle.ts";
-import { FileEntry, FileSystem } from "@test/helper.ts";
+import { FileEntry, FileSystem } from "@test/util.ts";
 import { Msg } from "./constant.ts";
 
 interface Context {

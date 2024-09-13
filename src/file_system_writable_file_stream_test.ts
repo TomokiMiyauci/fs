@@ -1,6 +1,6 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { FileEntry, FileSystem } from "@test/helper.ts";
+import { FileEntry, FileSystem } from "@test/util.ts";
 import {
   createNewFileSystemWritableFileStream,
   FileSystemWritableFileStream,

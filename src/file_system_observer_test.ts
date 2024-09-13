@@ -1,7 +1,7 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { List } from "@miyauci/infra";
-import { DirectoryEntry, FileSystem } from "@test/helper.ts";
+import { DirectoryEntry, FileSystem } from "@test/util.ts";
 import { delay } from "@std/async/delay";
 import { FileSystemObserver } from "./file_system_observer.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
