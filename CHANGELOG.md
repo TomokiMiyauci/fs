@@ -1,3 +1,10 @@
+# [1.0.0-beta.28](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.27...1.0.0-beta.28) (2024-09-13)
+
+
+### Bug Fixes
+
+* **deno:** fix parent entry referencing algorithm ([54bc97e](https://github.com/TomokiMiyauci/fs/commit/54bc97e65df09c5c96ce9f0a703d4be4469faa92))
+
 # [1.0.0-beta.27](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.26...1.0.0-beta.27) (2024-09-13)
 
 
