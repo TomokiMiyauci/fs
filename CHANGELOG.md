@@ -1,3 +1,11 @@
+# [1.0.0-beta.27](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.26...1.0.0-beta.27) (2024-09-13)
+
+
+### Features
+
+* **constant:** change aborted error message ([f6367eb](https://github.com/TomokiMiyauci/fs/commit/f6367ebd244cfde368c6e0ba2c4deb14e19646f0))
+* **deno:** change permission denied error message ([47c0226](https://github.com/TomokiMiyauci/fs/commit/47c0226c19635acffe65dccfa221b8129a454405))
+
 # [1.0.0-beta.26](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.25...1.0.0-beta.26) (2024-09-13)
 
 
