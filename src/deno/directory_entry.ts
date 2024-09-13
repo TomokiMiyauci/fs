@@ -5,6 +5,7 @@ import type {
   FileSystemEntry,
   Set,
 } from "@miyauci/fs";
+import { List } from "@miyauci/infra";
 import { isDirectoryEntry } from "../algorithm.ts";
 import { FileEntry } from "./file_entry.ts";
 import { BaseEntry } from "./util.ts";
@@ -14,10 +15,14 @@ export class DirectoryEntry extends BaseEntry implements IDirectoryEntry {
     super(fileSystem, path);
   }
 
-  get parent(): DirectoryEntry | null {
+  get parent(): IDirectoryEntry | null {
     const head = this.path.slice(0, -1);
+    const path = new List(head);
+    const entry = this.fileSystem.locateEntry(path);
 
-    return head.length ? new DirectoryEntry(this.fileSystem, head) : null;
+    if (entry && isDirectoryEntry(entry)) return entry;
+
+    return null;
   }
 
   get children(): Effector {
