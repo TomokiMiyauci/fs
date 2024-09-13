@@ -1,3 +1,15 @@
+# [1.0.0-beta.26](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.25...1.0.0-beta.26) (2024-09-13)
+
+
+### Bug Fixes
+
+* **directory_entry:** fix to getting parent algorithm ([1b7f5eb](https://github.com/TomokiMiyauci/fs/commit/1b7f5eb8c0517adfbefbda086de52bed3347afbb))
+
+
+### Features
+
+* **directory_entry:** change iterable behaivor to skip when the entry is symlink ([8c7fa82](https://github.com/TomokiMiyauci/fs/commit/8c7fa821a0ad2cee5e5632a37dff58dd460f3bd9))
+
 # [1.0.0-beta.25](https://github.com/TomokiMiyauci/fs/compare/1.0.0-beta.24...1.0.0-beta.25) (2024-09-12)
 
 
