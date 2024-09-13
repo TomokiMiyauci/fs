@@ -62,6 +62,63 @@ describe("FileSystemObserver", () => {
         );
       },
     );
+
+    it<Context>(
+      "should do nothing if observe is succeed",
+      async function () {
+        const fileSystem = new FileSystem();
+        const dirEntry = new DirectoryEntry(fileSystem);
+
+        fileSystem.locateEntry = () => {
+          return dirEntry;
+        };
+
+        const dir = createNewFileSystemHandle(
+          fileSystem,
+          new List([""]),
+          "directory",
+        );
+
+        await expect(this.observer.observe(dir, { recursive: true })).resolves
+          .toBeFalsy();
+
+        await delay(0);
+
+        expect(fileSystem.observations.size).toBe(1);
+        expect(fileSystem.observations[0].recursive).toBeTruthy();
+      },
+    );
+
+    it<Context>(
+      "should do nothing if the handle already observed",
+      async function () {
+        const fileSystem = new FileSystem();
+        const dirEntry = new DirectoryEntry(fileSystem);
+
+        fileSystem.locateEntry = () => {
+          return dirEntry;
+        };
+
+        const dir = createNewFileSystemHandle(
+          fileSystem,
+          new List([""]),
+          "directory",
+        );
+
+        await this.observer.observe(dir, { recursive: true });
+
+        await delay(0);
+
+        expect(fileSystem.observations.size).toBe(1);
+        expect(fileSystem.observations[0].recursive).toBeTruthy();
+
+        await this.observer.observe(dir);
+        await delay(0);
+
+        expect(fileSystem.observations.size).toBe(1);
+        expect(fileSystem.observations[0].recursive).toBeTruthy();
+      },
+    );
   });
 
   describe("unobserve", () => {
