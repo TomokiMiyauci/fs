@@ -1,6 +1,11 @@
-import type { FileEntry as IFileEntry, FileSystem } from "@miyauci/fs";
+import type {
+  DirectoryEntry,
+  FileEntry as IFileEntry,
+  FileSystem,
+} from "@miyauci/fs";
+import { List } from "@miyauci/infra";
 import { BaseEntry } from "./util.ts";
-import { DirectoryEntry } from "./directory_entry.ts";
+import { isDirectoryEntry } from "../algorithm.ts";
 
 export class FileEntry extends BaseEntry implements IFileEntry {
   constructor(fileSystem: FileSystem, path: string[]) {
@@ -9,8 +14,12 @@ export class FileEntry extends BaseEntry implements IFileEntry {
 
   get parent(): DirectoryEntry | null {
     const head = this.path.slice(0, -1);
+    const path = new List(head);
+    const entry = this.fileSystem.locateEntry(path);
 
-    return head.length ? new DirectoryEntry(this.fileSystem, head) : null;
+    if (entry && isDirectoryEntry(entry)) return entry;
+
+    return null;
   }
 
   get modificationTimestamp(): number {

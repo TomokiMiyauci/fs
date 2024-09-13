@@ -1,8 +1,54 @@
-import { describe, it } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { LocalFileSystem } from "./file_system.ts";
+import { FileSystem, LocalFileSystem } from "./file_system.ts";
 import { parse } from "@std/path/parse";
 import { join } from "@std/path/join";
+import { List } from "@miyauci/infra";
+
+describe("FileSystem", () => {
+  interface Context {
+    root: string;
+  }
+
+  beforeEach<Context>(async function () {
+    const root = await Deno.makeTempDir();
+
+    this.root = root;
+  });
+
+  afterEach<Context>(async function () {
+    await Deno.remove(this.root, { recursive: true });
+  });
+
+  describe("locateEntry", () => {
+    it<Context>("should return directory entry", function () {
+      const fileSystem = new FileSystem(this.root);
+
+      const entry = fileSystem.locateEntry(new List([""]));
+      expect(entry?.name).toBe("");
+      expect(entry?.fileSystem).toBe(fileSystem);
+      expect(entry?.parent).toBe(null);
+    });
+
+    it<Context>("should return null if entry does not exist", function () {
+      const fileSystem = new FileSystem(this.root);
+
+      expect(fileSystem.locateEntry(new List(["not-found"]))).toBe(null);
+    });
+  });
+
+  describe("getPath", () => {
+    it<Context>("should return directory entry", function () {
+      const fileSystem = new FileSystem(this.root);
+
+      const entry = fileSystem.locateEntry(new List([""]))!;
+
+      const path = fileSystem.getPath(entry);
+      expect(path.size).toBe(1);
+      expect(path[0]).toBe("");
+    });
+  });
+});
 
 describe("FileSystemHandle", () => {
   it("should return end of root segment", async function () {
@@ -33,26 +79,6 @@ describe("FileSystemDirectoryHandle", () => {
     });
   });
 });
-
-// TODO: Investigate how the file watcher sometimes dispatch 'created' or 'modified' events when a file is removed.
-// runFileSystemObserverTest(async () => {
-//   const rootPath = await Deno.makeTempDir();
-//   const realPath = await Deno.realPath(rootPath);
-//   const fileSystem = new FileSystem(realPath);
-//   const storage = new StorageManager(fileSystem);
-
-//   fileSystem.watch();
-
-//   const root = await storage.getDirectory();
-
-//   return {
-//     root,
-//     onAfterEach() {
-//       fileSystem.unwatch();
-//       return Deno.remove(realPath, { recursive: true });
-//     },
-//   };
-// });
 
 describe("LocalFileSystem", () => {
   describe("getDirectory", () => {

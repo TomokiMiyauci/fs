@@ -45,6 +45,8 @@ export class FileSystem implements IFileSystem {
    * Required `allow-read` permission.
    */
   locateEntry(path: FileSystemPath): FileSystemEntry | null {
+    if (!path.size) return null;
+
     const fullPath = join(this.root, ...path);
 
     try {

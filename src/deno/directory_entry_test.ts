@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { DirectoryEntry, Effector } from "./directory_entry.ts";
 import { FileSystem } from "./file_system.ts";
+import { join } from "@std/path/join";
 
 interface Context {
   root: string;
@@ -16,7 +17,7 @@ describe("DirectoryEntry", () => {
   });
 
   afterEach<Context>(async function () {
-    await Deno.remove(this.root);
+    await Deno.remove(this.root, { recursive: true });
   });
 
   describe("parent", () => {
@@ -33,13 +34,42 @@ describe("DirectoryEntry", () => {
     );
 
     it<Context>(
-      "should return root",
+      "should return null if parent entry is not directory",
+      async function () {
+        await Deno.writeTextFile(join(this.root, "path"), "");
+
+        const entry = new DirectoryEntry(this.fileSystem, [
+          "path",
+          "not-found",
+        ]);
+
+        expect(entry.parent).toBe(null);
+      },
+    );
+
+    it<Context>(
+      "should return parent directory if exists",
+      async function () {
+        await Deno.mkdir(join(this.root, "path"));
+
+        const entry = new DirectoryEntry(this.fileSystem, [
+          "path",
+          "not-found",
+        ]);
+
+        expect(entry.parent).toBeTruthy();
+        expect(entry.parent?.name).toBe("path");
+      },
+    );
+
+    it<Context>(
+      "should return null",
       function () {
         const entry = new DirectoryEntry(this.fileSystem, [
           "",
         ]);
 
-        expect(entry.parent).toBeTruthy();
+        expect(entry.parent).toBe(null);
       },
     );
   });
