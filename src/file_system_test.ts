@@ -1,4 +1,5 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
+import { assertSpyCallArg, assertSpyCalls, spy } from "@std/testing/mock";
 import { expect } from "@std/expect";
 import { List, Set } from "@miyauci/infra";
 import { delay } from "@std/async/delay";
@@ -8,7 +9,12 @@ import {
   FileSystem,
   FileSystemObservation,
 } from "@test/util.ts";
-import { isInScope, notify, sendError } from "./file_system.ts";
+import {
+  isInScope,
+  notify,
+  notifyObservations,
+  sendError,
+} from "./file_system.ts";
 import type { FileSystemPath } from "./file_system.ts";
 import { FileSystemObserver } from "./file_system_observer.ts";
 import { createNewFileSystemHandle } from "./algorithm.ts";
@@ -491,4 +497,99 @@ describe("notify", () => {
       ]);
     },
   );
+
+  it<Context>(
+    "should skip if the event type is modified and the type is directory",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+      const fn = spy();
+      const observer = new FileSystemObserver(fn);
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+
+      notify(
+        observation,
+        new List([{
+          type: "modified",
+          entryType: "directory",
+          fromPath: null,
+          modifiedPath: new List([""]),
+        }]),
+        this.fileSystem,
+      );
+
+      await delay(0);
+
+      assertSpyCallArg(fn, 0, 0, []);
+      assertSpyCallArg(fn, 0, 1, observer);
+    },
+  );
+
+  it<Context>(
+    "should skip if the event type is modified and the type is null",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+      const fn = spy();
+      const observer = new FileSystemObserver(fn);
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+
+      notify(
+        observation,
+        new List([{
+          type: "modified",
+          entryType: null,
+          fromPath: null,
+          modifiedPath: new List([""]),
+        }]),
+        this.fileSystem,
+      );
+
+      await delay(0);
+
+      assertSpyCallArg(fn, 0, 0, []);
+      assertSpyCallArg(fn, 0, 1, observer);
+    },
+  );
+});
+
+describe("notifyObservations", () => {
+  it("should call callback if notifyObservations called", async () => {
+    const fileSystem = new FileSystem();
+    const fn = spy();
+    const observer = new FileSystemObserver(fn);
+    const handle = createNewFileSystemHandle(
+      fileSystem,
+      new List([""]),
+      "directory",
+    );
+
+    fileSystem.observations.append({
+      observer,
+      rootHandle: handle,
+      recursive: false,
+    });
+
+    notifyObservations(
+      fileSystem,
+      new List([{
+        entryType: "file",
+        fromPath: null,
+        modifiedPath: new List(["", "file.txt"]),
+        type: "appeared",
+      }]),
+    );
+
+    await delay(0);
+
+    assertSpyCalls(fn, 1);
+  });
 });
