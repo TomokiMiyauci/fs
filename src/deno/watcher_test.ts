@@ -2,6 +2,7 @@ import { Watcher } from "./watcher.ts";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path/join";
+import { delay } from "@std/async/delay";
 
 describe("Watcher", () => {
   it("should do nothing if construct", () => {
@@ -26,7 +27,7 @@ describe("Watcher", () => {
 
       // Avoid catching temp dir creation event.
       // @see https://github.com/denoland/deno/issues/15332
-      await wait(10);
+      await delay(10);
     });
 
     afterEach<Context>(async function () {
@@ -64,7 +65,7 @@ describe("Watcher", () => {
       const filePath = join(this.root, "file.txt");
       using _ = await Deno.create(filePath);
 
-      await wait(10);
+      await delay(10);
     });
 
     it<Context>("should not dispatch event after unwatch", async function () {
@@ -83,11 +84,16 @@ describe("Watcher", () => {
       const filePath = join(this.root, "file.txt");
       using _ = await Deno.create(filePath);
 
-      await wait(10);
+      await delay(10);
+    });
+
+    it<Context>("should do nothing if already watched", function () {
+      using watcher = new Watcher(this.root);
+
+      watcher.watch();
+      watcher.watch();
+
+      watcher.unwatch();
     });
   });
 });
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(() => resolve(), ms));
-}
