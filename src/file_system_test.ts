@@ -559,6 +559,49 @@ describe("notify", () => {
       assertSpyCallArg(fn, 0, 1, observer);
     },
   );
+
+  it<Context>(
+    "should locate moved entry",
+    async function () {
+      const rootHandle = createNewFileSystemHandle(
+        this.fileSystem,
+        new List([""]),
+        "directory",
+      );
+      const records: FileSystemChangeRecord[] = [];
+      const observer = new FileSystemObserver((allRecords) => {
+        records.push(...allRecords);
+      });
+      const observation = new FileSystemObservation(rootHandle);
+      observation.observer = observer;
+
+      const dirEntry = new DirectoryEntry(this.fileSystem);
+
+      dirEntry.name = "not-found";
+      this.fileSystem.locateEntry = (path) => {
+        if (path.size === 2 && path[0] === "" && path[1] === "not-found") {
+          return dirEntry;
+        }
+
+        return null;
+      };
+
+      notify(
+        observation,
+        new List([{
+          type: "moved",
+          entryType: "directory",
+          fromPath: new List(["", "not-found"]),
+          modifiedPath: new List([""]),
+        }]),
+        this.fileSystem,
+      );
+
+      await delay(0);
+
+      expect(records.length).toBe(1);
+    },
+  );
 });
 
 describe("notifyObservations", () => {
